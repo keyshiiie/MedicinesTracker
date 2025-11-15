@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Views.StockInfoPage"
+             Title="Запас">
+    <Grid HorizontalOptions="Fill">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <VerticalStackLayout>
+            <Label 
+            Text="Текущий запас"
+            FontSize="14"
+            Padding="0,0,0,5"
+            TextColor="{StaticResource Gray500}" 
+            Opacity="0.8"/>
+            <Border Margin="0,0,0,10">
+                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <HorizontalStackLayout Spacing="5">
+                        <Label 
+                            Text="{Binding Medicine.Stock.CurrentQuantity}"
+                            FontSize="14"
+                            VerticalOptions="Center"
+                            Grid.Column="0" />
+                        <Label 
+                            Text="{Binding Medicine.Unit.Name}"
+                            FontSize="14"
+                            VerticalOptions="Center"
+                            Grid.Column="0" />
+                    </HorizontalStackLayout>
+                    
+                    <Button
+                    ImageSource="pen_line.png"
+                    Padding="0"
+                    BackgroundColor="Transparent"
+                    BorderColor="Transparent"
+                    CornerRadius="0"
+                    Opacity="1"
+                    Grid.Column="1" />
+                </Grid>
+            </Border>
+            <Label 
+                Text="Напомнить вам, когда останется"
+                FontSize="14"
+                Padding="0,0,0,5"
+                TextColor="{StaticResource Gray500}"
+                Opacity="0.8"/>
+            <Border Margin="0,0,0,10">
+                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <HorizontalStackLayout Spacing="5">
+                        <Label 
+                            Text="{Binding Medicine.Stock.Threshold}"
+                            FontSize="14"
+                            VerticalOptions="Center"
+                            Grid.Column="0" />
+                        <Label 
+                            Text="{Binding Medicine.Unit.Name}"
+                            FontSize="14"
+                            VerticalOptions="Center"
+                            Grid.Column="0" />
+                    </HorizontalStackLayout>
+                    <Button
+                        ImageSource="pen_line.png"
+                        Padding="0"
+                        BackgroundColor="Transparent"
+                        BorderColor="Transparent"
+                        CornerRadius="0"
+                        Opacity="1"
+                        Grid.Column="1" />
+                </Grid>
+            </Border>
+            <VerticalStackLayout>
+                <Label 
+                    Text="Получение уведомлений о запасе"
+                    FontSize="14"
+                    TextColor="{StaticResource Gray500}"
+                    Opacity="0.8"
+                    Grid.Column="0"/>
+                <Switch
+                    IsToggled="{Binding Medicine.Stock.ReminderEnabled}"
+                    VerticalOptions="Center" 
+                    Grid.Column="1"/>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+        <Button Text="Сохранить" 
+            Grid.Row="1"
+            FontFamily="OpenSansSemibold"
+            BackgroundColor="{StaticResource PrimaryDark}"/>
+    </Grid>
+</ContentPage>

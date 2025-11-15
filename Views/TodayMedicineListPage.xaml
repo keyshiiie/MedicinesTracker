@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Views.TodayMedicineListPage"
+             Title="Сегодня"
+             BackgroundColor="{StaticResource PageBackground}">
+    <VerticalStackLayout>
+        <CollectionView ItemsSource="{Binding Reminders}"
+                        EmptyView="Нет напоминаний на сегодня">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,0,0,10">
+                        <HorizontalStackLayout Spacing="10" Padding="10">
+                            <!-- Чекбокс -->
+                            <CheckBox IsChecked="{Binding IsCompleted}"
+                                      Color="{StaticResource Primary}"
+                                      VerticalOptions="Center"/>
+
+                            <!-- Информация о лекарстве -->
+                            <VerticalStackLayout VerticalOptions="Center"
+                                                Spacing="4"
+                                                HorizontalOptions="Start">
+                                <Label Text="{Binding Medicine.Name}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"/>
+
+                                <HorizontalStackLayout Spacing="6">
+                                    <Label Text="{Binding Time}"
+                                           FontSize="14"
+                                           TextColor="#666"/>
+
+                                    <Label Text="{Binding Dosage}"
+                                           FontSize="14"
+                                           TextColor="#666"/>
+
+                                    <Label Text="таблетка(и)"
+                                           FontSize="14"
+                                           TextColor="#666"/>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+
+                            <!-- Стрелка вправо (индикатор) -->
+                            <Image Source="arrow_right.png"
+                                   WidthRequest="20"
+                                   HeightRequest="20"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="End"
+                                   Margin="8,0"/>       
+                        </HorizontalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

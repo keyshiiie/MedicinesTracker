@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Windows Machine": {
+      "commandName": "Project",
+      "nativeDebugging": false,
+      "environmentVariables": {
+        "ConnectionStrings__DefaultConnection": "Data Source=|DataDirectory|\\Data\\MedicineTracker.db;"
+      }
+    }
+  }
+}
+   

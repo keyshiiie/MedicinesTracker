@@ -1,0 +1,144 @@
+[20:09:54] Путь к БД: C:\Users\Acer\AppData\Local\User Name\com.companyname.medicinestracker\Data\MedicineTrackerv2.db3
+[20:09:54] БД успешно создана.
+[20:09:56] Выполняется запрос: 
+                SELECT
+                    m.IdMedicine,
+                    m.Name AS MedicineName,
+                    m.NameMethodAdmission,
+                    m.NameUnit,
+                    r.Time,
+                    r.IdReminder,
+                    r.DateEnd,
+                    r.DateStart,
+                    r.Dosage,
+                    s.CurrentQuantity,
+                    s.Threshold,
+                    s.ReminderEnabled,
+                    r.NameFrequency,
+                    rec.Name AS Recipient
+                FROM Medicine m
+                INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
+                INNER JOIN Reminder r ON m.IdMedicine = r.IdMedicine
+                INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
+                ORDER BY m.Name, r.Time;
+[20:09:56] Запрос выполнен успешно. Строк: 2
+[09:02:59] Путь к БД: C:\Users\Acer\AppData\Local\User Name\com.companyname.medicinestracker\Data\MedicineTrackerv2.db3
+[09:02:59] БД уже существует.
+[09:03:00] Выполняется запрос: 
+                SELECT
+                    m.IdMedicine,
+                    m.Name AS MedicineName,
+                    m.NameMethodAdmission,
+                    m.NameUnit,
+                    r.Time,
+                    r.IdReminder,
+                    r.DateEnd,
+                    r.DateStart,
+                    r.Dosage,
+                    s.CurrentQuantity,
+                    s.Threshold,
+                    s.ReminderEnabled,
+                    r.NameFrequency,
+                    rec.Name AS Recipient
+                FROM Medicine m
+                INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
+                INNER JOIN Reminder r ON m.IdMedicine = r.IdMedicine
+                INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
+                ORDER BY m.Name, r.Time;
+[09:03:00] Запрос выполнен успешно. Строк: 2
+[09:16:55] Путь к БД: C:\Users\Acer\AppData\Local\User Name\com.companyname.medicinestracker\Data\MedicineTrackerv2.db3
+[09:16:55] БД уже существует.
+[09:16:56] Выполняется запрос: 
+                SELECT
+                    m.IdMedicine,
+                    m.Name AS MedicineName,
+                    m.NameMethodAdmission,
+                    m.NameUnit,
+                    r.Time,
+                    r.IdReminder,
+                    r.DateEnd,
+                    r.DateStart,
+                    r.Dosage,
+                    s.CurrentQuantity,
+                    s.Threshold,
+                    s.ReminderEnabled,
+                    r.NameFrequency,
+                    rec.Name AS Recipient
+                FROM Medicine m
+                INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
+                INNER JOIN Reminder r ON m.IdMedicine = r.IdMedicine
+                INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
+                ORDER BY m.Name, r.Time;
+[09:16:56] Запрос выполнен успешно. Строк: 2
+[09:29:47] Путь к БД: C:\Users\Acer\AppData\Local\User Name\com.companyname.medicinestracker\Data\MedicineTrackerv2.db3
+[09:29:47] БД уже существует.
+[09:29:47] Выполняется запрос: 
+                SELECT
+                    m.IdMedicine,
+                    m.Name AS MedicineName,
+                    m.NameMethodAdmission,
+                    m.NameUnit,
+                    r.Time,
+                    r.IdReminder,
+                    r.DateEnd,
+                    r.DateStart,
+                    r.Dosage,
+                    s.CurrentQuantity,
+                    s.Threshold,
+                    s.ReminderEnabled,
+                    r.NameFrequency,
+                    rec.Name AS Recipient
+                FROM Medicine m
+                INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
+                INNER JOIN Reminder r ON m.IdMedicine = r.IdMedicine
+                INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
+                ORDER BY m.Name, r.Time;
+[09:29:48] Запрос выполнен успешно. Строк: 2
+[09:34:59] Путь к БД: C:\Users\Acer\AppData\Local\User Name\com.companyname.medicinestracker\Data\MedicineTrackerv2.db3
+[09:34:59] БД успешно создана.
+[09:35:02] Выполняется запрос: 
+                SELECT
+                    m.IdMedicine,
+                    m.Name AS MedicineName,
+                    m.NameMethodAdmission,
+                    m.NameUnit,
+                    r.Time,
+                    r.IdReminder,
+                    r.DateEnd,
+                    r.DateStart,
+                    r.Dosage,
+                    s.CurrentQuantity,
+                    s.Threshold,
+                    s.ReminderEnabled,
+                    r.NameFrequency,
+                    rec.Name AS Recipient
+                FROM Medicine m
+                INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
+                INNER JOIN Reminder r ON m.IdMedicine = r.IdMedicine
+                INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
+                ORDER BY m.Name, r.Time;
+[09:35:02] Запрос выполнен успешно. Строк: 2
+[18:02:20] Путь к БД: C:\Users\Acer\AppData\Local\User Name\com.companyname.medicinestracker\Data\MedicineTrackerv2.db3
+[18:02:20] БД уже существует.
+[18:02:21] Выполняется запрос: 
+                SELECT
+                    m.IdMedicine,
+                    m.Name AS MedicineName,
+                    m.NameMethodAdmission,
+                    m.NameUnit,
+                    r.Time,
+                    r.IdReminder,
+                    r.DateEnd,
+                    r.DateStart,
+                    r.Dosage,
+                    s.CurrentQuantity,
+                    s.Threshold,
+                    s.ReminderEnabled,
+                    r.NameFrequency,
+                    rec.Name AS Recipient
+                FROM Medicine m
+                INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
+                INNER JOIN Reminder r ON m.IdMedicine = r.IdMedicine
+                INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
+                ORDER BY m.Name, r.Time;
+[18:02:22] Запрос выполнен успешно. Строк: 2

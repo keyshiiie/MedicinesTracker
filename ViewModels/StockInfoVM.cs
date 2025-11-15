@@ -1,0 +1,20 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using MedicinesTracker.Models;
+using MedicinesTracker.Services;
+
+namespace MedicinesTracker.ViewModels
+{
+    [QueryProperty(nameof(Medicine), "medicine")]
+    public partial class StockInfoVM : ObservableObject
+    {
+        private readonly MedicineService _medicineService;
+
+        [ObservableProperty]
+        private MedicineModel _medicine;
+        public StockInfoVM(MedicineService medicineService)
+        {
+            _medicine = new MedicineModel();
+            _medicineService = medicineService;
+        }
+    }
+}

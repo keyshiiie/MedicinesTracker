@@ -1,0 +1,108 @@
+is_global = true
+build_property.EnableAotAnalyzer = 
+build_property.EnableSingleFileAnalyzer = 
+build_property.EnableTrimAnalyzer = false
+build_property.IncludeAllContentForSelfExtract = 
+build_property.MvvmToolkitEnableINotifyPropertyChangingSupport = true
+build_property._MvvmToolkitIsUsingWindowsRuntimePack = false
+build_property.CsWinRTComponent = 
+build_property.CsWinRTAotOptimizerEnabled = 
+build_property.CsWinRTAotWarningLevel = 
+build_property.TargetFramework = net9.0-maccatalyst
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = MedicinesTracker
+build_property.ProjectDir = C:\Users\Acer\Desktop\MedicinesTracker\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/Acer/Desktop/MedicinesTracker/App.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.App.xaml
+build_metadata.AdditionalFiles.TargetPath = App.xaml
+build_metadata.AdditionalFiles.RelativePath = App.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/AppShell.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.AppShell.xaml
+build_metadata.AdditionalFiles.TargetPath = AppShell.xaml
+build_metadata.AdditionalFiles.RelativePath = AppShell.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/MainPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.MainPage.xaml
+build_metadata.AdditionalFiles.TargetPath = MainPage.xaml
+build_metadata.AdditionalFiles.RelativePath = MainPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Resources/Styles/Colors.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Resources.Styles.Colors.xaml
+build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Colors.xaml
+build_metadata.AdditionalFiles.RelativePath = Resources\Styles\Colors.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Resources/Styles/Styles.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Resources.Styles.Styles.xaml
+build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Styles.xaml
+build_metadata.AdditionalFiles.RelativePath = Resources\Styles\Styles.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/BaseInfoPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.BaseInfoPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\BaseInfoPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\BaseInfoPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/HistoryListPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.HistoryListPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\HistoryListPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\HistoryListPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/MedicineDetailPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.MedicineDetailPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\MedicineDetailPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\MedicineDetailPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/MedicineListPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.MedicineListPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\MedicineListPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\MedicineListPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/NotificationInfoPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.NotificationInfoPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\NotificationInfoPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\NotificationInfoPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/NotificationListPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.NotificationListPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\NotificationListPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\NotificationListPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/SettingsPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.SettingsPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\SettingsPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\SettingsPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/StockInfoPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.StockInfoPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\StockInfoPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\StockInfoPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/TodayMedicineListPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.TodayMedicineListPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\TodayMedicineListPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\TodayMedicineListPage.xaml
