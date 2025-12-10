@@ -663,6 +663,8 @@ namespace MedicinesTracker.MedicinesTracker_XamlTypeInfo
                     otherProviders.Add(provider); 
                     provider = new global::Microsoft.Maui.Core_XamlTypeInfo.XamlMetaDataProvider() as global::Microsoft.UI.Xaml.Markup.IXamlMetadataProvider;
                     otherProviders.Add(provider); 
+                    provider = new global::Syncfusion.Maui.Toolkit.Syncfusion_Maui_Toolkit_XamlTypeInfo.XamlMetaDataProvider() as global::Microsoft.UI.Xaml.Markup.IXamlMetadataProvider;
+                    otherProviders.Add(provider); 
                     _otherProviders = otherProviders;
                 }
                 return _otherProviders;

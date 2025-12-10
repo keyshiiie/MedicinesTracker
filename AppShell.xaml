@@ -3,7 +3,6 @@
     x:Class="MedicinesTracker.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:MedicinesTracker"
     xmlns:views="clr-namespace:MedicinesTracker.Views"
     Title="MedicinesTracker"
     Shell.FlyoutBehavior="Disabled">
@@ -13,16 +12,16 @@
     </Shell.ToolbarItems>
     <TabBar>
         <Tab Title="Лекарства" Icon="medicine.png">
-            <ShellContent ContentTemplate="{DataTemplate views:MedicineListPage}" />
+            <ShellContent ContentTemplate="{DataTemplate views:MedicineListPage}" Route="medicines" />
         </Tab>
         <Tab Title="Сегодня" Icon="list_check_line.png">
-            <ShellContent ContentTemplate="{DataTemplate views:TodayMedicineListPage}" />
+            <ShellContent ContentTemplate="{DataTemplate views:TodayMedicineListPage}" Route="todayMedicines" />
         </Tab>
         <Tab Title="История" Icon="calendar.png">
-            <ShellContent ContentTemplate="{DataTemplate views:HistoryListPage}" />
+            <ShellContent ContentTemplate="{DataTemplate views:HistoryListPage}" Route="history" />
         </Tab>
         <Tab Title="Уведомления" Icon="bell_notification_outline.png">
-            <ShellContent ContentTemplate="{DataTemplate views:NotificationListPage}" />
+            <ShellContent ContentTemplate="{DataTemplate views:NotificationListPage}" Route="notification" />
         </Tab>
     </TabBar>
 </Shell>

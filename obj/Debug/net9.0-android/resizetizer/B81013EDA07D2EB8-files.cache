@@ -3,6 +3,7 @@ obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\bell_notification_outline.p
 obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\calendar.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\dotnet_bot.png
+obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\hint_swap_right.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\hugeicons_date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\list_check_line.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-hdpi\medicine.png
@@ -16,6 +17,7 @@ obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\bell_notification_outline.p
 obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\calendar.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\dotnet_bot.png
+obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\hint_swap_right.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\hugeicons_date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\list_check_line.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-mdpi\medicine.png
@@ -29,6 +31,7 @@ obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\bell_notification_outline.
 obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\calendar.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\dotnet_bot.png
+obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\hint_swap_right.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\hugeicons_date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\list_check_line.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xhdpi\medicine.png
@@ -42,6 +45,7 @@ obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\bell_notification_outline
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\calendar.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\dotnet_bot.png
+obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\hint_swap_right.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\hugeicons_date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\list_check_line.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxhdpi\medicine.png
@@ -55,6 +59,7 @@ obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\bell_notification_outlin
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\calendar.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\dotnet_bot.png
+obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\hint_swap_right.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\hugeicons_date_time.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\list_check_line.png
 obj\Debug\net9.0-android\resizetizer\r\drawable-xxxhdpi\medicine.png

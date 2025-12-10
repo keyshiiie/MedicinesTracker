@@ -2,97 +2,76 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Views.MedicineDetailPage"
+             x:DataType="viewModels:MedicineDetailVM"
+             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
              xmlns:viewModels="clr-namespace:MedicinesTracker.ViewModels"
              Title="Информация о лекарстве">
     <VerticalStackLayout>
         <Border  Margin="0,0,0,10">
             <Border.GestureRecognizers>
-                <TapGestureRecognizer
-                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}}, Path=BaseInfoTappedCommand}"
-                    CommandParameter="{Binding .}"/>    
+                <TapGestureRecognizer 
+                    Command="{Binding OpenBaseInfoPageCommand, 
+                    Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}},
+                    x:DataType=viewModels:MedicineDetailVM}"
+                    CommandParameter="{Binding Medicine}" />   
             </Border.GestureRecognizers>
             <StackLayout Spacing="10" 
                          Padding="15">
-                <HorizontalStackLayout Spacing="10">
+                <HorizontalStackLayout Spacing="15">
                     <Image Source="medicine_card_icon.png"
-                           WidthRequest="30"
-                           HeightRequest="30"
-                           VerticalOptions="Start"
-                           Margin="0,3,0,0"/>
+                           Style="{StaticResource MedicineIconStyle}"/>
                     <VerticalStackLayout Spacing="10" >
                         <StackLayout Spacing="5">
                             <Label Text="Основная информация"
-                                   FontSize="16"
-                                   FontAttributes="Bold"/>
-                            <Label Text="{Binding Medicine.Name}"
-                                   FontSize="14"
-                                   TextColor="{StaticResource Gray500}"
-                                   Opacity="0.9"/>
-                            <Label Text="{Binding Medicine.MethodAdmission.Name, StringFormat='{0} тип приёма'}"
-                                   FontSize="14"
-                                   TextColor="{StaticResource Gray500}"
-                                   Opacity="0.9"/>  
+                                   Style="{StaticResource CardTitletyle}"/>
                         </StackLayout>
-                        <StackLayout>
-                            <Label Text="Добавить рекомендации по приёму →"
-                               FontSize="14"
-                               TextColor="{StaticResource PrimaryDark}"/>
-                        </StackLayout>
+                        <HorizontalStackLayout Spacing="5">
+                            <Label Text="Редактировать основную информацию"
+                                   Style="{StaticResource DetailLinkStyle}"/>
+                            <Image Source="hint_swap_right.png"
+                                   Style="{StaticResource DetailLinkIconStyle}"/>
+                        </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
             </StackLayout>
         </Border>
         <Border Margin="0,0,0,10">
             <Border.GestureRecognizers>
-                <TapGestureRecognizer
-                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}}, Path=StockTappedCommand}"
-                    CommandParameter="{Binding .}"/>
+                <TapGestureRecognizer 
+                    Command="{Binding OpenStockPageCommand, 
+                    Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}},
+                    x:DataType=viewModels:MedicineDetailVM}"
+                    CommandParameter="{Binding Medicine}" />       
             </Border.GestureRecognizers>
             <StackLayout Spacing="10" 
                          Padding="15">
                 <HorizontalStackLayout Spacing="10">
                     <Image 
                         Source="medicine_box_filled.png"
-                        WidthRequest="30"
-                        HeightRequest="30"
-                        VerticalOptions="Start"
-                        Margin="0,3,0,0"/>
+                        Style="{StaticResource MedicineIconStyle}"/>
                     <VerticalStackLayout Spacing="10" >
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="Запас"
-                                FontSize="16"
-                                FontAttributes="Bold"/>
-                            <HorizontalStackLayout Spacing="5">
-                                <Label 
-                                    Text="{Binding Medicine.Stock.CurrentQuantity, StringFormat='Осталось {0}'}"
-                                    FontSize="14"
-                                    TextColor="{StaticResource Gray500}"
-                                    Opacity="0.9"/>
-                                <Label 
-                                    Text="{Binding Medicine.Unit.Name}"
-                                    FontSize="14"
-                                    TextColor="{StaticResource Gray500}"
-                                    Opacity="0.9"
-                                    VerticalOptions="Center"
-                                    Grid.Column="0" />      
-                            </HorizontalStackLayout>
+                                Style="{StaticResource CardTitletyle}"/>
                         </StackLayout>
-                        <StackLayout>
-                            <Label 
-                                Text="Редактировать запас →"
-                                FontSize="14"
-                                TextColor="{StaticResource PrimaryDark}"/>
-                        </StackLayout>
+                        <HorizontalStackLayout Spacing="5">
+                            <Label Text="Редактировать запас"
+                                   Style="{StaticResource DetailLinkStyle}"/>
+                            <Image Source="hint_swap_right.png"
+                                   Style="{StaticResource DetailLinkIconStyle}"/>
+                        </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
             </StackLayout>
         </Border>
         <Border Margin="0,0,0,10">
             <Border.GestureRecognizers>
-                <TapGestureRecognizer
-                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}}, Path=NotificationTappedCommand}"
-                    CommandParameter="{Binding .}"/>    
+                <TapGestureRecognizer 
+                    Command="{Binding OpenNotificationPageCommand, 
+                    Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}},
+                    x:DataType=viewModels:MedicineDetailVM}"
+                    CommandParameter="{Binding Medicine}" />   
             </Border.GestureRecognizers>
             <StackLayout 
                 Spacing="10"
@@ -100,28 +79,19 @@
                 <HorizontalStackLayout Spacing="10">
                     <Image 
                         Source="date_time.png"
-                        WidthRequest="30"
-                        HeightRequest="30"
-                        VerticalOptions="Start"
-                        Margin="0,3,0,0"/>
+                        Style="{StaticResource MedicineIconStyle}"/>
                     <VerticalStackLayout Spacing="10" >
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="График приёма лекарств"
-                                FontSize="16"
-                                FontAttributes="Bold"/>
-                            <Label 
-                                Text="{Binding Medicine.ScheduleString}"
-                                FontSize="14" 
-                                TextColor="{StaticResource Gray500}"
-                                Opacity="0.9"/>
+                                Style="{StaticResource CardTitletyle}"/>
                         </StackLayout>
-                        <StackLayout>
-                            <Label 
-                                Text="Редактировать график приёма →"
-                                FontSize="14"
-                                TextColor="{StaticResource PrimaryDark}"/>   
-                        </StackLayout>
+                        <HorizontalStackLayout Spacing="5">
+                            <Label Text="Редактировать график приёма"
+                                   Style="{StaticResource DetailLinkStyle}"/>
+                            <Image Source="hint_swap_right.png"
+                                   Style="{StaticResource DetailLinkIconStyle}"/>
+                        </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
             </StackLayout>

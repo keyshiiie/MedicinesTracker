@@ -45,11 +45,23 @@ build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.MainPage.
 build_metadata.AdditionalFiles.TargetPath = MainPage.xaml
 build_metadata.AdditionalFiles.RelativePath = MainPage.xaml
 
+[C:/Users/Acer/Desktop/MedicinesTracker/Resources/Styles/ButtonStyles.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Resources.Styles.ButtonStyles.xaml
+build_metadata.AdditionalFiles.TargetPath = Resources\Styles\ButtonStyles.xaml
+build_metadata.AdditionalFiles.RelativePath = Resources\Styles\ButtonStyles.xaml
+
 [C:/Users/Acer/Desktop/MedicinesTracker/Resources/Styles/Colors.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Resources.Styles.Colors.xaml
 build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Colors.xaml
 build_metadata.AdditionalFiles.RelativePath = Resources\Styles\Colors.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Resources/Styles/ControlStyles.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Resources.Styles.ControlStyles.xaml
+build_metadata.AdditionalFiles.TargetPath = Resources\Styles\ControlStyles.xaml
+build_metadata.AdditionalFiles.RelativePath = Resources\Styles\ControlStyles.xaml
 
 [C:/Users/Acer/Desktop/MedicinesTracker/Resources/Styles/Styles.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
@@ -62,6 +74,18 @@ build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.BaseInfoPage.xaml
 build_metadata.AdditionalFiles.TargetPath = Views\BaseInfoPage.xaml
 build_metadata.AdditionalFiles.RelativePath = Views\BaseInfoPage.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/Controls/AddButton.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.Controls.AddButton.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\Controls\AddButton.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\Controls\AddButton.xaml
+
+[C:/Users/Acer/Desktop/MedicinesTracker/Views/Controls/SaveButton.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = MedicinesTracker.Views.Controls.SaveButton.xaml
+build_metadata.AdditionalFiles.TargetPath = Views\Controls\SaveButton.xaml
+build_metadata.AdditionalFiles.RelativePath = Views\Controls\SaveButton.xaml
 
 [C:/Users/Acer/Desktop/MedicinesTracker/Views/HistoryListPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml

@@ -2,12 +2,7 @@
 {
     public class TypeModel
     {
+        public int IdType { get; set; }
         public string? Name { get; set; }
-
-        public TypeModel() { }
-        public TypeModel(string name)
-        {
-            Name = name;
-        }
     }
 }

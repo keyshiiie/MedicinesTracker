@@ -8,22 +8,15 @@ namespace MedicinesTracker.Models
 {
     public class StockModel
     {
-        public int Id { get; set; }
-        public MedicineModel? MedicineModel { get; set; }
+        public int IdStock { get; set; }
+        public int IdMedicine { get; set; }     
+
         public int InitialQuantity { get; set; }
         public int Threshold { get; set; }
         public int CurrentQuantity { get; set; }
-        public bool ReminderEnabled { get; set;}
+        public bool ReminderEnabled { get; set; }
 
-        public StockModel() { }
-        public StockModel(int id, MedicineModel medicineModel, int initialQuantity, int threshold, int currentQuantity, bool isReminderEnabled)
-        {
-            Id = id;
-            MedicineModel = medicineModel;
-            InitialQuantity = initialQuantity;
-            Threshold = threshold;
-            CurrentQuantity = currentQuantity;
-            ReminderEnabled = isReminderEnabled;
-        }
+        public string? CreatedAt { get; set; }
+        public string? UpdatedAt { get; set; }
     }
 }

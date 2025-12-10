@@ -2,12 +2,7 @@
 {
     public class MethodAdmissionModel
     {
+        public int IdMethodAdmission { get; set; }
         public string? Name { get; set; }
-
-        public MethodAdmissionModel() { }
-        public MethodAdmissionModel(string name)
-        {
-            Name = name;
-        }
     }
 }

@@ -67,13 +67,25 @@
         "net9.0-android35.0": {
           "targetAlias": "net9.0-android",
           "dependencies": {
+            "CommunityToolkit.Maui": {
+              "target": "Package",
+              "version": "[9.1.0, )"
+            },
             "CommunityToolkit.Mvvm": {
               "target": "Package",
               "version": "[8.4.0, )"
             },
+            "Dapper": {
+              "target": "Package",
+              "version": "[2.1.66, )"
+            },
             "Microsoft.Data.Sqlite": {
               "target": "Package",
               "version": "[9.0.10, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[10.0.0, )"
             },
             "Microsoft.Extensions.Logging.Debug": {
               "target": "Package",
@@ -88,6 +100,10 @@
               "target": "Package",
               "version": "[9.0.8, )",
               "autoReferenced": true
+            },
+            "Syncfusion.Maui.Toolkit": {
+              "target": "Package",
+              "version": "[1.0.8, )"
             },
             "sqlite-net-pcl": {
               "target": "Package",
@@ -118,13 +134,25 @@
         "net9.0-ios18.5": {
           "targetAlias": "net9.0-ios",
           "dependencies": {
+            "CommunityToolkit.Maui": {
+              "target": "Package",
+              "version": "[9.1.0, )"
+            },
             "CommunityToolkit.Mvvm": {
               "target": "Package",
               "version": "[8.4.0, )"
             },
+            "Dapper": {
+              "target": "Package",
+              "version": "[2.1.66, )"
+            },
             "Microsoft.Data.Sqlite": {
               "target": "Package",
               "version": "[9.0.10, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[10.0.0, )"
             },
             "Microsoft.Extensions.Logging.Debug": {
               "target": "Package",
@@ -139,6 +167,10 @@
               "target": "Package",
               "version": "[9.0.8, )",
               "autoReferenced": true
+            },
+            "Syncfusion.Maui.Toolkit": {
+              "target": "Package",
+              "version": "[1.0.8, )"
             },
             "sqlite-net-pcl": {
               "target": "Package",
@@ -169,13 +201,25 @@
         "net9.0-maccatalyst18.5": {
           "targetAlias": "net9.0-maccatalyst",
           "dependencies": {
+            "CommunityToolkit.Maui": {
+              "target": "Package",
+              "version": "[9.1.0, )"
+            },
             "CommunityToolkit.Mvvm": {
               "target": "Package",
               "version": "[8.4.0, )"
             },
+            "Dapper": {
+              "target": "Package",
+              "version": "[2.1.66, )"
+            },
             "Microsoft.Data.Sqlite": {
               "target": "Package",
               "version": "[9.0.10, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[10.0.0, )"
             },
             "Microsoft.Extensions.Logging.Debug": {
               "target": "Package",
@@ -190,6 +234,10 @@
               "target": "Package",
               "version": "[9.0.8, )",
               "autoReferenced": true
+            },
+            "Syncfusion.Maui.Toolkit": {
+              "target": "Package",
+              "version": "[1.0.8, )"
             },
             "sqlite-net-pcl": {
               "target": "Package",
@@ -221,13 +269,25 @@
         "net9.0-windows10.0.19041": {
           "targetAlias": "net9.0-windows10.0.19041.0",
           "dependencies": {
+            "CommunityToolkit.Maui": {
+              "target": "Package",
+              "version": "[9.1.0, )"
+            },
             "CommunityToolkit.Mvvm": {
               "target": "Package",
               "version": "[8.4.0, )"
             },
+            "Dapper": {
+              "target": "Package",
+              "version": "[2.1.66, )"
+            },
             "Microsoft.Data.Sqlite": {
               "target": "Package",
               "version": "[9.0.10, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[10.0.0, )"
             },
             "Microsoft.Extensions.Logging.Debug": {
               "target": "Package",
@@ -236,6 +296,10 @@
             "Microsoft.Maui.Controls": {
               "target": "Package",
               "version": "[9.0.120, )"
+            },
+            "Syncfusion.Maui.Toolkit": {
+              "target": "Package",
+              "version": "[1.0.8, )"
             },
             "sqlite-net-pcl": {
               "target": "Package",

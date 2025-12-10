@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Resources.Styles.ControlStyles">
+
+    <Style TargetType="Label" x:Key="MedicineNameStyle">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+        <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+    </Style>
+    
+    <!-- Стиль заголовка карточки -->
+    <Style TargetType="Label" x:Key="CardTitletyle">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+    </Style>
+
+    <!-- Стиль текста в полях -->
+    <Style TargetType="Label" x:Key="FieldTitleStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+    </Style>
+
+    <!-- Стиль текста в полях -->
+    <Style TargetType="Entry" x:Key="EditFieldStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+    </Style>
+
+    <!-- Стиль описания карточки с прозрачностью 0.8 -->
+    <Style TargetType="Label" x:Key="CardDescriptionStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+
+    <!-- Стиль для иконки лекарства -->
+    <Style TargetType="Image" x:Key="MedicineIconStyle">
+        <Setter Property="WidthRequest" Value="30"/>
+        <Setter Property="HeightRequest" Value="30"/>
+    </Style>
+
+    <!-- Стиль для стрелочки "Подробнее" -->
+    <Style TargetType="Image" x:Key="DetailLinkIconStyle">
+        <Setter Property="WidthRequest" Value="15"/>
+        <Setter Property="Margin" Value="0,2,0,0"/>
+    </Style>
+
+    <!-- Стиль для кнопки "Подробнее" -->
+    <Style TargetType="Label" x:Key="DetailLinkStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDark}"/>
+        <Setter Property="HorizontalOptions" Value="Start"/>
+    </Style>
+
+    <!-- Cтиль для границы карточки -->
+    <Style TargetType="Border" x:Key="MedicineCardBorderStyle">
+        <Setter Property="Margin" Value="0,0,0,10"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource Secondary}"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="10"/>
+        </Setter>
+        <Setter Property="StrokeThickness" Value="0"/>
+    </Style>
+
+    <!-- Cтиль для редактируемого поля -->
+    <Style TargetType="Grid" x:Key="EditFielsGridStyle">
+        <Setter Property="HorizontalOptions" Value="Fill"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- Текст для карточки запаса текущего -->
+    <Style TargetType="Label" x:Key="CardHintTextStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
+    </Style>
+    
+    <!-- Cтиль для карточки запаса текущего -->
+    <Style TargetType="Border" x:Key="CardHintBorderStyle">
+        <Setter Property="BackgroundColor" Value="{StaticResource Primary}"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="10"/>
+        </Setter>
+        <Setter Property="StrokeThickness" Value="0"/>
+    </Style>
+
+    <!-- Основной стиль Picker -->
+    <Style x:Key="PrimaryPickerStyle" TargetType="Picker">
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="VerticalOptions" Value="Center"/>
+        <Setter Property="TitleColor" Value="{StaticResource Gray500}" />
+    </Style>
+</ResourceDictionary>

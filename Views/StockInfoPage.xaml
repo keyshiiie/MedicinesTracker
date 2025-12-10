@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Views.StockInfoPage"
+             x:DataType="viewModels:StockInfoVM"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.ViewModels"
              Title="Запас">
     <Grid HorizontalOptions="Fill">
         <Grid.RowDefinitions>
@@ -23,12 +25,12 @@
                     </Grid.ColumnDefinitions>
                     <HorizontalStackLayout Spacing="5">
                         <Label 
-                            Text="{Binding Medicine.Stock.CurrentQuantity}"
+                            Text="{Binding Medicine.CurrentQuantity}"
                             FontSize="14"
                             VerticalOptions="Center"
                             Grid.Column="0" />
                         <Label 
-                            Text="{Binding Medicine.Unit.Name}"
+                            Text="{Binding Medicine.UnitName}"
                             FontSize="14"
                             VerticalOptions="Center"
                             Grid.Column="0" />
@@ -58,12 +60,12 @@
                     </Grid.ColumnDefinitions>
                     <HorizontalStackLayout Spacing="5">
                         <Label 
-                            Text="{Binding Medicine.Stock.Threshold}"
+                            Text="{Binding Medicine.Threshold}"
                             FontSize="14"
                             VerticalOptions="Center"
                             Grid.Column="0" />
                         <Label 
-                            Text="{Binding Medicine.Unit.Name}"
+                            Text="{Binding Medicine.UnitName}"
                             FontSize="14"
                             VerticalOptions="Center"
                             Grid.Column="0" />
@@ -86,7 +88,7 @@
                     Opacity="0.8"
                     Grid.Column="0"/>
                 <Switch
-                    IsToggled="{Binding Medicine.Stock.ReminderEnabled}"
+                    IsToggled="{Binding Medicine.ReminderEnabled}"
                     VerticalOptions="Center" 
                     Grid.Column="1"/>
             </VerticalStackLayout>

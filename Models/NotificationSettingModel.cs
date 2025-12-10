@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace MedicinesTracker.Models
 {
-    class NotificationSettingModel
+    public class NotificationSettingModel
     {
+        public int IdNotificationSetting { get; set; }
+        public int IdRecipient { get; set; } 
+        public bool IsEnabled { get; set; }
+        public string? Sound { get; set; }
+
+        public string? CreatedAt { get; set; }
+        public string? UpdatedAt { get; set; }
     }
 }

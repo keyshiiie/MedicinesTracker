@@ -1,3 +1,6 @@
+appsettings.json
+MedicineTracker.db
+MauiMaterialAssets.ttf
 Open Sans-Light.ttf
 OpenSans-Regular.ttf
 OpenSans-Semibold.ttf
@@ -72,6 +75,11 @@ dotnet_bot.scale-125.png
 dotnet_bot.scale-150.png
 dotnet_bot.scale-200.png
 dotnet_bot.scale-400.png
+hint_swap_right.scale-100.png
+hint_swap_right.scale-125.png
+hint_swap_right.scale-150.png
+hint_swap_right.scale-200.png
+hint_swap_right.scale-400.png
 hugeicons_date_time.scale-100.png
 hugeicons_date_time.scale-125.png
 hugeicons_date_time.scale-150.png

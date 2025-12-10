@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MedicinesTracker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+5c2ec59d7f3a492c5264346edddcd6d862816fdb")]
 [assembly: System.Reflection.AssemblyProductAttribute("MedicinesTracker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MedicinesTracker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

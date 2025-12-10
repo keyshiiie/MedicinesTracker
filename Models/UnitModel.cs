@@ -2,12 +2,7 @@
 {
     public class UnitModel
     {
+        public int IdUnit { get; set; }
         public string? Name { get; set; }
-
-        public UnitModel() { }
-        public UnitModel(string name)
-        {
-            Name = name;
-        }
     }
 }
