@@ -2,17 +2,12 @@
 {
     public class RecipientModel
     {
-        public int Id { get; set; }
+        public int IdRecipient { get; set; }
         public string? Name { get; set; }
-        public GenderModel? Gender { get; set; }
+        public int IdGender { get; set; }
         public int Age { get; set; }
-        public RecipientModel() { }
-        public RecipientModel(int id, string name, GenderModel gender, int age)
-        {
-            Id = id;
-            Name = name;
-            Gender = gender;
-            Age = age;
-        }
+
+        public string? CreatedAt { get; set; }
+        public string? UpdatedAt { get; set; }
     }
 }

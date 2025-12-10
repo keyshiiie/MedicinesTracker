@@ -1,101 +1,99 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.ViewModels"
+             x:DataType="viewModels:BaseInfoVM"
              x:Class="MedicinesTracker.Views.BaseInfoPage"
+             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
              Title="Основная информация">
 
+    <ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior
+            EventName="Appearing"
+            Command="{Binding LoadDataCommand}" />
+    </ContentPage.Behaviors>
     <Grid HorizontalOptions="Fill">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <VerticalStackLayout>
-            <Label 
-                Text="Название"
-                FontSize="14"
-                Padding="0,0,0,5"
-                TextColor="{StaticResource Gray500}" 
-                Opacity="0.8"/>
-            <Border Margin="0,0,0,10">
-                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Label 
-                        Text="{Binding Medicine.Name}"
-                        FontSize="16"
-                        VerticalOptions="Center"
-                        Grid.Column="0" />
-                    <Button
-                        ImageSource="pen_line.png"
-                        Padding="0"
-                        BackgroundColor="Transparent"
-                        BorderColor="Transparent"
-                        CornerRadius="0"
-                        Opacity="1"
-                        Grid.Column="1" />
-                </Grid>
-            </Border>
-            <Label 
-                Text="Способ приёма"
-                FontSize="14"
-                Padding="0,0,0,5"
-                TextColor="{StaticResource Gray500}"
-                Opacity="0.8"/>
-            <Border Margin="0,0,0,10">
-                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Label 
-                        Text="{Binding Medicine.MethodAdmission.Name}"
-                        FontSize="16"
-                        VerticalOptions="Center"
-                        Grid.Column="0" />
-                    <Button
-                        ImageSource="pen_line.png"
-                        Padding="0"
-                        BackgroundColor="Transparent"
-                        BorderColor="Transparent"
-                        CornerRadius="0"
-                        Opacity="1"
-                        Grid.Column="1" />
-                </Grid>
-            </Border>
-            <Label 
-                Text="Получатель"
-                FontSize="14"
-                Padding="0,0,0,5"
-                TextColor="{StaticResource Gray500}"
-                Opacity="0.8"/>
-            <Border Margin="0,0,0,10">
-                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Label 
-                        Text="{Binding Medicine.Recipient.Name}"
-                        FontSize="16"
-                        VerticalOptions="Center"
-                        Grid.Column="0" />
-                    <Button
-                        ImageSource="pen_line.png"
-                        Padding="0"
-                        BackgroundColor="Transparent"
-                        BorderColor="Transparent"
-                        CornerRadius="0"
-                        Opacity="1"
-                        Grid.Column="1" />
-                </Grid>
-            </Border>
+        <VerticalStackLayout Spacing="10" Grid.Row="0">
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Название"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Border>
+                    <Grid Style="{StaticResource EditFielsGridStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Entry
+                            Text="{Binding Medicine.MedicineName}"
+                            Style="{StaticResource EditFieldStyle}"
+                            Grid.Column="0"/>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Единица измерения"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Border>
+                    <Grid Style="{StaticResource EditFielsGridStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Picker ItemsSource="{Binding Units}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
+                            Style="{StaticResource PrimaryPickerStyle}">        
+                        </Picker>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Способ приёма"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Border>
+                    <Grid Style="{StaticResource EditFielsGridStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Picker ItemsSource="{Binding MethodAdmissions}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
+                            Style="{StaticResource PrimaryPickerStyle}">
+                        </Picker>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Получатель"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Border>
+                    <Grid Style="{StaticResource EditFielsGridStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Picker ItemsSource="{Binding Recipients}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                            Style="{StaticResource PrimaryPickerStyle}">        
+                        </Picker>
+                    </Grid>
+                </Border>
+            </VerticalStackLayout>
         </VerticalStackLayout>
-        <Button Text="Сохранить" 
-                Grid.Row="1"
-                FontFamily="OpenSansSemibold"
-                BackgroundColor="{StaticResource PrimaryDark}"/>    
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+            <controls:SaveButton Command="{Binding SaveMedicineCommand}"/>
+        </HorizontalStackLayout>
     </Grid>
     
 </ContentPage>

@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="MedicinesTracker.Resources.Styles.ButtonStyles">
+
+    <!-- Стиль для кнопки "Добавить" -->
+    <Style TargetType="Button" x:Key="AddMedicineButtonStyle">
+        <!-- Основные свойства -->
+        <Setter Property="Text" Value="Добавить"/>
+        <Setter Property="ImageSource" Value="add_icon.png"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="FontSize" Value="14"/>
+
+        <!-- Цвета -->
+        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}"/>
+        <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
+
+        <!-- Размеры и отступы -->
+        <Setter Property="MinimumHeightRequest" Value="44"/>
+        <Setter Property="Padding" Value="15,10"/>
+
+        <!-- Форма -->
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="BorderWidth" Value="0"/>
+
+        <!-- Доступность -->
+        <Setter Property="SemanticProperties.Description" Value="Добавить лекарство"/>
+
+        <!-- Визуальные состояния -->
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal"/>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
+                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.95"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Button" x:Key="EditButtonStyle">
+        <Setter Property="ImageSource" Value="pen_line.png"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="BorderColor" Value="Transparent"/>
+        <!-- Визуальные состояния -->
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal"/>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
+                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.95"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Стиль для кнопки "Сохранить" -->
+    <Style TargetType="Button" x:Key="SaveMedicineButtonStyle">
+        <!-- Основные свойства -->
+        <Setter Property="Text" Value="Сохранить"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <!-- Цвета -->
+        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}"/>
+        <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
+
+        <!-- Размеры и отступы -->
+        <Setter Property="MinimumHeightRequest" Value="44"/>
+        <Setter Property="Padding" Value="15,10"/>
+
+        <!-- Форма -->
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="BorderWidth" Value="0"/>
+
+        <!-- Доступность -->
+        <Setter Property="SemanticProperties.Description" Value="Сохранить изменения"/>
+
+        <!-- Визуальные состояния -->
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal"/>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
+                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.95"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+</ResourceDictionary>

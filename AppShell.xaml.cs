@@ -6,15 +6,15 @@ namespace MedicinesTracker
 {
     public partial class AppShell : Shell
     {
-        public AppShell()
+        public AppShell(AppShellVM viewModel)
         {
             InitializeComponent();
-            BindingContext = new AppShellVM();
+            BindingContext = viewModel;
             Routing.RegisterRoute("SettingsPage", typeof(SettingsPage));
             Routing.RegisterRoute("MedicineDetailPage", typeof(MedicineDetailPage));
             Routing.RegisterRoute("BaseInfoPage", typeof(BaseInfoPage));
-            Routing.RegisterRoute("StockInfoPage", typeof(StockInfoPage));
             Routing.RegisterRoute("NotificationInfoPage", typeof(NotificationInfoPage));
+            Routing.RegisterRoute("StockInfoPage", typeof(StockInfoPage));
         }
     }
 }

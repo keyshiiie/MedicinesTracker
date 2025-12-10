@@ -1,8 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using MedicinesTracker.Models;
+using CommunityToolkit.Mvvm.Input;
+using MedicinesTracker.Models.Dto;
 using MedicinesTracker.Services;
 using System.Diagnostics;
-using System.Windows.Input;
 
 namespace MedicinesTracker.ViewModels
 {
@@ -12,66 +12,83 @@ namespace MedicinesTracker.ViewModels
         private readonly MedicineService _medicineService;
 
         [ObservableProperty]
-        private MedicineModel _medicine;
-
-        public ICommand BaseInfoTappedCommand { get;}
-        public ICommand StockTappedCommand { get; }
-        public ICommand NotificationTappedCommand { get; }
+        private MedicineDetailDto _medicine;
 
         public MedicineDetailVM(MedicineService medicineService)
         {
-            _medicine = new MedicineModel();
             _medicineService = medicineService;
-            StockTappedCommand = new Command(OpenStockPage);
-            BaseInfoTappedCommand = new Command(OpenBaseInfoPage);
-            NotificationTappedCommand = new Command(OpenNotificationPage);
+            _medicine = new MedicineDetailDto();
         }
 
-        private async void OpenBaseInfoPage()
+        // Обрабатываем полученное значение через QueryProperty
+        partial void OnMedicineChanged(MedicineDetailDto value)
         {
-            if (Medicine == null)
+            if (value != null)
             {
-                return;
+                // Обновляем свойство (ObservableProperty сделает NotifyPropertyChanged)
+                Medicine = value;
+                Debug.WriteLine($"Получены данные лекарства: {Medicine.MedicineName}");
             }
-
-            var state = new Dictionary<string, object>
+            else
             {
-                {"medicine", Medicine}
-            };
-
-            await Shell.Current.GoToAsync("BaseInfoPage", state);
+                Debug.WriteLine("Предупреждение: medicine равен null");
+            }
         }
 
-
-        private async void OpenStockPage()
+        [RelayCommand]
+        private async Task OpenBaseInfoPage(MedicineDetailDto medicine)
         {
-            if (Medicine == null)
+            if (medicine is null) return;
+            try
             {
-                return;
+                var route = "BaseInfoPage";
+                var parameters = new Dictionary<string, object>
+                {
+                    { "medicine", medicine }
+                };
+                await Shell.Current.GoToAsync(route, parameters);
             }
-
-            var state = new Dictionary<string, object>
+            catch (Exception ex)
             {
-                {"medicine", Medicine}
-            };
-
-            await Shell.Current.GoToAsync("StockInfoPage", state);
+                Debug.WriteLine($"Ошибка при переходе на страницу детализации: {ex.Message}");
+            }
         }
-
-        private async void OpenNotificationPage()
+        [RelayCommand]
+        private async Task OpenNotificationPage(MedicineDetailDto medicine)
         {
-            if (Medicine == null)
+            if (medicine is null) return;
+            try
             {
-                return;
+                var route = "NotificationInfoPage";
+                var parameters = new Dictionary<string, object>
+                {
+                    { "medicine", medicine }
+                };
+                await Shell.Current.GoToAsync(route, parameters);
             }
-
-            var state = new Dictionary<string, object>
+            catch (Exception ex)
             {
-                {"medicine", Medicine}
-            };
-
-            await Shell.Current.GoToAsync("NotificationInfoPage", state);
+                Debug.WriteLine($"Ошибка при переходе на страницу детализации: {ex.Message}");
+            }
         }
+        [RelayCommand]
+        private async Task OpenStockPage(MedicineDetailDto medicine)
+        {
+            if (medicine is null) return;
+            try
+            {
+                var route = "StockInfoPage";
+                var parameters = new Dictionary<string, object>
+                {
+                    { "medicine", medicine }
+                };
+                await Shell.Current.GoToAsync(route, parameters);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка при переходе на страницу детализации: {ex.Message}");
+            }
+        }
+
     }
-
 }

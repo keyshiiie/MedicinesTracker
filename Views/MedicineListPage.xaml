@@ -1,89 +1,79 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="MedicinesTracker.Views.MedicineListPage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.ViewModels"
+             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
+             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
+             x:DataType="viewModels:MedicineListVM"
              Title="Лекарства">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <VerticalStackLayout Grid.Row="0">
-            <CollectionView ItemsSource="{Binding Medicines}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,0,10">
+
+    <Grid RowDefinitions="*,Auto">
+        <!-- Список лекарств с вертикальным скролом -->
+        <ScrollView Grid.Row="0" >
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding MedicineDetails}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:MedicineDetailDto">
+                        <Border Style="{StaticResource MedicineCardBorderStyle}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MedicineListVM}}, Path=MedicineTappedCommand}"
-                                    CommandParameter="{Binding .}" />   
+                                <TapGestureRecognizer 
+                                    Command="{Binding OpenDetailPageCommand, 
+                                    Source={RelativeSource AncestorType={x:Type viewModels:MedicineListVM}},
+                                    x:DataType=viewModels:MedicineListVM}"
+                                    CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <StackLayout Padding="10" 
-                                         Spacing="10">
+                            <StackLayout Spacing="10">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <!-- Получатель -->
-                                    <Label Text="{Binding Recipient.Name}"
-                                           FontSize="14"
-                                           TextColor="#555"
-                                           Opacity="0.8"
+                                    <Label Text="{Binding RecipientName}"
+                                           Style="{StaticResource CardDescriptionStyle}"
                                            Grid.Column="0"
                                            VerticalOptions="Center"/>
                                     <!-- Остаток на складе -->
-                                    <Border BackgroundColor="{StaticResource Primary}"
-                                            Padding="10,5"
+                                    <Border Style="{StaticResource CardHintBorderStyle}"
                                             HorizontalOptions="End"
                                             Grid.Column="1">
                                         <HorizontalStackLayout Spacing="5">
-                                            <Label Text="{Binding Stock.CurrentQuantity, StringFormat='Осталось {0}'}"
-                                                   FontSize="14"
-                                                   TextColor="{StaticResource Secondary}"/>
-                                            <Label Text="{Binding Unit.Name}"
-                                                   FontSize="14"
-                                                   TextColor="{StaticResource Secondary}"/>
+                                            <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
+                                                   Style="{StaticResource CardHintTextStyle}"/>
+                                            <Label Text="{Binding UnitName}"
+                                                   Style="{StaticResource CardHintTextStyle}"/>
                                         </HorizontalStackLayout>
-                                            
                                     </Border>
                                 </Grid>
                                 <!-- Основная информация о лекарстве -->
                                 <VerticalStackLayout Spacing="5">
                                     <HorizontalStackLayout Spacing="10">
                                         <Image Source="medicine_card_icon.png"
-                                               WidthRequest="30"
-                                               HeightRequest="30"/>
-                                        <Label Text="{Binding Name}"
-                                               FontSize="16"
-                                               VerticalOptions="Center"
-                                               FontFamily="OpenSansSemibold"/>
+                                               Style="{StaticResource MedicineIconStyle}"/>
+                                        <Label Text="{Binding MedicineName}"
+                                               Style="{StaticResource CardTitletyle}"/>
                                     </HorizontalStackLayout>
                                     <!-- Список напоминаний -->
                                     <Label Text="{Binding ScheduleString}"
-                                           FontSize="14"
-                                           VerticalOptions="Center"
-                                           Opacity="0.8"
-                                           TextColor="{StaticResource Gray500}"/>
+                                           Style="{StaticResource CardDescriptionStyle}"/>
                                 </VerticalStackLayout>
-                                
-                                <StackLayout>
-                                    <Label Text="Посмотреть подробную информацию →"
-                                           FontSize="14"
-                                           TextColor="{StaticResource PrimaryDark}"/>
-                                </StackLayout>
+
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="Посмотреть подробную информацию"
+                                           Style="{StaticResource DetailLinkStyle}"/>
+                                    <Image Source="hint_swap_right.png"
+                                           Style="{StaticResource DetailLinkIconStyle}"/>
+                                </HorizontalStackLayout>
                             </StackLayout>
                         </Border>
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </VerticalStackLayout>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+        <!-- Кнопка "Добавить" -->
         <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
-            <Button Text="Добавить"
-                ImageSource="add_icon.png"
-                FontFamily="OpenSansSemibold"
-                BackgroundColor="{StaticResource PrimaryDark}"/>
+            <controls:AddButton/>
         </HorizontalStackLayout>
     </Grid>
 </ContentPage>

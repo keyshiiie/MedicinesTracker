@@ -1,7 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Models;
+using MedicinesTracker.Models.Dto;
 using MedicinesTracker.Services;
-using System.Windows.Input;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace MedicinesTracker.ViewModels
 {
@@ -11,11 +14,159 @@ namespace MedicinesTracker.ViewModels
         private readonly MedicineService _medicineService;
 
         [ObservableProperty]
-        private MedicineModel _medicine;
+        private MedicineDetailDto _medicine = new();
+
+        [ObservableProperty]
+        private MedicineDto _newMedicine = new();
+
+        [ObservableProperty]
+        private ObservableCollection<UnitModel> _units = new();
+
+        [ObservableProperty]
+        private UnitModel? _selectedUnit;
+
         public BaseInfoVM(MedicineService medicineService)
         {
-            _medicine = new MedicineModel();
             _medicineService = medicineService;
+        }
+
+        [ObservableProperty]
+        private ObservableCollection<RecipientModel> _recipients = new();
+
+        [ObservableProperty]
+        private RecipientModel? _selectedRecipient;
+
+        [ObservableProperty]
+        private ObservableCollection<MethodAdmissionModel> _methodAdmissions = new();
+
+        [ObservableProperty]
+        private MethodAdmissionModel? _selectedMethodAdmission;
+
+
+        // Обрабатываем полученное значение через QueryProperty
+        partial void OnMedicineChanged(MedicineDetailDto value)
+        {
+            if (value != null)
+            {
+                Debug.WriteLine($"Получены данные лекарства: {Medicine.MedicineName}");
+            }
+            else
+            {
+                Debug.WriteLine("Предупреждение: medicine равен null");
+            }
+        }
+
+        [RelayCommand]
+        private async Task LoadData()
+        {
+            try
+            {
+                await LoadUnitsAsync();
+                await LoadRecipientsAsync();
+                await LoadMethodsAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка загрузки: {ex.Message}");
+                throw;
+            }
+        }
+
+        private async Task LoadUnitsAsync()
+        {
+            var units = await _medicineService.GetAllUnitsAsync();
+            Units = new ObservableCollection<UnitModel>(units);
+            Debug.WriteLine($"Загружено единиц измерения: {Units.Count}");
+
+            if (!string.IsNullOrEmpty(Medicine.UnitName))
+            {
+                SelectedUnit = Units.FirstOrDefault(u => u.Name == Medicine.UnitName);
+            }
+        }
+
+        private async Task LoadRecipientsAsync()
+        {
+            var recipients = await _medicineService.GetAllRecipientsAsync();
+            Recipients = new ObservableCollection<RecipientModel>(recipients);
+            Debug.WriteLine($"Загружено получателей лекарств: {Recipients.Count}");
+
+            if (!string.IsNullOrEmpty(Medicine.RecipientName))
+            {
+                SelectedRecipient = Recipients.FirstOrDefault(r => r.Name == Medicine.RecipientName);
+            }
+        }
+
+        private async Task LoadMethodsAsync()
+        {
+            var methods = await _medicineService.GetAllMethodsAdmissionAsync();
+            MethodAdmissions = new ObservableCollection<MethodAdmissionModel>(methods);
+            Debug.WriteLine($"Загружено получателей лекарств: {MethodAdmissions.Count}");
+
+            if (!string.IsNullOrEmpty(Medicine.MethodAdmissionName))
+            {
+                SelectedMethodAdmission = MethodAdmissions.FirstOrDefault(r => r.Name == Medicine.MethodAdmissionName);
+            }
+        }
+
+        [RelayCommand]
+        private async Task SaveMedicine()
+        {
+            try
+            {
+                // Валидация обязательных полей
+                if (string.IsNullOrWhiteSpace(Medicine.MedicineName))
+                {
+                    Debug.WriteLine("Ошибка: Название лекарства не может быть пустым");
+                    return;
+                }
+
+                if (SelectedUnit == null)
+                {
+                    Debug.WriteLine("Ошибка: Необходимо выбрать единицу измерения");
+                    return;
+                }
+
+                if (SelectedRecipient == null)
+                {
+                    Debug.WriteLine("Ошибка: Необходимо выбрать получателя");
+                    return;
+                }
+
+                if (SelectedMethodAdmission == null)
+                {
+                    Debug.WriteLine("Ошибка: Необходимо выбрать способ приёма");
+                    return;
+                }
+
+                // Заполняем DTO данными из ViewModel
+                NewMedicine.IdMedicine = Medicine.IdMedicine;
+
+                NewMedicine.Name = Medicine.MedicineName;
+
+                NewMedicine.IdUnit = SelectedUnit.IdUnit;
+
+                NewMedicine.IdRecipient = SelectedRecipient.IdRecipient;
+
+                NewMedicine.IdMethodAdmission = SelectedMethodAdmission.IdMethodAdmission;
+
+                // Вызываем сервис для сохранения
+                var rowsAffected = await _medicineService.EditMedicineAsync(NewMedicine);
+
+                if (rowsAffected > 0)
+                {
+                    Debug.WriteLine($"Лекарство успешно сохранено. Затронуто строк: {rowsAffected}");
+                    // Можно добавить навигацию назад или уведомление об успехе
+                }
+                else
+                {
+                    Debug.WriteLine("Предупреждение: Лекарство не было обновлено (0 затронутых строк)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка обновления записи: {ex.Message}");
+                throw;
+            }
         }
     }
 }

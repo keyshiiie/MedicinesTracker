@@ -2,22 +2,15 @@
 {
     public class IntakeModel
     {
-        public int Id { get; set; }
-        public TypeModel? Type { get; set; }
-        public MedicineModel? Medicine { get; set; }
-        public StatusModel? Status { get; set; }
-        public DateOnly Date { get; set; }
-        public TimeOnly Time { get; set; }
+        public int IdIntake { get; set; }
+        public int IdType { get; set; }    
+        public int IdMedicine { get; set; }   
+        public int IdStatus { get; set; } 
 
-        public IntakeModel() { }
-        public IntakeModel(int id, TypeModel type, MedicineModel medicine, StatusModel status, DateOnly date, TimeOnly time)
-        {
-            Id = id;
-            Type = type;
-            Medicine = medicine;
-            Status = status;
-            Date = date;
-            Time = time;
-        }
+        public string? Date { get; set; }  
+        public string? Time { get; set; }     
+
+        public string? CreatedAt { get; set; }
+        public string? UpdatedAt { get; set; }
     }
 }

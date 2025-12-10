@@ -2,12 +2,7 @@
 {
     public class GenderModel
     {
+        public int IdGender { get; set; }
         public string? Name { get; set; }
-
-        public GenderModel() { }
-        public GenderModel(string name)
-        {
-            Name = name;
-        }
     }
 }
