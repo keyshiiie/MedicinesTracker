@@ -4,7 +4,8 @@
     {
         public int IdReminder { get; set; }
         public int IdMedicine { get; set; }
-        public int IdFrequency { get; set; }  
+        public int IdFrequency { get; set; }
+        public string? FrequencyName { get; set; }
 
         public string? Time { get; set; }    
         public string? DateStart { get; set; }  

@@ -12,6 +12,7 @@ namespace MedicinesTracker.Repository
             _connectionString = connectionString;
         }
         // для запросов select, возвращающих список
+        
         public async Task<IEnumerable<T>> QueryAsync<T>(string query, object? parameters = null)
         {
             try

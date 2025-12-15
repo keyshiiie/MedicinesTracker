@@ -2,7 +2,7 @@
 {
     public class MedicineModel
     {
-        public int IdMedicine { get; set; }
+        public int? IdMedicine { get; set; }
         public string? Name { get; set; }
 
         public int IdUnit { get; set; }

@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using MedicinesTracker.Interface;
 using MedicinesTracker.Models;
-using Microsoft.Data.Sqlite;
 
 namespace MedicinesTracker.Repository
 {

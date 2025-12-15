@@ -6,34 +6,35 @@ using System.Diagnostics;
 
 namespace MedicinesTracker.ViewModels
 {
-    [QueryProperty(nameof(Medicine), "medicine")]
+    [QueryProperty(nameof(IdMedicine), "idMedicine")]
     public partial class NotificationInfoVM : ObservableObject
     {
         private readonly MedicineService _medicineService;
 
         [ObservableProperty]
-        private MedicineDetailDto _medicine;
+        private int _idMedicine;
+
+        [ObservableProperty]
+        private IEnumerable<GroupedReminderDto> _groupedReminders = [];
 
         public NotificationInfoVM(MedicineService medicineService)
         {
             _medicineService = medicineService;
-            // Инициализируем пустым объектом на случай, если параметр не передан
-            _medicine = new MedicineDetailDto();
         }
 
-        // Обрабатываем полученное значение через QueryProperty
-        partial void OnMedicineChanged(MedicineDetailDto value)
+        public async Task InitializeAsync()
         {
-            if (value != null)
+            if (IdMedicine == 0) return;
+
+            try
             {
-                // Обновляем свойство (ObservableProperty сделает NotifyPropertyChanged)
-                Medicine = value;
-                Debug.WriteLine($"Получены данные лекарства: {Medicine.MedicineName}");
+                GroupedReminders = await _medicineService.GetAllRemindersByMedicineIdAsync(IdMedicine);
             }
-            else
+            catch (Exception ex)
             {
-                Debug.WriteLine("Предупреждение: medicine равен null");
+                Debug.WriteLine($"Ошибка загрузки: {ex.Message}");
             }
         }
     }
+
 }

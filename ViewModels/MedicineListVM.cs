@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Models;
 using MedicinesTracker.Models.Dto;
 using MedicinesTracker.Services;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace MedicinesTracker.ViewModels
@@ -10,13 +11,49 @@ namespace MedicinesTracker.ViewModels
     public partial class MedicineListVM : ObservableObject
     {
         private readonly MedicineService _medicineService;
-        [ObservableProperty]
-        private IEnumerable<MedicineDetailDto> _medicineDetails = [];
 
+        [ObservableProperty]
+        private ObservableCollection<MedicineDetailDto> _medicineDetails = new();
+
+        [ObservableProperty]
+        private RecipientModel? _selectedRecipient;
+
+        [ObservableProperty]
+        private ObservableCollection<MedicineDetailDto> _filteredMedicineDetails = new();
+
+        public bool HasMedicines => FilteredMedicineDetails.Any();
 
         public MedicineListVM(MedicineService medicineService)
         {
             _medicineService = medicineService;
+        }
+
+        // Обновляем фильтрованный список при изменении получателя или данных
+        partial void OnSelectedRecipientChanged(RecipientModel? value)
+        {
+            UpdateFilteredList();
+        }
+
+        partial void OnMedicineDetailsChanged(ObservableCollection<MedicineDetailDto> value)
+        {
+            UpdateFilteredList();
+        }
+
+        private void UpdateFilteredList()
+        {
+            if (SelectedRecipient == null)
+            {
+                FilteredMedicineDetails = new ObservableCollection<MedicineDetailDto>();
+                return;
+            }
+
+            var filtered = MedicineDetails
+                .Where(m => m.RecipientName == SelectedRecipient.Name)
+                .ToList();
+
+            FilteredMedicineDetails = new ObservableCollection<MedicineDetailDto>(filtered);
+
+            Debug.WriteLine($"[MedicineListVM] FilteredMedicineDetails обновлен: {FilteredMedicineDetails.Count} элементов");
         }
 
         public async Task InitializeAsync()
@@ -42,7 +79,7 @@ namespace MedicinesTracker.ViewModels
                 var route = "MedicineDetailPage";
                 var parameters = new Dictionary<string, object>
                 {
-                    { "medicine", medicine } 
+                    { "medicine", medicine }
                 };
                 await Shell.Current.GoToAsync(route, parameters);
             }
@@ -52,40 +89,14 @@ namespace MedicinesTracker.ViewModels
             }
         }
 
-
         private async Task LoadDataAsync()
         {
             try
             {
                 var rawData = await _medicineService.GetAllMedicineDetailsAsync();
+                MedicineDetails = new ObservableCollection<MedicineDetailDto>(rawData);
 
-                // Группируем по IdMedicine, оставляем только первое напоминание для карточки
-                var grouped = rawData
-                    .GroupBy(d => d.IdMedicine)
-                    .Select(group =>
-                    {
-                        // Берём первую запись группы (для отображения в карточке)
-                        var firstItem = group.First();
-
-                        // Формируем ScheduleString для всех напоминаний лекарства
-                        var schedule = FormatSchedule(group);
-
-                        // Создаём новую DTO с общим расписанием
-                        return new MedicineDetailDto
-                        {
-                            IdMedicine = firstItem.IdMedicine,
-                            MedicineName = firstItem.MedicineName,
-                            MethodAdmissionName = firstItem.MethodAdmissionName,
-                            UnitName = firstItem.UnitName,
-                            CurrentQuantity = firstItem.CurrentQuantity,
-                            ReminderEnabled = firstItem.ReminderEnabled,
-                            RecipientName = firstItem.RecipientName,
-                            ScheduleString = schedule
-                        };
-                    })
-                    .ToList();
-
-                MedicineDetails = grouped;
+                Debug.WriteLine($"[MedicineListVM] Загружено {MedicineDetails.Count} лекарств");
             }
             catch (Exception ex)
             {
@@ -93,26 +104,10 @@ namespace MedicinesTracker.ViewModels
             }
         }
 
-
-        private string FormatSchedule(IEnumerable<MedicineDetailDto> reminders)
+        [RelayCommand]
+        public async Task RefreshData()
         {
-            var times = reminders
-                .Select(r => r.Time)
-                .OrderBy(t => t)
-                .ToList();
-
-            if (!times.Any())
-                return string.Empty;
-
-            var frequencyText = $"{times.Count} раз(а) в день";
-
-            if (times.Count == 1)
-                return $"{frequencyText} — {times[0]}";
-            else if (times.Count == 2)
-                return $"{frequencyText} — {times[0]} и {times[1]}";
-            else
-                return $"{frequencyText} — {string.Join(", ", times.Take(times.Count - 1))} и {times.Last()}";
+            await LoadDataAsync();
         }
-
     }
 }

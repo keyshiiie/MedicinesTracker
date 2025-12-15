@@ -7,7 +7,7 @@
              xmlns:viewModels="clr-namespace:MedicinesTracker.ViewModels"
              Title="Информация о лекарстве">
     <VerticalStackLayout>
-        <Border  Margin="0,0,0,10">
+        <Border Margin="0,0,0,10">
             <Border.GestureRecognizers>
                 <TapGestureRecognizer 
                     Command="{Binding OpenBaseInfoPageCommand, 
@@ -23,7 +23,7 @@
                     <VerticalStackLayout Spacing="10" >
                         <StackLayout Spacing="5">
                             <Label Text="Основная информация"
-                                   Style="{StaticResource CardTitletyle}"/>
+                                   Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>
                         <HorizontalStackLayout Spacing="5">
                             <Label Text="Редактировать основную информацию"
@@ -53,7 +53,7 @@
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="Запас"
-                                Style="{StaticResource CardTitletyle}"/>
+                                Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>
                         <HorizontalStackLayout Spacing="5">
                             <Label Text="Редактировать запас"
@@ -71,7 +71,7 @@
                     Command="{Binding OpenNotificationPageCommand, 
                     Source={RelativeSource AncestorType={x:Type viewModels:MedicineDetailVM}},
                     x:DataType=viewModels:MedicineDetailVM}"
-                    CommandParameter="{Binding Medicine}" />   
+                    CommandParameter="{Binding Medicine}"/>   
             </Border.GestureRecognizers>
             <StackLayout 
                 Spacing="10"
@@ -84,7 +84,7 @@
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="График приёма лекарств"
-                                Style="{StaticResource CardTitletyle}"/>
+                                Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>
                         <HorizontalStackLayout Spacing="5">
                             <Label Text="Редактировать график приёма"

@@ -1,0 +1,30 @@
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="MedicinesTracker.Views.Controls.RecipientPicker"
+             x:Name="self">
+
+    <VerticalStackLayout Spacing="5">
+        <Label Text="Получатель" Style="{StaticResource CardDescriptionStyle}" />
+        <Grid>
+            <Picker ItemsSource="{Binding Recipients}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                    SelectedIndexChanged="OnSelectedIndexChanged"
+                    Style="{StaticResource PrimaryPickerStyle}"
+                    IsEnabled="{Binding IsLoading, Converter={toolkit:InvertedBoolConverter}}">
+                <Picker.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding LoadDataCommand}" />
+                </Picker.GestureRecognizers>
+            </Picker>
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                              IsVisible="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
+                              HorizontalOptions="End"
+                              VerticalOptions="Center"
+                              WidthRequest="20"
+                              HeightRequest="20"
+                              Color="{StaticResource Primary}" />
+        </Grid>
+    </VerticalStackLayout>
+</ContentView>

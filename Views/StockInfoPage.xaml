@@ -4,98 +4,64 @@
              x:Class="MedicinesTracker.Views.StockInfoPage"
              x:DataType="viewModels:StockInfoVM"
              xmlns:viewModels="clr-namespace:MedicinesTracker.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
              Title="Запас">
     <Grid HorizontalOptions="Fill">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <VerticalStackLayout>
-            <Label 
-            Text="Текущий запас"
-            FontSize="14"
-            Padding="0,0,0,5"
-            TextColor="{StaticResource Gray500}" 
-            Opacity="0.8"/>
-            <Border Margin="0,0,0,10">
-                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
+        <VerticalStackLayout Spacing="10">
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Текущий запас"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Grid Style="{StaticResource EditFielsGridStyle}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <HorizontalStackLayout Spacing="5">
-                        <Label 
-                            Text="{Binding Medicine.CurrentQuantity}"
-                            FontSize="14"
-                            VerticalOptions="Center"
-                            Grid.Column="0" />
-                        <Label 
-                            Text="{Binding Medicine.UnitName}"
-                            FontSize="14"
-                            VerticalOptions="Center"
-                            Grid.Column="0" />
-                    </HorizontalStackLayout>
-                    
-                    <Button
-                    ImageSource="pen_line.png"
-                    Padding="0"
-                    BackgroundColor="Transparent"
-                    BorderColor="Transparent"
-                    CornerRadius="0"
-                    Opacity="1"
-                    Grid.Column="1" />
+                    <Entry
+                        Text="{Binding Medicine.CurrentQuantity}"
+                        Style="{StaticResource EditFieldStyle}"
+                        Grid.Column="0"/>
+                    <Label 
+                        Text="{Binding Medicine.UnitName}"
+                        Style="{StaticResource FieldTitleStyle}"
+                        Grid.Column="1"
+                        Padding="10,0,0,0"/>        
                 </Grid>
-            </Border>
-            <Label 
-                Text="Напомнить вам, когда останется"
-                FontSize="14"
-                Padding="0,0,0,5"
-                TextColor="{StaticResource Gray500}"
-                Opacity="0.8"/>
-            <Border Margin="0,0,0,10">
-                <Grid HorizontalOptions="Fill" Padding="15,0,0,0">
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Текущий запас"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Grid Style="{StaticResource EditFielsGridStyle}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <HorizontalStackLayout Spacing="5">
-                        <Label 
-                            Text="{Binding Medicine.Threshold}"
-                            FontSize="14"
-                            VerticalOptions="Center"
-                            Grid.Column="0" />
-                        <Label 
-                            Text="{Binding Medicine.UnitName}"
-                            FontSize="14"
-                            VerticalOptions="Center"
-                            Grid.Column="0" />
-                    </HorizontalStackLayout>
-                    <Button
-                        ImageSource="pen_line.png"
-                        Padding="0"
-                        BackgroundColor="Transparent"
-                        BorderColor="Transparent"
-                        CornerRadius="0"
-                        Opacity="1"
-                        Grid.Column="1" />
+                    <Entry
+                        Text="{Binding Medicine.Threshold}"
+                        Style="{StaticResource EditFieldStyle}"
+                        Grid.Column="0"/>
+                    <Label 
+                        Text="{Binding Medicine.UnitName}"
+                        Style="{StaticResource FieldTitleStyle}"
+                        Grid.Column="1"
+                        Padding="10,0,0,0"/>
                 </Grid>
-            </Border>
+            </VerticalStackLayout>
             <VerticalStackLayout>
                 <Label 
                     Text="Получение уведомлений о запасе"
-                    FontSize="14"
-                    TextColor="{StaticResource Gray500}"
-                    Opacity="0.8"
-                    Grid.Column="0"/>
+                    Style="{StaticResource CardDescriptionStyle}"/>
                 <Switch
-                    IsToggled="{Binding Medicine.ReminderEnabled}"
-                    VerticalOptions="Center" 
-                    Grid.Column="1"/>
+                    IsToggled="{Binding Medicine.ReminderEnabled}"/>
             </VerticalStackLayout>
         </VerticalStackLayout>
-        <Button Text="Сохранить" 
-            Grid.Row="1"
-            FontFamily="OpenSansSemibold"
-            BackgroundColor="{StaticResource PrimaryDark}"/>
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+            <controls:SaveButton Command="{Binding SaveMedicineCommand}"/>
+        </HorizontalStackLayout>
     </Grid>
 </ContentPage>
