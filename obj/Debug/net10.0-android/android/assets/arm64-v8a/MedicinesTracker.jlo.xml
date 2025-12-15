@@ -1,0 +1,15 @@
+<api>
+  <jcw-types>
+    <type name="MainActivity" package="crc648374421e7ad8140b" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="crc6488302ad6e9e4df1a.MauiAppCompatActivity" partial_assembly_qualified_name="MedicinesTracker.MainActivity, MedicinesTracker">
+      <constructors>
+        <constructor name="MainActivity" method="n_.ctor:()V:" jni_signature="()V" managed_parameters="" retval="void" is_dynamically_registered="True" />
+        <constructor name="MainActivity" method="n_.ctor:(I)V:" jni_signature="(I)V" managed_parameters="System.Int32, System.Private.CoreLib" params="int p0" retval="void" is_dynamically_registered="True" super_call="p0" activate_call="p0" />
+      </constructors>
+    </type>
+    <type name="MainApplication" package="crc648374421e7ad8140b" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="crc6488302ad6e9e4df1a.MauiApplication" is_application="True" partial_assembly_qualified_name="MedicinesTracker.MainApplication, MedicinesTracker" application_constructor="MainApplication" />
+  </jcw-types>
+  <acw-types partial-assembly-name="MedicinesTracker" module-name="MedicinesTracker.dll">
+    <type assembly-qualified-name="MedicinesTracker.MainActivity, MedicinesTracker, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="medicinestracker.MainActivity" java-key="crc648374421e7ad8140b.MainActivity" managed-key="MedicinesTracker.MainActivity" partial-assembly-qualified-name="MedicinesTracker.MainActivity, MedicinesTracker" />
+    <type assembly-qualified-name="MedicinesTracker.MainApplication, MedicinesTracker, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="medicinestracker.MainApplication" java-key="crc648374421e7ad8140b.MainApplication" managed-key="MedicinesTracker.MainApplication" partial-assembly-qualified-name="MedicinesTracker.MainApplication, MedicinesTracker" />
+  </acw-types>
+</api>

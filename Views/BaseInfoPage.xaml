@@ -8,11 +8,6 @@
              xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
              Title="Основная информация">
 
-    <ContentPage.Behaviors>
-        <toolkit:EventToCommandBehavior
-            EventName="Appearing"
-            Command="{Binding LoadDataCommand}" />
-    </ContentPage.Behaviors>
     <Grid HorizontalOptions="Fill">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -23,72 +18,40 @@
                 <Label 
                     Text="Название"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Border>
-                    <Grid Style="{StaticResource EditFielsGridStyle}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry
-                            Text="{Binding Medicine.MedicineName}"
-                            Style="{StaticResource EditFieldStyle}"
-                            Grid.Column="0"/>
-                    </Grid>
-                </Border>
+                <Entry
+                    Text="{Binding Medicine.MedicineName}"
+                    Style="{StaticResource EditFieldStyle}"
+                    Grid.Column="0"/>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Единица измерения"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Border>
-                    <Grid Style="{StaticResource EditFielsGridStyle}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Picker ItemsSource="{Binding Units}"
-                            ItemDisplayBinding="{Binding Name}"
-                            SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
-                            Style="{StaticResource PrimaryPickerStyle}">        
-                        </Picker>
-                    </Grid>
-                </Border>
+                <Picker ItemsSource="{Binding Units}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}">
+                </Picker>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Способ приёма"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Border>
-                    <Grid Style="{StaticResource EditFielsGridStyle}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Picker ItemsSource="{Binding MethodAdmissions}"
-                            ItemDisplayBinding="{Binding Name}"
-                            SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
-                            Style="{StaticResource PrimaryPickerStyle}">
-                        </Picker>
-                    </Grid>
-                </Border>
+                <Picker ItemsSource="{Binding MethodAdmissions}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}">
+                </Picker>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Получатель"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Border>
-                    <Grid Style="{StaticResource EditFielsGridStyle}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Picker ItemsSource="{Binding Recipients}"
-                            ItemDisplayBinding="{Binding Name}"
-                            SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
-                            Style="{StaticResource PrimaryPickerStyle}">        
-                        </Picker>
-                    </Grid>
-                </Border>
+                <Picker ItemsSource="{Binding Recipients}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}">
+                </Picker>
             </VerticalStackLayout>
         </VerticalStackLayout>
         <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">

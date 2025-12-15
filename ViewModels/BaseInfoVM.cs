@@ -17,7 +17,7 @@ namespace MedicinesTracker.ViewModels
         private MedicineDetailDto _medicine = new();
 
         [ObservableProperty]
-        private MedicineDto _newMedicine = new();
+        private MedicineModel _newMedicine = new();
 
         [ObservableProperty]
         private ObservableCollection<UnitModel> _units = new();
@@ -57,7 +57,7 @@ namespace MedicinesTracker.ViewModels
         }
 
         [RelayCommand]
-        private async Task LoadData()
+        public async Task LoadData()
         {
             try
             {
@@ -154,18 +154,25 @@ namespace MedicinesTracker.ViewModels
 
                 if (rowsAffected > 0)
                 {
-                    Debug.WriteLine($"Лекарство успешно сохранено. Затронуто строк: {rowsAffected}");
-                    // Можно добавить навигацию назад или уведомление об успехе
+                    await Shell.Current.DisplayAlertAsync(
+                        "Успех!",
+                        "Лекарство успешно сохранено!",
+                        "ОК");
                 }
                 else
                 {
-                    Debug.WriteLine("Предупреждение: Лекарство не было обновлено (0 затронутых строк)");
+                    await Shell.Current.DisplayAlertAsync(
+                        "Предупреждение!",
+                        "Лекарство не было обновлено",
+                        "ОК");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка обновления записи: {ex.Message}");
-                throw;
+                await Shell.Current.DisplayAlertAsync(
+                    "Ошибка!",
+                    $"Не удалось сохранить: {ex.Message}",
+                    "ОК");
             }
         }
     }

@@ -18,7 +18,7 @@
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}" />
         <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="15" />
+            <RoundRectangle CornerRadius="5" />
         </Setter>
     </Style>
 

@@ -1,10 +1,11 @@
-﻿using MedicinesTracker.Models.Dto;
+﻿using MedicinesTracker.Models;
+using MedicinesTracker.Models.Dto;
 
 namespace MedicinesTracker.Interface
 {
     public interface IMedicineRepository
     {
         Task<IEnumerable<MedicineDetailDto>> GetMedicineDetailsAsync();
-        Task<int> UpdateMedicineAsync(MedicineDto medicineDto);
+        Task<int> UpdateMedicineAsync(MedicineModel medicineModel);
     }
 }

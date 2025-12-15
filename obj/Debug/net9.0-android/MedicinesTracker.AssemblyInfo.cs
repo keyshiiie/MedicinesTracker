@@ -14,12 +14,12 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MedicinesTracker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+5c2ec59d7f3a492c5264346edddcd6d862816fdb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+240938c00e454ce672103fa035d4ccd344db97e5")]
 [assembly: System.Reflection.AssemblyProductAttribute("MedicinesTracker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MedicinesTracker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
-[assembly: System.Runtime.Versioning.TargetPlatformAttribute("Android35.0")]
-[assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Android21.0")]
+[assembly: System.Runtime.Versioning.TargetPlatformAttribute("android0.0")]
+[assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("android21.0")]
 
 // Создано классом WriteCodeFragment MSBuild.
 

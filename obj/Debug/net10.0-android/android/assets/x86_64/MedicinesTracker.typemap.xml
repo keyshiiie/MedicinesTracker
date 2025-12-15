@@ -1,0 +1,10 @@
+<api type="debug" assembly-name="MedicinesTracker" mvid="4c1c8bca7f734ce8b53c45a790646571">
+  <java-to-managed>
+    <entry java-name="crc648374421e7ad8140b/MainActivity" managed-name="MedicinesTracker.MainActivity, MedicinesTracker" managed-type-token-id="33554457" />
+    <entry java-name="crc648374421e7ad8140b/MainApplication" managed-name="MedicinesTracker.MainApplication, MedicinesTracker" managed-type-token-id="33554458" />
+  </java-to-managed>
+  <managed-to-java>
+    <entry java-name="crc648374421e7ad8140b/MainActivity" managed-name="MedicinesTracker.MainActivity, MedicinesTracker" managed-type-token-id="33554457" />
+    <entry java-name="crc648374421e7ad8140b/MainApplication" managed-name="MedicinesTracker.MainApplication, MedicinesTracker" managed-type-token-id="33554458" />
+  </managed-to-java>
+</api>

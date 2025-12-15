@@ -1,13 +1,13 @@
 ﻿using MedicinesTracker.Services;
 using MedicinesTracker.ViewModels;
 using CommunityToolkit.Maui;
-using MedicinesTracker.Views;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Maui.Toolkit.Hosting;
-using Microsoft.Extensions.Configuration;   
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Interface;
+using MedicinesTracker.ViewModels.Controls;
+using MedicinesTracker.Views;
 
 namespace MedicinesTracker
 {
@@ -54,7 +54,10 @@ namespace MedicinesTracker
             builder.Services.AddSingleton<IUnitRepository, UnitRepository>();
             builder.Services.AddSingleton<IRecipientRepository, RecipientRepository>();
             builder.Services.AddSingleton<IMethodAdmissionRepository, MethodAdmissionRepository>();
+            builder.Services.AddSingleton<IStockRepository, StockRepository>();
+            builder.Services.AddSingleton<IReminderRepository, ReminderRepository>();
 
+            
             builder.Services.AddSingleton<MedicineService>();
 
             builder.Services.AddSingleton<AppShellVM>();
@@ -64,7 +67,9 @@ namespace MedicinesTracker
             builder.Services.AddSingleton<BaseInfoVM>();
             builder.Services.AddSingleton<NotificationInfoVM>();
             builder.Services.AddSingleton<StockInfoVM>();
+            builder.Services.AddSingleton<RecipientPickerVM>();
 
+            builder.Services.AddSingleton<MedicineListPage>();
 #if DEBUG
             builder.Logging.AddDebug();
 #endif

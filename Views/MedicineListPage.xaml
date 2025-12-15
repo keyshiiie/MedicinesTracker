@@ -9,12 +9,21 @@
              x:DataType="viewModels:MedicineListVM"
              Title="Лекарства">
 
-    <Grid RowDefinitions="*,Auto">
-        <!-- Список лекарств с вертикальным скролом -->
-        <ScrollView Grid.Row="0" >
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding MedicineDetails}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="models:MedicineDetailDto">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <controls:RecipientPicker 
+            Margin="0,0,0,10"
+            HorizontalOptions="Fill"
+            x:Name="recipientPicker"
+            SelectedRecipient="{Binding SelectedRecipient, Mode=TwoWay}"/>
+
+        <!-- CollectionView -->
+        <CollectionView Grid.Row="1" 
+                       ItemsSource="{Binding FilteredMedicineDetails}">
+            <!-- Шаблон элемента -->
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:MedicineDetailDto">
+                    <!-- Обертка для отступов -->
+                    <VerticalStackLayout>
                         <Border Style="{StaticResource MedicineCardBorderStyle}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer 
@@ -23,56 +32,54 @@
                                     x:DataType=viewModels:MedicineListVM}"
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <StackLayout Spacing="10">
+                            <StackLayout>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <!-- Получатель -->
-                                    <Label Text="{Binding RecipientName}"
-                                           Style="{StaticResource CardDescriptionStyle}"
-                                           Grid.Column="0"
-                                           VerticalOptions="Center"/>
+                                    <!-- Основная информация о лекарстве -->
+                                    <VerticalStackLayout Grid.Column="0">
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Image Source="medicine_card_icon.png"
+                                                   Style="{StaticResource MedicineIconStyle}"/>
+                                            <Label Text="{Binding MedicineName}"
+                                                   Style="{StaticResource CardTitleStyle}"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+
+                                        <HorizontalStackLayout Spacing="5" Margin="0,5,0,0">
+                                            <Label Text="Посмотреть подробную информацию"
+                                                   Style="{StaticResource DetailLinkStyle}"/>
+                                            <Image Source="hint_swap_right.png"
+                                                   Style="{StaticResource DetailLinkIconStyle}"/>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+
                                     <!-- Остаток на складе -->
                                     <Border Style="{StaticResource CardHintBorderStyle}"
-                                            HorizontalOptions="End"
-                                            Grid.Column="1">
-                                        <HorizontalStackLayout Spacing="5">
-                                            <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
-                                                   Style="{StaticResource CardHintTextStyle}"/>
-                                            <Label Text="{Binding UnitName}"
-                                                   Style="{StaticResource CardHintTextStyle}"/>
-                                        </HorizontalStackLayout>
+                                            VerticalOptions="End"
+                                            Grid.Column="1"
+                                            Padding="10,5">
+                                        <VerticalStackLayout>
+                                            <HorizontalStackLayout Spacing="5">
+                                                <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
+                                                       Style="{StaticResource CardHintTextStyle}"/>
+                                                <Label Text="{Binding UnitName}"
+                                                       Style="{StaticResource CardHintTextStyle}"/>
+                                            </HorizontalStackLayout>
+                                        </VerticalStackLayout>
                                     </Border>
                                 </Grid>
-                                <!-- Основная информация о лекарстве -->
-                                <VerticalStackLayout Spacing="5">
-                                    <HorizontalStackLayout Spacing="10">
-                                        <Image Source="medicine_card_icon.png"
-                                               Style="{StaticResource MedicineIconStyle}"/>
-                                        <Label Text="{Binding MedicineName}"
-                                               Style="{StaticResource CardTitletyle}"/>
-                                    </HorizontalStackLayout>
-                                    <!-- Список напоминаний -->
-                                    <Label Text="{Binding ScheduleString}"
-                                           Style="{StaticResource CardDescriptionStyle}"/>
-                                </VerticalStackLayout>
-
-                                <HorizontalStackLayout Spacing="5">
-                                    <Label Text="Посмотреть подробную информацию"
-                                           Style="{StaticResource DetailLinkStyle}"/>
-                                    <Image Source="hint_swap_right.png"
-                                           Style="{StaticResource DetailLinkIconStyle}"/>
-                                </HorizontalStackLayout>
                             </StackLayout>
                         </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
-        </ScrollView>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
         <!-- Кнопка "Добавить" -->
-        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+        <HorizontalStackLayout Grid.Row="2" HorizontalOptions="End">
             <controls:AddButton/>
         </HorizontalStackLayout>
     </Grid>

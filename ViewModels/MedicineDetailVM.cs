@@ -12,12 +12,12 @@ namespace MedicinesTracker.ViewModels
         private readonly MedicineService _medicineService;
 
         [ObservableProperty]
-        private MedicineDetailDto _medicine;
+        private MedicineDetailDto _medicine = new();
+
 
         public MedicineDetailVM(MedicineService medicineService)
         {
             _medicineService = medicineService;
-            _medicine = new MedicineDetailDto();
         }
 
         // Обрабатываем полученное значение через QueryProperty
@@ -54,23 +54,18 @@ namespace MedicinesTracker.ViewModels
             }
         }
         [RelayCommand]
-        private async Task OpenNotificationPage(MedicineDetailDto medicine)
+        private async Task OpenNotificationPage()
         {
-            if (medicine is null) return;
-            try
+            if (Medicine.IdMedicine == 0) return;
+
+            var route = "NotificationInfoPage";
+            var parameters = new Dictionary<string, object>
             {
-                var route = "NotificationInfoPage";
-                var parameters = new Dictionary<string, object>
-                {
-                    { "medicine", medicine }
-                };
-                await Shell.Current.GoToAsync(route, parameters);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка при переходе на страницу детализации: {ex.Message}");
-            }
+                { "idMedicine", Medicine.IdMedicine }  // ← Именно "idMedicine"!
+            };
+            await Shell.Current.GoToAsync(route, parameters);
         }
+
         [RelayCommand]
         private async Task OpenStockPage(MedicineDetailDto medicine)
         {
@@ -89,6 +84,5 @@ namespace MedicinesTracker.ViewModels
                 Debug.WriteLine($"Ошибка при переходе на страницу детализации: {ex.Message}");
             }
         }
-
     }
 }
