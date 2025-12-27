@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Medications.Views.MedicineSchedulePage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="viewModels:MedicineScheduleVM"
+             Title="График приёма лекарства">
+
+    <ScrollView>
+        <Grid RowDefinitions="*,*">
+            <VerticalStackLayout Spacing="15">
+                <!-- Тип расписания -->
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Тип расписания приёма:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Picker ItemsSource="{Binding ScheduleTypes}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedScheduleType, Mode=TwoWay}"
+                        IsEnabled="{Binding CanEditSchedule}"
+                        Style="{StaticResource PrimaryPickerStyle}"/>
+                </VerticalStackLayout>
+
+                <!-- Мод расписания - ТОЛЬКО для RECURRING -->
+                <VerticalStackLayout Spacing="5" 
+                                 IsVisible="{Binding UiState.IsRecurringSchedule}">
+                    <Label Text="Способ задания расписания:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Picker ItemsSource="{Binding ScheduleModes}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedScheduleMode, Mode=TwoWay}"
+                        IsEnabled="{Binding CanEditSchedule}"
+                        Style="{StaticResource PrimaryPickerStyle}"/>
+                </VerticalStackLayout>
+
+                <!-- Частота приёма - ТОЛЬКО для INTERVAL режима -->
+                <VerticalStackLayout Spacing="5" 
+                                 IsVisible="{Binding UiState.ShowFrequencyPicker}">
+                    <Label Text="Частота приёма:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Picker ItemsSource="{Binding RecurrencePatterns}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedRecurrencePattern, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}"/>
+                </VerticalStackLayout>
+
+                <!-- День недели - ТОЛЬКО для WEEKDAYS режима -->
+                <VerticalStackLayout Spacing="5" 
+                                 IsVisible="{Binding UiState.ShowWeekDaysPicker}">
+                    <Label Text="День недели:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Picker ItemsSource="{Binding WeekDays}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedWeekDays, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}"/>
+                </VerticalStackLayout>
+
+                 <!--Дата начала - ТОЛЬКО для повторяющихся--> 
+                <VerticalStackLayout Spacing="5" 
+                                 IsVisible="{Binding UiState.ShowRecurringDateFields}">
+                    <Label Text="Дата начала приёма:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <DatePicker Style="{StaticResource PrimaryDatePickerStyle}" 
+                                Date="{Binding MedicineSchedule.DateStart, 
+                                Converter={StaticResource StringToDateConverter}, 
+                                Mode=TwoWay}"/>
+                </VerticalStackLayout>
+
+                 <!--Дата завершения - ТОЛЬКО для повторяющихся--> 
+                <VerticalStackLayout Spacing="5" 
+                                 IsVisible="{Binding UiState.ShowRecurringDateFields}">
+                    <Label Text="Дата завершения приёма:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <DatePicker Style="{StaticResource PrimaryDatePickerStyle}" 
+                                Date="{Binding MedicineSchedule.DateEnd,
+                                Converter={StaticResource StringToDateConverter}, 
+                                Mode=TwoWay}"/>
+                </VerticalStackLayout>
+
+                 <!--Дата приёма - ТОЛЬКО для одноразовых--> 
+                <VerticalStackLayout Spacing="5" 
+                                 IsVisible="{Binding UiState.ShowOneTimeDateField}">
+                    <Label Text="Дата приёма:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <DatePicker Style="{StaticResource PrimaryDatePickerStyle}"
+                                Date="{Binding MedicineSchedule.OneTimeDate,
+                                Converter={StaticResource StringToDateConverter}, 
+                                Mode=TwoWay}"/>
+                </VerticalStackLayout>
+
+                <!-- Общие поля (для всех типов) -->
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Доза:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Entry Text="{Binding MedicineSchedule.Dosage}"
+                           Style="{StaticResource EditFieldStyle}" 
+                           HorizontalOptions="Fill"/>
+                        <Label Text="{Binding MedicineSchedule.UnitName}"
+                           Style="{StaticResource CardTitleStyle}"
+                           Grid.Column="1"
+                           Margin="10,0,0,0"/>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Время приёма:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Entry Text="{Binding MedicineSchedule.Times}"
+                       Style="{StaticResource EditFieldStyle}"/>
+                    <TimePicker Time="{Binding MedicineSchedule.Times}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Активно:"
+                       Style="{StaticResource CardDescriptionStyle}"/>
+                    <Switch IsToggled="{Binding MedicineSchedule.ScheduleIsActive}"/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+            <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+                <Button Style="{StaticResource SaveMedicineButtonStyle}" Command="{Binding SaveCommand}"/>
+            </HorizontalStackLayout>
+        </Grid>
+    </ScrollView>
+</ContentPage>

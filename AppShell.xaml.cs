@@ -1,6 +1,7 @@
-﻿using MedicinesTracker.ViewModels;
+﻿using MedicinesTracker.Modules.Medications.Views;
+using MedicinesTracker.Modules.Settings.Views;
+using MedicinesTracker.ViewModels;
 using MedicinesTracker.Views;
-using System.Diagnostics;
 
 namespace MedicinesTracker
 {
@@ -13,8 +14,9 @@ namespace MedicinesTracker
             Routing.RegisterRoute("SettingsPage", typeof(SettingsPage));
             Routing.RegisterRoute("MedicineDetailPage", typeof(MedicineDetailPage));
             Routing.RegisterRoute("BaseInfoPage", typeof(BaseInfoPage));
-            Routing.RegisterRoute("NotificationInfoPage", typeof(NotificationInfoPage));
+            Routing.RegisterRoute("MedicineSchedulePage", typeof(MedicineSchedulePage));
             Routing.RegisterRoute("StockInfoPage", typeof(StockInfoPage));
+            Routing.RegisterRoute("EditRecipientPage", typeof(EditRecipientPage));
         }
     }
 }

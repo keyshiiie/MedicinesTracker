@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             x:Class="MedicinesTracker.Modules.Medications.Views.BaseInfoPage"
+             x:DataType="viewModels:BaseInfoVM"
+             Title="Основная информация">
+
+    <Grid HorizontalOptions="Fill">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <VerticalStackLayout Spacing="10" Grid.Row="0">
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Название"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Entry
+                    Text="{Binding Medicine.Name}"
+                    Style="{StaticResource EditFieldStyle}"
+                    Grid.Column="0"/>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Единица измерения"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Picker ItemsSource="{Binding Units}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}">
+                </Picker>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Способ приёма"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Picker ItemsSource="{Binding MethodAdmissions}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}">
+                </Picker>
+            </VerticalStackLayout>
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Получатель"
+                    Style="{StaticResource CardDescriptionStyle}"/>
+                <Picker ItemsSource="{Binding Recipients}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}">
+                </Picker>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+            <Button Style="{StaticResource SaveMedicineButtonStyle}" Command="{Binding SaveMedicineCommand}"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

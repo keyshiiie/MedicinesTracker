@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Settings.Views.SettingsPage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Settings.ViewModels"
+             x:DataType="viewModels:SettingsPageVM"
+             xmlns:models="clr-namespace:MedicinesTracker.Models"
+             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
+             Title="Настройки">
+    <VerticalStackLayout Spacing="5">
+        <Label 
+        Text="Получатели"
+        Style="{StaticResource CardDescriptionStyle}"/>
+
+        <!-- CollectionView -->
+        <CollectionView Grid.Row="1" 
+               ItemsSource="{Binding Recipients}">
+            <!-- Шаблон элемента -->
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:RecipientModel">
+                    <!-- Обертка для отступов -->
+                    <VerticalStackLayout>
+                        <Border Style="{StaticResource MedicineCardBorderStyle}" Padding="10,0,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="{Binding Name}" 
+                                       Style="{StaticResource FieldTitleStyle}"/>
+                                <Button Style="{StaticResource EditButtonStyle}" 
+                                        Grid.Column="1"
+                                        Command="{Binding OpenEditPageCommand, 
+                                        Source={RelativeSource AncestorType={x:Type viewModels:SettingsPageVM}},
+                                        x:DataType=viewModels:SettingsPageVM}"
+                                        CommandParameter="{Binding .}"/>    
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Style="{StaticResource AddMedicineButtonStyle}" 
+                Command="{Binding OpenEditPageCommand}" 
+                CommandParameter="{x:Null}"/>
+    </VerticalStackLayout>
+</ContentPage>

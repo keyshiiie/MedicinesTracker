@@ -1,13 +1,12 @@
-﻿using MedicinesTracker.Services;
-using MedicinesTracker.ViewModels;
-using CommunityToolkit.Maui;
+﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Maui.Toolkit.Hosting;
 using Microsoft.Extensions.Configuration;
 using MedicinesTracker.Repository;
-using MedicinesTracker.Interface;
-using MedicinesTracker.ViewModels.Controls;
-using MedicinesTracker.Views;
+using MedicinesTracker.ViewModels;
+using MedicinesTracker.Modules.Medications.ViewModels;
+using MedicinesTracker.Modules.Notifications.ViewModels;
+using MedicinesTracker.Modules.Settings.ViewModels;
 
 namespace MedicinesTracker
 {
@@ -51,25 +50,24 @@ namespace MedicinesTracker
                 sp => new DBHandler(connectionString));
 
             builder.Services.AddSingleton<IMedicineRepository, MedicineRepository>();
-            builder.Services.AddSingleton<IUnitRepository, UnitRepository>();
+            builder.Services.AddSingleton<IReferencesDataRepository, ReferencesDataRepository>();
             builder.Services.AddSingleton<IRecipientRepository, RecipientRepository>();
-            builder.Services.AddSingleton<IMethodAdmissionRepository, MethodAdmissionRepository>();
             builder.Services.AddSingleton<IStockRepository, StockRepository>();
-            builder.Services.AddSingleton<IReminderRepository, ReminderRepository>();
+            builder.Services.AddSingleton<IMedicineScheduleRepository, MedicineScheduleRepository>();
 
             
-            builder.Services.AddSingleton<MedicineService>();
+            builder.Services.AddSingleton<IMedicineRepository, MedicineRepository>();
 
             builder.Services.AddSingleton<AppShellVM>();
             builder.Services.AddSingleton<MedicineListVM>();
             builder.Services.AddSingleton<TodayMedicineVM>();
             builder.Services.AddSingleton<MedicineDetailVM>();
             builder.Services.AddSingleton<BaseInfoVM>();
-            builder.Services.AddSingleton<NotificationInfoVM>();
+            builder.Services.AddSingleton<MedicineScheduleVM>();
             builder.Services.AddSingleton<StockInfoVM>();
-            builder.Services.AddSingleton<RecipientPickerVM>();
+            builder.Services.AddSingleton<SettingsPageVM>();
+            builder.Services.AddSingleton<EditRecipientVM>();
 
-            builder.Services.AddSingleton<MedicineListPage>();
 #if DEBUG
             builder.Logging.AddDebug();
 #endif

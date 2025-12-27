@@ -90,19 +90,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="Modules\Settings\Views\EditRecipientPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Resources\Styles\ButtonStyles.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Resources\Styles\ControlStyles.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\BaseInfoPage.xaml">
+	  <MauiXaml Update="Modules\Medications\Views\BaseInfoPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Controls\AddButton.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\Controls\RecipientPicker.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Controls\SaveButton.xaml">
@@ -111,25 +111,25 @@
 	  <MauiXaml Update="Views\HistoryListPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\MedicineDetailPage.xaml">
+	  <MauiXaml Update="Modules\Medications\Views\MedicineDetailPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\MedicineListPage.xaml">
+	  <MauiXaml Update="Modules\Medications\Views\MedicineListPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\NotificationInfoPage.xaml">
+	  <MauiXaml Update="Modules\Medications\Views\MedicineSchedulePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\NotificationListPage.xaml">
+	  <MauiXaml Update="Modules\Notifications\Views\NotificationListPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\SettingsPage.xaml">
+	  <MauiXaml Update="Modules\Settings\Views\SettingsPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\StockInfoPage.xaml">
+	  <MauiXaml Update="Modules\Medications\Views\StockInfoPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\TodayMedicineListPage.xaml">
+	  <MauiXaml Update="Modules\Notifications\Views\TodayMedicineListPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>
@@ -138,6 +138,16 @@
 	  <None Update="Views\Controls\RecipientPicker.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="ViewModels\Controls\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Modules\Medications\Views\MedicineSchedulePage.xaml.cs">
+	    <DependentUpon>MedicineSchedulePage.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 </Project>
