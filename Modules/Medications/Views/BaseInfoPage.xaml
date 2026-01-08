@@ -16,40 +16,51 @@
                 <Label 
                     Text="Название"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Entry
-                    Text="{Binding Medicine.Name}"
-                    Style="{StaticResource EditFieldStyle}"
-                    Grid.Column="0"/>
+                <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Entry
+                        Text="{Binding Medicine.Name}"
+                        Style="{StaticResource EditFieldStyle}"
+                        Grid.Column="0"
+                        Placeholder="Введите название лекарства"/>
+                </Border>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Единица измерения"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Picker ItemsSource="{Binding Units}"
+                <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Picker ItemsSource="{Binding Units}"
                         ItemDisplayBinding="{Binding Name}"
                         SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}">
-                </Picker>
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите единицу измерения"/>
+                </Border>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Способ приёма"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Picker ItemsSource="{Binding MethodAdmissions}"
+                <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Picker ItemsSource="{Binding MethodAdmissions}"
                         ItemDisplayBinding="{Binding Name}"
                         SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}">
-                </Picker>
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите способ приёма">
+                    </Picker>
+                </Border>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Получатель"
                     Style="{StaticResource CardDescriptionStyle}"/>
-                <Picker ItemsSource="{Binding Recipients}"
+                <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Picker ItemsSource="{Binding Recipients}"
                         ItemDisplayBinding="{Binding Name}"
                         SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}">
-                </Picker>
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите получателя лекарства">
+                    </Picker>
+                </Border>
             </VerticalStackLayout>
         </VerticalStackLayout>
         <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">

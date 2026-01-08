@@ -8,10 +8,12 @@
         public string? UnitName { get; set; }
 
         // Тип расписания
+        public int IdScheduleType { get; set; }
         public string? ScheduleTypeCode { get; set; }
         public string? ScheduleTypeName { get; set; }
 
         // Режим расписания
+        public int? IdScheduleMode { get; set; }
         public string? ScheduleModeCode { get; set; }
         public string? ScheduleModeName { get; set; }
 
@@ -33,8 +35,5 @@
         // Время приема
         public string? Times { get; set; }
         public string? TimeOrders { get; set; }
-
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
     }
 }

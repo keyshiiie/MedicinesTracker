@@ -9,14 +9,15 @@ public partial class MedicineListPage : ContentPage
     {
         InitializeComponent();
         BindingContext = viewModel;
-
-        Loaded += OnPageLoaded;
     }
 
-    private async void OnPageLoaded(object? sender, EventArgs e)
+    protected override async void OnAppearing()
     {
+        base.OnAppearing();
+
         try
         {
+            Debug.WriteLine("[MedicineListPage] OnAppearing - обновление данных");
             await ((MedicineListVM)BindingContext).InitializeAsync();
         }
         catch (Exception ex)

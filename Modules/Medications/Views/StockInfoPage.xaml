@@ -21,10 +21,13 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Entry
-                        Text="{Binding Stock.CurrentQuantity}"
-                        Style="{StaticResource EditFieldStyle}"
-                        Grid.Column="0"/>
+                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                        <Entry
+                            Text="{Binding Stock.CurrentQuantity}"
+                            Style="{StaticResource EditFieldStyle}"
+                            Grid.Column="0"
+                            Placeholder="Текущее количество"/>
+                    </Border>
                     <Label 
                         Text="{Binding UnitName}"
                         Style="{StaticResource FieldTitleStyle}"
@@ -41,10 +44,13 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Entry
-                        Text="{Binding Stock.Threshold}"
-                        Style="{StaticResource EditFieldStyle}"
-                        Grid.Column="0"/>
+                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                        <Entry
+                            Text="{Binding Stock.Threshold}"
+                            Style="{StaticResource EditFieldStyle}"
+                            Grid.Column="0"
+                            Placeholder="Порог для напоминания"/>
+                    </Border>
                     <Label 
                         Text="{Binding UnitName}"
                         Style="{StaticResource FieldTitleStyle}"
@@ -52,12 +58,18 @@
                         Padding="10,0,0,0"/>
                 </Grid>
             </VerticalStackLayout>
-            <VerticalStackLayout>
+            <Grid ColumnDefinitions="Auto,*">
                 <Label 
-                    Text="Получение уведомлений о запасе"
-                    Style="{StaticResource CardDescriptionStyle}"/>
-                <Switch IsToggled="{Binding Stock.ReminderEnabled}"/>
-            </VerticalStackLayout>
+                    Text="Уведомления:"
+                    Style="{StaticResource CardDescriptionStyle}" 
+                    VerticalOptions="Center"
+                    HorizontalOptions="Start"/>
+                <Switch 
+                    IsToggled="{Binding Stock.ReminderEnabled}" 
+                    Grid.Column="1" 
+                    HorizontalOptions="End"      
+                    VerticalOptions="Center"/>
+            </Grid>
         </VerticalStackLayout>
         <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
             <controls:SaveButton Command="{Binding SaveMedicineCommand}"/>

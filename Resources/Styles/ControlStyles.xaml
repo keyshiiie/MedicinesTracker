@@ -1,15 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="MedicinesTracker.Resources.Styles.ControlStyles">
+             x:Class="MedicinesTracker.Resources.Styles.ControlStyles"
+             xmlns:converters="clr-namespace:MedicinesTracker.Converters">
+
+    <converters:IsTimePassedConverter x:Key="IsTimePassedConverter" />
+
+    <!-- стиль приветсвенного тайтла -->
+    <Style TargetType="Label" x:Key="AcquaintanceTitleStyle">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="AcquaintanceDescriptionStyle">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="FontFamily" Value="OpenSansLight"/>
+    </Style>
 
     <Style TargetType="Label" x:Key="MedicineNameStyle">
         <Setter Property="FontSize" Value="16"/>
         <Setter Property="VerticalOptions" Value="Center"/>
-        <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
         <Setter Property="FontFamily" Value="OpenSansSemibold"/>
     </Style>
-    
+
+    <!-- Стиль заголовка timepicker -->
+    <Style TargetType="TimePicker" x:Key="TimePickerStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Background" Value="{StaticResource Secondary}"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+    </Style>
+
     <!-- Стиль заголовка карточки -->
     <Style TargetType="Label" x:Key="CardTitleStyle">
         <Setter Property="FontSize" Value="16"/>
@@ -38,7 +65,7 @@
     <!-- Стиль описания карточки с прозрачностью 0.8 -->
     <Style TargetType="Label" x:Key="CardDescriptionStyle">
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
         <Setter Property="Opacity" Value="0.8"/>
     </Style>
 
@@ -61,6 +88,7 @@
         <Setter Property="HorizontalOptions" Value="Start"/>
     </Style>
 
+    
     <!-- Cтиль для границы карточки -->
     <Style TargetType="Border" x:Key="MedicineCardBorderStyle">
         <Setter Property="Margin" Value="0,0,0,10"/>
@@ -73,9 +101,9 @@
     </Style>
 
     <!-- Cтиль для редактируемого поля -->
-    <Style TargetType="Border" x:Key="EditFielsGridStyle">
+    <Style TargetType="Border" x:Key="EditFielsBorderStyle">
         <Setter Property="HorizontalOptions" Value="Fill"/>
-        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Padding" Value="5,0"/>
     </Style>
 
     <!-- Текст для карточки запаса текущего -->
@@ -101,7 +129,7 @@
         <Setter Property="FontFamily" Value="OpenSansSemibold" />
         <Setter Property="Background" Value="{StaticResource Secondary}"/>
         <Setter Property="VerticalOptions" Value="Center"/>
-        <Setter Property="TitleColor" Value="{StaticResource Gray500}" />
+        <Setter Property="TitleColor" Value="{StaticResource PrimaryDarkText}" />
     </Style>
 
     <!-- Основной стиль DatePicker -->
@@ -124,5 +152,68 @@
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
+    </Style>
+
+    <!-- Стиль для текста, если приём лекарства пропущен -->
+    <Style x:Key="MissedFieldTitleStyle" TargetType="Label" 
+       BasedOn="{StaticResource FieldTitleStyle}">
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Label"
+                     Binding="{Binding IsCompleted}"
+                     Value="False">
+                <!-- Обратите внимание на заглавную F -->
+                <Setter Property="TextColor" Value="Red" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+
+
+
+    <Style x:Key="TimeAwareFieldTitleStyle" TargetType="Label" 
+           BasedOn="{StaticResource FieldTitleStyle}">
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Label"
+                         Binding="{Binding Time, Converter={StaticResource IsTimePassedConverter}}"
+                         Value="True">
+                <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="TimeAwareCardDescriptionStyle" TargetType="Label" 
+           BasedOn="{StaticResource CardDescriptionStyle}">
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Label"
+                         Binding="{Binding Time, Converter={StaticResource IsTimePassedConverter}}"
+                         Value="True">
+                <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="FilterLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource Primary}"/>
+    </Style>
+
+    <Style x:Key="OutlineButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="TextColor" Value="{StaticResource Primary}"/>
+        <Setter Property="BorderColor" Value="{StaticResource Primary}"/>
+        <Setter Property="BorderWidth" Value="1"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="Padding" Value="10,5"/>
+    </Style>
+
+    <Style x:Key="EmptyViewLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
     </Style>
 </ResourceDictionary>

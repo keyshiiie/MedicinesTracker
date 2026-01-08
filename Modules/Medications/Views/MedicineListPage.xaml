@@ -31,7 +31,7 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <!-- Получатель -->
                                     <Label Text="{Binding RecipientName}"
@@ -40,7 +40,6 @@
                                            VerticalOptions="Center"/>
                                     <!-- Остаток на складе -->
                                     <Border Style="{StaticResource CardHintBorderStyle}"
-                                            HorizontalOptions="End"
                                             Grid.Column="1">
                                         <HorizontalStackLayout Spacing="5">
                                             <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
@@ -72,7 +71,8 @@
         </CollectionView>
 
         <!-- Кнопка "Добавить" -->
-        <HorizontalStackLayout Grid.Row="2" HorizontalOptions="End">
+        <HorizontalStackLayout Grid.Row="2" 
+                               HorizontalOptions="End">
             <controls:AddButton Command="{Binding AddMedicineCommand}" 
                                 CommandParameter="{x:Null}"/>
         </HorizontalStackLayout>

@@ -13,7 +13,7 @@ namespace MedicinesTracker.Models
         public int? IdRecurrencePattern { get; set; }
         public string? OneTimeDate { get; set; }
         public int Dosage { get; set; }
-        public string DateStart { get; set; } = string.Empty;
+        public string? DateStart { get; set; } 
         public string? DateEnd { get; set; }
         public bool IsActive { get; set; } = true;
     }

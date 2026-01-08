@@ -8,15 +8,17 @@ public partial class SettingsPage : ContentPage
 	public SettingsPage(SettingsPageVM viewModels)
 	{
 		InitializeComponent();
-		BindingContext = viewModels; 
-        Loaded += OnPageLoaded;
+		BindingContext = viewModels;
     }
 
-    private async void OnPageLoaded(object? sender, EventArgs e)
+    protected override async void OnAppearing()
     {
+        base.OnAppearing();
+
         try
         {
-            await ((SettingsPageVM)BindingContext).LoadData();
+            Debug.WriteLine("[BaseInfoPagePage] OnAppearing - обновление данных");
+            await ((SettingsPageVM)BindingContext).InitializeAsync();
         }
         catch (Exception ex)
         {

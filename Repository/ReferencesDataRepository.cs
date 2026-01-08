@@ -16,8 +16,8 @@ namespace MedicinesTracker.Repository
     }
     public class ReferencesDataRepository : IReferencesDataRepository
     {
-        private readonly DBHandler _dbHandler;
-        public ReferencesDataRepository(DBHandler dbHandler)
+        private readonly IDBHandler _dbHandler;
+        public ReferencesDataRepository(IDBHandler dbHandler)
         {
             _dbHandler = dbHandler;
         }

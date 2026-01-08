@@ -10,15 +10,16 @@ public partial class MedicineSchedulePage : ContentPage
 	{
 		InitializeComponent();
 		BindingContext = viewModel;
-
-        Loaded += OnPageLoaded;
     }
 
-    private async void OnPageLoaded(object? sender, EventArgs e)
+    protected override async void OnAppearing()
     {
+        base.OnAppearing();
+
         try
         {
-            await ((MedicineScheduleVM)BindingContext).LoadData();
+            Debug.WriteLine("[BaseInfoPagePage] OnAppearing - обновление данных");
+            await ((MedicineScheduleVM)BindingContext).InitializeAsync();
         }
         catch (Exception ex)
         {

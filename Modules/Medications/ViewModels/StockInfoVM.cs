@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Models;
 using MedicinesTracker.Repository;
+using MedicinesTracker.Services;
 using System.Diagnostics;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
@@ -12,6 +13,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     public partial class StockInfoVM : ObservableObject
     {
         private readonly IStockRepository _stockRepository;
+        private readonly IValidatorService _validatorService;
 
         [ObservableProperty]
         private StockModel _stock = new();
@@ -30,9 +32,23 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private bool _isInitialized = false;
 
-        public StockInfoVM(IStockRepository stockRepository)
+        public StockInfoVM(IStockRepository stockRepository,
+            IValidatorService validatorService)
         {
             _stockRepository = stockRepository;
+            _validatorService = validatorService;
+        }
+
+        public async Task InitializeAsync()
+        {
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MedicineListVM ERROR] {ex.Message}");
+            }
         }
 
         partial void OnStockIdChanged(int value)
@@ -46,13 +62,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 _isInitialized = true;
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
-                    await LoadData();
+                    await LoadDataAsync();
                 });
             }
         }
 
         [RelayCommand]
-        public async Task LoadData()
+        private async Task LoadDataAsync()
         {
             try
             {
@@ -94,8 +110,15 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             if (MedicineId == 0) return;
             try
             {
+                var errors = _validatorService.GetStockValidationErrors(Stock);
+
+                if (errors.Any())
+                {
+                    await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
+                    return;
+                }
+
                 int rowsAffected;
-                string successMessage;
 
                 // Совместная логика сохранения/редактирования
                 if (IsEditingExisting && StockId > 0)
@@ -104,7 +127,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     Debug.WriteLine("Режим: Редактирование существующего запаса лекарства");
                     Stock.IdStock = StockId;
                     rowsAffected = await _stockRepository.UpdateStockAsync(Stock);
-                    successMessage = "Запас лекарства успешно обновлен!";
                     // Возвращаемся назад
                     await Shell.Current.GoToAsync("..");
                 }
@@ -113,23 +135,14 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     // Добавление нового
                     Debug.WriteLine("Режим: Добавление нового запаса лекарства");
                     rowsAffected = await _stockRepository.AddStockAsync(Stock, MedicineId);
-                    successMessage = "Запас лекарства успешно добавлен!";
-                    await OpenMedicineSchedulePage();
-                    // await Shell.Current.GoToAsync("..");
+                    await OpenMedicineSchedulePage(); 
                 }
 
                 Debug.WriteLine($"Результат операции: {rowsAffected} строк затронуто");
 
                 if (rowsAffected > 0)
                 {
-                    await Shell.Current.DisplayAlertAsync(
-                        "Успех!",
-                        successMessage,
-                        "ОК");
-
                     Debug.WriteLine("Сохранение успешно, возврат назад");
-
-
                 }
                 else
                 {

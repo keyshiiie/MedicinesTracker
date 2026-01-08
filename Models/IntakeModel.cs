@@ -3,14 +3,13 @@
     public class IntakeModel
     {
         public int IdIntake { get; set; }
-        public int IdType { get; set; }    
         public int IdMedicine { get; set; }   
-        public int IdStatus { get; set; } 
-
+        public bool IsCompleted { get; set; } 
+        public int IdSchedule { get; set; }
+        public int IdScheduleTime { get; set; }
         public string? Date { get; set; }  
-        public string? Time { get; set; }     
-
-        public string? CreatedAt { get; set; }
-        public string? UpdatedAt { get; set; }
+        public string? Time { get; set; }
+        public int ActualDosage { get; set; }
+        public string? Status { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MedicinesTracker.Models;
 using MedicinesTracker.Repository;
+using MedicinesTracker.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,13 +15,16 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
     public partial class EditRecipientVM : ObservableObject
     {
         private readonly IRecipientRepository _recipientRepository;
+        private readonly IValidatorService _validatorService;
         [ObservableProperty]
         private RecipientModel _recipient = new();
         [ObservableProperty]
         private bool _isEditingExisting;
-        public EditRecipientVM(IRecipientRepository recipientRepository)
+        public EditRecipientVM(IRecipientRepository recipientRepository,
+            IValidatorService validatorService)
         {
             _recipientRepository = recipientRepository;
+            _validatorService = validatorService;
         }
         partial void OnRecipientChanged(RecipientModel value)
         {
@@ -32,9 +36,12 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(Recipient.Name))
+                var errors = _validatorService.GetRecipientValidationErrors 
+                    (Recipient);
+
+                if (errors.Any())
                 {
-                    Debug.WriteLine("Ошибка: Название получателя не может быть пустым");
+                    await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
                     return;
                 }
                 int rowsAffected;

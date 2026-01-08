@@ -1,8 +1,7 @@
 ﻿using MedicinesTracker.Models;
 using MedicinesTracker.Models.Dto;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace MedicinesTracker.Modules.Medications.Models
 {
@@ -12,24 +11,31 @@ namespace MedicinesTracker.Modules.Medications.Models
         public void CleanForScheduleType(
             string? newTypeCode,
             string? oldTypeCode,
-            MedicineScheduleDto scheduleDto,
+            ref MedicineScheduleDto scheduleDto,
             ref ScheduleModeModel? selectedMode,
             ref RecurrencePatternModel? selectedPattern,
-            ref WeekDayModel? selectedWeekDay)
+            ref ObservableCollection<WeekDayModel> weekDays)
         {
-            // Если переключились с RECURRING на ONETIME
             if (oldTypeCode == "RECURRING" && newTypeCode == "ONETIME")
             {
                 selectedMode = null;
                 selectedPattern = null;
-                selectedWeekDay = null;
-                scheduleDto.DateStart = string.Empty;
-                scheduleDto.DateEnd = string.Empty;
+                scheduleDto.DateStart = null;
+                scheduleDto.DateEnd = null;
+                scheduleDto.WeekDays = null;
+
+                // Сбрасываем выбранные дни
+                if (weekDays != null)
+                {
+                    foreach (var day in weekDays)
+                    {
+                        day.IsSelected = false;
+                    }
+                }
             }
-            // Если переключились с ONETIME на RECURRING
             else if (oldTypeCode == "ONETIME" && newTypeCode == "RECURRING")
             {
-                scheduleDto.OneTimeDate = string.Empty;
+                scheduleDto.OneTimeDate = null;
             }
         }
 
@@ -37,18 +43,23 @@ namespace MedicinesTracker.Modules.Medications.Models
         public void CleanForScheduleMode(
             string? newModeCode,
             string? oldModeCode,
-            ref WeekDayModel? selectedWeekDay,
+            ref ObservableCollection<WeekDayModel> weekDays,
             ref RecurrencePatternModel? selectedPattern)
         {
-            // Если переключились с INTERVAL на WEEKDAYS
             if (oldModeCode == "INTERVAL" && newModeCode == "WEEKDAYS")
             {
                 selectedPattern = null;
             }
-            // Если переключились с WEEKDAYS на INTERVAL
             else if (oldModeCode == "WEEKDAYS" && newModeCode == "INTERVAL")
             {
-                selectedWeekDay = null;
+                // Сбрасываем выбранные дни при переключении с WEEKDAYS на INTERVAL
+                if (weekDays != null)
+                {
+                    foreach (var day in weekDays)
+                    {
+                        day.IsSelected = false;
+                    }
+                }
             }
         }
     }

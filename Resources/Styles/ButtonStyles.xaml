@@ -33,8 +33,8 @@
                     <VisualState x:Name="Normal"/>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
-                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
                             <Setter Property="Opacity" Value="0.6"/>
                         </VisualState.Setters>
                     </VisualState>
@@ -48,6 +48,38 @@
         </Setter>
     </Style>
 
+
+    <Style TargetType="Button" x:Key="DefaultButtonStyle">
+        <Setter Property="BackgroundColor" Value="{StaticResource Primary}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="15,5"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
+        <Setter Property="BorderColor" Value="Transparent"/>
+        <!-- Визуальные состояния -->
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal"/>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.95"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+    
+    
     <Style TargetType="Button" x:Key="EditButtonStyle">
         <Setter Property="ImageSource" Value="edit_filled.png"/>
         <Setter Property="BackgroundColor" Value="Transparent"/>
@@ -59,8 +91,37 @@
                     <VisualState x:Name="Normal"/>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
-                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.95"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Button" x:Key="CloseButtonStyle">
+        <Setter Property="Text" Value="✕"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="BorderColor" Value="Transparent"/>
+        <!-- Визуальные состояния -->
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal"/>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
                             <Setter Property="Opacity" Value="0.6"/>
                         </VisualState.Setters>
                     </VisualState>
@@ -90,8 +151,8 @@
                     <VisualState x:Name="Normal"/>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
-                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
                             <Setter Property="Opacity" Value="0.6"/>
                         </VisualState.Setters>
                     </VisualState>
@@ -133,8 +194,8 @@
                     <VisualState x:Name="Normal"/>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource Gray200}"/>
-                            <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDarkText}"/>
+                            <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
                             <Setter Property="Opacity" Value="0.6"/>
                         </VisualState.Setters>
                     </VisualState>

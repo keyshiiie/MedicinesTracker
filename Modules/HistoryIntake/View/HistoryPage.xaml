@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.HistoryIntake.View.HistoryPage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.HistoryIntake.ViewModels"
+             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
+             x:DataType="viewModels:HistoryPageVM"
+             Title="История">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="10">
+            <!-- Индикатор загрузки -->
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               HeightRequest="50"
+                               WidthRequest="50"
+                               Color="{StaticResource Primary}" />
+
+            <!-- Фильтр по получателю -->
+            <Border Style="{StaticResource MedicineCardBorderStyle}">
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Фильтр по получателю:"
+                           Style="{StaticResource FieldTitleStyle}"/>
+
+                    <!-- Picker -->
+                    <Picker Grid.Column="0"
+                            Title="Выберите получателя"
+                            ItemsSource="{Binding Recipients}"
+                            SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                            ItemDisplayBinding="{Binding Name}"/>
+
+                    <!-- Кнопка сброса фильтра -->
+                    <Button Grid.Column="1"
+                            Text="Сбросить"
+                            Command="{Binding ClearFilterCommand}"
+                            IsVisible="{Binding IsFiltered}"
+                            Style="{StaticResource DefaultButtonStyle}"
+                            HorizontalOptions="End"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Список истории приема с группировкой по датам -->
+            <StackLayout BindableLayout.ItemsSource="{Binding FilteredIntakes}"
+                         Spacing="10"
+                         IsVisible="{Binding HasData}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:GroupedHistory">
+                        <VerticalStackLayout Spacing="5">
+                            <!-- Заголовок с датой -->
+                            <Label Text="{Binding Date}"
+                                   Style="{StaticResource CardTitleStyle}"/>
+
+                            <!-- Лекарства за эту дату -->
+                            <CollectionView ItemsSource="{Binding Medicines}"
+                                            SelectionMode="None"
+                                            EmptyView="Нет приёмов за эту дату">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:HistoryDto">
+                                        <Border Style="{StaticResource MedicineCardBorderStyle}">
+                                            <VerticalStackLayout Spacing="5">
+                                                <!-- Время и Статус -->
+                                                <HorizontalStackLayout Spacing="10">
+                                                    <Label Text="{Binding Time}" 
+                                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                                    <Label Text="{Binding Status}"
+                                                           TextColor="{Binding StatusColor}"
+                                                           FontAttributes="Bold"/>
+                                                </HorizontalStackLayout>
+
+                                                <!-- Название лекарства и получатель -->
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="{Binding NameMedicine}"
+                                                           Style="{StaticResource CardTitleStyle}"/>
+                                                    <Label Text="{Binding RecipientName}"
+                                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                                </VerticalStackLayout>
+
+                                                <!-- Дозировка и единица измерения -->
+                                                <HorizontalStackLayout Spacing="5">
+                                                    <Label Text="{Binding ActualDosage}"
+                                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                                    <Label Text="{Binding UnitName}"
+                                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                                </HorizontalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+
+                <!-- Сообщение, когда нет данных -->
+                <BindableLayout.EmptyView>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         VerticalOptions="Center"
+                                         Spacing="10"
+                                         Padding="20">
+                        <Label Text="{Binding EmptyMessage}"
+                               HorizontalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource Gray500}"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </BindableLayout.EmptyView>
+            </StackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

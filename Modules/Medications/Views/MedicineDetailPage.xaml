@@ -20,13 +20,13 @@
                 <HorizontalStackLayout Spacing="15">
                     <Image Source="medicine_card_icon.png"
                            Style="{StaticResource MedicineIconStyle}"/>
-                    <VerticalStackLayout Spacing="10" >
+                    <VerticalStackLayout Spacing="5" >
                         <StackLayout Spacing="5">
                             <Label Text="Основная информация"
                                    Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>
                         <HorizontalStackLayout Spacing="5">
-                            <Label Text="Редактировать основную информацию"
+                            <Label Text="Редактировать"
                                    Style="{StaticResource DetailLinkStyle}"/>
                             <Image Source="hint_swap_right.png"
                                    Style="{StaticResource DetailLinkIconStyle}"/>
@@ -49,14 +49,14 @@
                     <Image 
                         Source="medicine_box_filled.png"
                         Style="{StaticResource MedicineIconStyle}"/>
-                    <VerticalStackLayout Spacing="10" >
+                    <VerticalStackLayout Spacing="5" >
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="Запас"
                                 Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>
                         <HorizontalStackLayout Spacing="5">
-                            <Label Text="Редактировать запас"
+                            <Label Text="Редактировать"
                                    Style="{StaticResource DetailLinkStyle}"/>
                             <Image Source="hint_swap_right.png"
                                    Style="{StaticResource DetailLinkIconStyle}"/>
@@ -80,14 +80,14 @@
                     <Image 
                         Source="date_time.png"
                         Style="{StaticResource MedicineIconStyle}"/>
-                    <VerticalStackLayout Spacing="10" >
+                    <VerticalStackLayout Spacing="5" >
                         <StackLayout Spacing="5">
                             <Label 
-                                Text="График приёма лекарств"
+                                Text="Расписание приёма"
                                 Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>
                         <HorizontalStackLayout Spacing="5">
-                            <Label Text="Редактировать график приёма"
+                            <Label Text="Редактировать"
                                    Style="{StaticResource DetailLinkStyle}"/>
                             <Image Source="hint_swap_right.png"
                                    Style="{StaticResource DetailLinkIconStyle}"/>

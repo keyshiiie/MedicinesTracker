@@ -11,8 +11,8 @@ namespace MedicinesTracker.Repository
     }
     public class RecipientRepository : IRecipientRepository
     {
-        private readonly DBHandler _dbHandler;
-        public RecipientRepository(DBHandler dbHandler)
+        private readonly IDBHandler _dbHandler;
+        public RecipientRepository(IDBHandler dbHandler)
         {
             _dbHandler = dbHandler;
         }

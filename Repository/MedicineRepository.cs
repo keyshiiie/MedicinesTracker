@@ -12,11 +12,12 @@ namespace MedicinesTracker.Repository
         Task<int> AddMedicineAsync(MedicineModel medicineModel);
         Task<MedicineDetailDto?> GetMedicineDetailByIdAsync(int idMedicine);
         Task<MedicineModel?> GetMedicineByIdAsync(int idMedicine);
+        Task<IEnumerable<MedicineWithScheduleDto>> GetActiveMedicinesWithSchedulesAsync();
     }
     public class MedicineRepository : IMedicineRepository
     {
-        private readonly DBHandler _dbHandler;
-        public MedicineRepository(DBHandler dbHandler)
+        private readonly IDBHandler _dbHandler;
+        public MedicineRepository(IDBHandler dbHandler)
         {
             _dbHandler = dbHandler;
         }
@@ -93,9 +94,7 @@ namespace MedicinesTracker.Repository
                 m.Name,
                 m.IdUnit,
                 m.IdMethodAdmission,
-                m.IdRecipient,
-                m.CreatedAt,
-                m.UpdatedAt
+                m.IdRecipient
             FROM Medicine m
             WHERE m.IdMedicine = @IdMedicine";
 
@@ -155,5 +154,60 @@ namespace MedicinesTracker.Repository
             return newId;
         }
 
+        public async Task<IEnumerable<MedicineWithScheduleDto>> GetActiveMedicinesWithSchedulesAsync()
+        {
+            var query = @"
+        SELECT DISTINCT
+            m.IdMedicine,
+            m.Name AS MedicineName,
+            r.Name AS RecipientName,
+            u.Name AS UnitName,
+            m.IdUnit,
+            m.IdRecipient,
+            
+            -- Расписание лекарства
+            ms.IdSchedule,
+            ms.IdScheduleType,
+            st.Code AS ScheduleTypeCode,
+            st.Name AS ScheduleTypeName,
+            
+            ms.IdScheduleMode,
+            sm.Code AS ScheduleModeCode,
+            sm.Name AS ScheduleModeName,
+            
+            ms.IdRecurrencePattern,
+            rp.DaysInterval,
+            rp.Name AS RecurrencePatternName,
+            
+            ms.OneTimeDate,
+            ms.Dosage,
+            ms.DateStart,
+            ms.DateEnd,
+            ms.IsActive AS ScheduleIsActive,
+            
+            -- Дни недели для WEEKDAYS режима
+            GROUP_CONCAT(DISTINCT wd.IdDay) AS WeekDayIds,
+            GROUP_CONCAT(DISTINCT wd.Name) AS WeekDays,
+            
+            -- Время приема
+            GROUP_CONCAT(DISTINCT stm.Time) AS Times,
+            GROUP_CONCAT(DISTINCT stm.OrderInDay) AS TimeOrders
+            
+        FROM Medicine m
+        JOIN Recipient r ON m.IdRecipient = r.IdRecipient
+        JOIN Unit u ON m.IdUnit = u.IdUnit
+        LEFT JOIN MedicationSchedule ms ON m.IdMedicine = ms.IdMedicine AND ms.IsActive = 1
+        LEFT JOIN ScheduleType st ON ms.IdScheduleType = st.IdType
+        LEFT JOIN ScheduleMode sm ON ms.IdScheduleMode = sm.IdMode
+        LEFT JOIN RecurrencePattern rp ON ms.IdRecurrencePattern = rp.IdPattern
+        LEFT JOIN ScheduleWeekDays swd ON ms.IdSchedule = swd.IdSchedule
+        LEFT JOIN WeekDay wd ON swd.IdDay = wd.IdDay
+        LEFT JOIN ScheduleTime stm ON ms.IdSchedule = stm.IdSchedule AND stm.IsActive = 1
+        WHERE ms.IdSchedule IS NOT NULL  -- Только лекарства с расписанием
+        GROUP BY m.IdMedicine, m.Name, r.Name, u.Name, ms.IdSchedule
+        ORDER BY r.Name, m.Name";
+
+            return await _dbHandler.QueryAsync<MedicineWithScheduleDto>(query);
+        }
     }
 }

@@ -9,11 +9,12 @@ namespace MedicinesTracker.Repository
     {
         Task<int> AddScheduleTimeAsync(ScheduleTimeModel scheduleTimeModel);
         Task<int> UpdateScheduleTimeAsync(ScheduleTimeModel scheduleTimeModel);
+        Task<int> DeleteScheduleTimesAsync(int scheduleId);
     }
     public class ScheduleTimeRepository : IScheduleTimeRepository
     {
-        private readonly DBHandler _dbHandler;
-        public ScheduleTimeRepository(DBHandler dbHandler)
+        private readonly IDBHandler _dbHandler;
+        public ScheduleTimeRepository(IDBHandler dbHandler)
         {
             _dbHandler = dbHandler;
         }
@@ -21,7 +22,6 @@ namespace MedicinesTracker.Repository
         {
             var query = @"
             INSERT INTO ScheduleTime (
-                IdTime,
                 IdSchedule,
                 Time,
                 OrderInDay,
@@ -49,7 +49,6 @@ namespace MedicinesTracker.Repository
             var query = @"
             UPDATE ScheduleTime
             SET 
-                IdTime = @IdTime,
                 IdSchedule = @IdSchedule,
                 Time = @Time,
                 OrderInDay = @OrderInDay,
@@ -63,6 +62,12 @@ namespace MedicinesTracker.Repository
                 scheduleTimeModel.OrderInDay,
                 scheduleTimeModel.IsActive
             };
+            return await _dbHandler.ExecuteAsync(query, parameters);
+        }
+        public async Task<int> DeleteScheduleTimesAsync(int scheduleId)
+        {
+            var query = @"DELETE FROM ScheduleTime WHERE IdSchedule = @ScheduleId";
+            var parameters = new { ScheduleId = scheduleId };
             return await _dbHandler.ExecuteAsync(query, parameters);
         }
     }

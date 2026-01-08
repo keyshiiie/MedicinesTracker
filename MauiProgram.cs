@@ -7,6 +7,9 @@ using MedicinesTracker.ViewModels;
 using MedicinesTracker.Modules.Medications.ViewModels;
 using MedicinesTracker.Modules.Notifications.ViewModels;
 using MedicinesTracker.Modules.Settings.ViewModels;
+using MedicinesTracker.Services;
+using MedicinesTracker.Modules.HistoryIntake.ViewModels;
+using Plugin.LocalNotification;
 
 namespace MedicinesTracker
 {
@@ -17,6 +20,9 @@ namespace MedicinesTracker
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+#if ANDROID
+                .UseLocalNotification()
+#endif 
                 .UseMauiCommunityToolkit()
                 .ConfigureSyncfusionToolkit()
                 .ConfigureMauiHandlers(handlers =>
@@ -36,38 +42,42 @@ namespace MedicinesTracker
             builder.Configuration
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
-            // Получение строки подключения
-            var config = builder.Configuration;
-            string? connectionString = config.GetConnectionString("Default");
+            // 1. Регистрируем DatabaseService
+            builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
 
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new InvalidOperationException(
-                    "Строка подключения не найдена в appsettings.json. Проверьте секцию ConnectionStrings:Default.");
-            }
+            // 2. Регистрируем DBHandler с интерфейсом
+            builder.Services.AddSingleton<IDBHandler, DBHandler>();
 
-            builder.Services.AddSingleton<DBHandler>(
-                sp => new DBHandler(connectionString));
-
+            // 3. Регистрируем репозитории (обновляем типы конструкторов в репозиториях!)
             builder.Services.AddSingleton<IMedicineRepository, MedicineRepository>();
             builder.Services.AddSingleton<IReferencesDataRepository, ReferencesDataRepository>();
             builder.Services.AddSingleton<IRecipientRepository, RecipientRepository>();
             builder.Services.AddSingleton<IStockRepository, StockRepository>();
             builder.Services.AddSingleton<IMedicineScheduleRepository, MedicineScheduleRepository>();
+            builder.Services.AddSingleton<IIntakeRepository, IntakeRepository>();
 
-            
-            builder.Services.AddSingleton<IMedicineRepository, MedicineRepository>();
+            // 4. Регистрируем сервисы
+            builder.Services.AddSingleton<IScheduleService, ScheduleService>();
+            builder.Services.AddSingleton<IValidatorService, ValidatorService>();
+            builder.Services.AddSingleton<IScheduleTimeRepository, ScheduleTimeRepository>();
+            builder.Services.AddSingleton<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
+            builder.Services.AddSingleton<IntakeSchedulerService>();
+            builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
 
+            // 5. Регистрируем ViewModels
             builder.Services.AddSingleton<AppShellVM>();
-            builder.Services.AddSingleton<MedicineListVM>();
-            builder.Services.AddSingleton<TodayMedicineVM>();
-            builder.Services.AddSingleton<MedicineDetailVM>();
-            builder.Services.AddSingleton<BaseInfoVM>();
-            builder.Services.AddSingleton<MedicineScheduleVM>();
-            builder.Services.AddSingleton<StockInfoVM>();
-            builder.Services.AddSingleton<SettingsPageVM>();
-            builder.Services.AddSingleton<EditRecipientVM>();
-
+            builder.Services.AddTransient<MedicineListVM>();
+            builder.Services.AddTransient<TodayMedicineVM>();
+            builder.Services.AddTransient<MedicineDetailVM>();
+            builder.Services.AddTransient<BaseInfoVM>();
+            builder.Services.AddTransient<MedicineScheduleVM>();
+            builder.Services.AddTransient<StockInfoVM>();
+            builder.Services.AddTransient<SettingsPageVM>();
+            builder.Services.AddTransient<EditRecipientVM>();
+            builder.Services.AddTransient<HistoryPageVM>();
+            builder.Services.AddTransient<AcquaintanceVM>();
+            builder.Services.AddTransient<GreetingVM>();    
+            builder.Services.AddTransient<AboutAppVM>();
 #if DEBUG
             builder.Logging.AddDebug();
 #endif

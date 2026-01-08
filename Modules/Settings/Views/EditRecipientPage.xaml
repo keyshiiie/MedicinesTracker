@@ -10,11 +10,15 @@
         <VerticalStackLayout Spacing="5">
             <Label Text="Имя получателя" 
                    Style="{StaticResource CardDescriptionStyle}"/>
-            <Entry Text="{Binding Recipient.Name}"
-                   Style="{StaticResource EditFieldStyle}"
-                   Placeholder="Введите имя"/>
+            <Border Style="{StaticResource EditFielsBorderStyle}">
+                <Entry Text="{Binding Recipient.Name}"
+                       Style="{StaticResource EditFieldStyle}"
+                       Placeholder="Введите имя получателя"/>
+            </Border>
         </VerticalStackLayout>
-        <controls:SaveButton Command="{Binding SaveRecipientCommand}" HorizontalOptions="Fill" Grid.Row="2"/>
+        <controls:SaveButton Command="{Binding SaveRecipientCommand}" 
+                             HorizontalOptions="Fill" 
+                             Grid.Row="2"/>
         <Button Style="{StaticResource DeleteButtonStyle}"
                 Command="{Binding DeleteRecipientCommand}" 
                 Grid.Row="1" 

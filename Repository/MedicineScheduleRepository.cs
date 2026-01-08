@@ -1,23 +1,24 @@
 ﻿using MedicinesTracker.Models;
 using MedicinesTracker.Models.Dto;
+using System.Diagnostics;
 
 namespace MedicinesTracker.Repository
 {
     public interface IMedicineScheduleRepository
     {
-        Task<MedicineScheduleDto?> GetMedicineScheduleById(int idMedicine);
+        Task<MedicineScheduleDto?> GetMedicineScheduleById(int scheduleId);
         Task<int> AddMedicineShedule(MedicineScheduleModel scheduleModel);
         Task<int> UpdateMedicineScheduleAsync(MedicineScheduleModel scheduleModel);
     }
     public class MedicineScheduleRepository : IMedicineScheduleRepository
     {
-        private readonly DBHandler _dbHandler;
-        public MedicineScheduleRepository(DBHandler dbHandler)
+        private readonly IDBHandler _dbHandler;
+        public MedicineScheduleRepository(IDBHandler dbHandler)
         {
             _dbHandler = dbHandler;
         }
 
-        public async Task<MedicineScheduleDto?> GetMedicineScheduleById(int idMedicine)
+        public async Task<MedicineScheduleDto?> GetMedicineScheduleById(int scheduleId)
         {
             var query = @"
             SELECT
@@ -27,10 +28,12 @@ namespace MedicinesTracker.Repository
                 u.Name AS UnitName,
         
                 -- Тип расписания
+                st.IdType AS IdScheduleType,
                 st.Code AS ScheduleTypeCode,
                 st.Name AS ScheduleTypeName,
         
                 -- Режим расписания (только для RECURRING)
+                sm.IdMode AS IdScheduleMode,
                 sm.Code AS ScheduleModeCode,
                 sm.Name AS ScheduleModeName,
         
@@ -54,10 +57,7 @@ namespace MedicinesTracker.Repository
                 GROUP_CONCAT(stm.Time, ', ') AS Times,
         
                 -- Порядок времени в течение дня (для сортировки)
-                GROUP_CONCAT(stm.OrderInDay, ',') AS TimeOrders,
-        
-                ms.CreatedAt,
-                ms.UpdatedAt
+                GROUP_CONCAT(stm.OrderInDay, ',') AS TimeOrders
             FROM MedicationSchedule ms
             JOIN Medicine m ON ms.IdMedicine = m.IdMedicine
             JOIN Unit u ON m.IdUnit = u.IdUnit
@@ -75,18 +75,18 @@ namespace MedicinesTracker.Repository
     
             -- LEFT JOIN для времени приема
             LEFT JOIN ScheduleTime stm ON ms.IdSchedule = stm.IdSchedule
-            WHERE ms.IdMedicine = @IdMedicine
+            WHERE ms.IdSchedule = @IdSchedule
             GROUP BY
                 ms.IdSchedule, ms.IdMedicine, m.Name, u.Name,
                 st.Code, st.Name, 
                 sm.Code, sm.Name, 
                 rp.IdPattern, rp.Name, rp.DaysInterval,
                 ms.OneTimeDate, ms.Dosage, ms.DateStart, 
-                ms.DateEnd, ms.IsActive, ms.CreatedAt, ms.UpdatedAt
+                ms.DateEnd, ms.IsActive
             ORDER BY ms.DateStart DESC, ms.IdSchedule;
             ";
 
-            var parameters = new { IdMedicine = idMedicine };
+            var parameters = new { IdSchedule = scheduleId };
             return await _dbHandler.QueryFirstOrDefaultAsync<MedicineScheduleDto>(query, parameters);
         }
 
@@ -147,7 +147,7 @@ namespace MedicinesTracker.Repository
                 DateStart = @DateStart,
                 DateEnd = @DateEnd,
                 IsActive = @IsActive
-            WHERE IdSchedule = @IdSchedule";
+            WHERE IdSchedule = @IdSchedule;";
             var parameters = new
             {
                 scheduleModel.IdSchedule,

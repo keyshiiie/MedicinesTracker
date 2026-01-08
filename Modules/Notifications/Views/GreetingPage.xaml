@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Notifications.Views.GreetingPage"
+             Title="">
+
+    <Grid RowDefinitions="*, Auto" Margin="10">
+        <VerticalStackLayout Spacing="22" 
+                             VerticalOptions="Center" 
+                             Grid.Column="0">
+            <Image Source="heart.png" HeightRequest="150"/>
+            <Label Text="Добро пожаловать в Medicine Tracker!"
+                   Style="{StaticResource AcquaintanceTitleStyle}"/>
+            <Label Style="{StaticResource AcquaintanceDescriptionStyle}"
+                   Text="Мы рады приветствовать вас в нашем приложении, созданном для того, чтобы помочь вам заботиться о своем здоровье и не забывать о приеме лекарств. "/>
+        </VerticalStackLayout>
+        <Button Text="Продолжить" 
+                Padding="20,10"
+                Style="{StaticResource DefaultButtonStyle}"
+                Command="{Binding ContinueToAcquaintanceCommand}"
+                Grid.Row="1"/>
+    </Grid>
+</ContentPage>

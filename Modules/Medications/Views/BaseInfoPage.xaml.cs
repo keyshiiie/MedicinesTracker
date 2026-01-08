@@ -8,15 +8,17 @@ public partial class BaseInfoPage : ContentPage
 	public BaseInfoPage(BaseInfoVM viewModel)
 	{
 		InitializeComponent();
-        BindingContext = viewModel; 
-        Loaded += OnPageLoaded;
+        BindingContext = viewModel;
     }
 
-    private async void OnPageLoaded(object? sender, EventArgs e)
+    protected override async void OnAppearing()
     {
+        base.OnAppearing();
+
         try
         {
-            await ((BaseInfoVM)BindingContext).LoadData();
+            Debug.WriteLine("[BaseInfoPagePage] OnAppearing - обновление данных");
+            await ((BaseInfoVM)BindingContext).InitializeAsync();
         }
         catch (Exception ex)
         {

@@ -19,8 +19,20 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
             _recipientRepository = recipientRepository;
         }
 
+        public async Task InitializeAsync()
+        {
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MedicineListVM ERROR] {ex.Message}");
+            }
+        }
+
         [RelayCommand]
-        public async Task LoadData()
+        private async Task LoadDataAsync()
         {
             try
             {

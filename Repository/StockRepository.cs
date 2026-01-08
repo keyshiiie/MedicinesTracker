@@ -7,13 +7,14 @@ namespace MedicinesTracker.Repository
         Task<int> UpdateStockAsync(StockModel stockModel);
         Task<StockModel> GetStockByIdAsync(int idStock);
         Task<int> AddStockAsync(StockModel stockModel, int medicineId);
+        Task<int> UpdateCurrentQuantityAsync(int idStock, int quantity);
     }
     public class StockRepository : IStockRepository
     {
-        private readonly DBHandler _dbHandler;
-        public StockRepository(DBHandler bHandler)
+        private readonly IDBHandler _dbHandler;
+        public StockRepository(IDBHandler dbHandler)
         {
-            _dbHandler = bHandler;
+            _dbHandler = dbHandler;
         }
         public async Task<int> UpdateStockAsync(StockModel stockModel)
         {
@@ -30,6 +31,21 @@ namespace MedicinesTracker.Repository
                 stockModel.CurrentQuantity,
                 stockModel.ReminderEnabled
             };
+            return await _dbHandler.ExecuteAsync(query, parameters);
+        }
+        public async Task<int> UpdateCurrentQuantityAsync(int idStock, int quantity)
+        {
+            var query = @"UPDATE Stock 
+            SET
+            CurrentQuantity = @CurrentQuantity
+            WHERE IdStock = @IdStock";
+
+            var parameters = new
+            {
+                IdStock = idStock,
+                CurrentQuantity = quantity 
+            };
+
             return await _dbHandler.ExecuteAsync(query, parameters);
         }
         public async Task<int> AddStockAsync(StockModel stockModel, int IdMedicine)
@@ -68,5 +84,7 @@ namespace MedicinesTracker.Repository
 
             return stock;
         }
+
+        
     }
 }

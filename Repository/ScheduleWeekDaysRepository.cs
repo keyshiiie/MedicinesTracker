@@ -9,11 +9,12 @@ namespace MedicinesTracker.Repository
     {
         Task<int> AddScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel);
         Task<int> UpdateScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel);
+        Task<int> DeleteScheduleWeekDaysAsync(int scheduleId);
     }
     public class ScheduleWeekDaysRepository : IScheduleWeekDaysRepository
     {
-        private readonly DBHandler _dbHandler;
-        public ScheduleWeekDaysRepository(DBHandler dbHandler)
+        private readonly IDBHandler _dbHandler;
+        public ScheduleWeekDaysRepository(IDBHandler dbHandler)
         {
             _dbHandler = dbHandler;
         }
@@ -43,6 +44,12 @@ namespace MedicinesTracker.Repository
                 scheduleWeekDaysModel.IdSchedule,
                 scheduleWeekDaysModel.IdDay
             };
+            return await _dbHandler.ExecuteAsync(query, parameters);
+        }
+        public async Task<int> DeleteScheduleWeekDaysAsync(int scheduleId)
+        {
+            var query = @"DELETE FROM ScheduleWeekDays WHERE IdSchedule = @ScheduleId";
+            var parameters = new { ScheduleId = scheduleId };
             return await _dbHandler.ExecuteAsync(query, parameters);
         }
     }

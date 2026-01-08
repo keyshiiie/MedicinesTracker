@@ -28,9 +28,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                Debug.WriteLine("[MedicineListVM] InitializeAsync начат");
                 await LoadDataAsync();
-                Debug.WriteLine("[MedicineListVM] InitializeAsync завершен");
             }
             catch (Exception ex)
             {

@@ -6,6 +6,7 @@
     xmlns:medicationsViews="clr-namespace:MedicinesTracker.Modules.Medications.Views"
     xmlns:notificationsViews="clr-namespace:MedicinesTracker.Modules.Notifications.Views"
     xmlns:settingsViews="clr-namespace:MedicinesTracker.Modules.Settings.Views"
+    xmlns:historyViews="clr-namespace:MedicinesTracker.Modules.HistoryIntake.View"
     Title="MedicinesTracker"
     Shell.FlyoutBehavior="Disabled">
 
@@ -16,12 +17,12 @@
         <Tab Title="Лекарства" Icon="medicine.png">
             <ShellContent ContentTemplate="{DataTemplate medicationsViews:MedicineListPage}" Route="medicines" />
         </Tab>
-        <!--<Tab Title="Сегодня" Icon="list_check_line.png">
-            <ShellContent ContentTemplate="{DataTemplate views:TodayMedicineListPage}" Route="todayMedicines" />
+        <Tab Title="Сегодня" Icon="list_check_line.png">
+            <ShellContent ContentTemplate="{DataTemplate notificationsViews:TodayMedicinePage}" Route="todayMedicines" />
         </Tab>
         <Tab Title="История" Icon="calendar.png">
-            <ShellContent ContentTemplate="{DataTemplate views:HistoryListPage}" Route="history" />
-        </Tab>-->
+            <ShellContent ContentTemplate="{DataTemplate historyViews:HistoryPage}" Route="history" />
+        </Tab>
         <Tab Title="Уведомления" Icon="bell_notification_outline.png">
             <ShellContent ContentTemplate="{DataTemplate notificationsViews:NotificationListPage}" Route="notification" />
         </Tab>

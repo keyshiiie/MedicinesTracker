@@ -20,16 +20,17 @@
                 <DataTemplate x:DataType="models:RecipientModel">
                     <!-- Обертка для отступов -->
                     <VerticalStackLayout>
-                        <Border Style="{StaticResource MedicineCardBorderStyle}" Padding="10,0,0,0">
+                        <Border Style="{StaticResource MedicineCardBorderStyle}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding OpenEditPageCommand, 
+                                    Source={RelativeSource AncestorType={x:Type viewModels:SettingsPageVM}},
+                                    x:DataType=viewModels:SettingsPageVM}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="*,Auto">
                                 <Label Text="{Binding Name}" 
                                        Style="{StaticResource FieldTitleStyle}"/>
-                                <Button Style="{StaticResource EditButtonStyle}" 
-                                        Grid.Column="1"
-                                        Command="{Binding OpenEditPageCommand, 
-                                        Source={RelativeSource AncestorType={x:Type viewModels:SettingsPageVM}},
-                                        x:DataType=viewModels:SettingsPageVM}"
-                                        CommandParameter="{Binding .}"/>    
                             </Grid>
                         </Border>
                     </VerticalStackLayout>

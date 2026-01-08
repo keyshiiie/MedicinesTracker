@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Notifications.Views.TodayMedicinePage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Notifications.ViewModels"
+             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
+             x:DataType="viewModels:TodayMedicineVM"
+             Title="Сегодня">
+
+    <RefreshView IsRefreshing="{Binding IsRefreshing}"
+                 Command="{Binding RefreshCommand}">
+        <ScrollView>
+            <VerticalStackLayout>
+                <!-- Индикатор загрузки -->
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   IsVisible="{Binding IsLoading}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   HeightRequest="50"
+                                   WidthRequest="50"
+                                   Color="{StaticResource Primary}" />
+
+                <!-- Используем StackLayout с BindableLayout -->
+                <StackLayout BindableLayout.ItemsSource="{Binding GroupedMedicines}"
+                             Spacing="10">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:GroupedTodayMedicine">
+                            <VerticalStackLayout Spacing="5">
+                                <!-- Заголовок с именем получателя -->
+                                <Label Text="{Binding RecipientName}"
+                                       Style="{StaticResource CardDescriptionStyle}"/>
+                                <!-- Лекарства получателя -->
+                                <CollectionView ItemsSource="{Binding Medicines}"
+                                                SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="models:TodayMedicineDto">
+                                            <Border Style="{StaticResource MedicineCardBorderStyle}">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <VerticalStackLayout VerticalOptions="Center"
+                                                                         HorizontalOptions="Fill"
+                                                                         Spacing="5">
+                                                        <HorizontalStackLayout Spacing="10">
+                                                            <Label Text="{Binding MedicineName}"
+                                                                   Style="{StaticResource TimeAwareFieldTitleStyle}"
+                                                                   VerticalOptions="Center"
+                                                                   LineBreakMode="TailTruncation"/>
+                                                            <HorizontalStackLayout VerticalOptions="Center"
+                                                                                   Spacing="2">
+                                                                <Label Text="{Binding Dosage}"
+                                                                       Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+                                                                <Label Text="{Binding UnitName}"
+                                                                       Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+                                                            </HorizontalStackLayout>
+                                                        </HorizontalStackLayout>
+                                                        <Label Text="{Binding Time}"
+                                                               Style="{StaticResource TimeAwareCardDescriptionStyle}"
+                                                               HorizontalOptions="Start"/>
+                                                    </VerticalStackLayout>
+                                                    <Button Grid.Column="1"
+                                                            Command="{Binding MarkIntakeCommand, 
+                                                            Source={RelativeSource AncestorType={x:Type viewModels:TodayMedicineVM}},
+                                                            x:DataType=viewModels:TodayMedicineVM}"
+                                                            CommandParameter="{Binding .}"
+                                                            Text="Отметить"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </StackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>
