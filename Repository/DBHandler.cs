@@ -12,18 +12,11 @@ namespace MedicinesTracker.Repository
         Task<IEnumerable<T>> QueryAsync<T>(string query, object? parameters = null);
         Task<T?> QueryFirstOrDefaultAsync<T>(string query, object? parameters = null);
         Task<int> ExecuteAsync(string query, object? parameters = null);
-        Task<T> ExecuteScalarAsync<T>(string sql, object? parameters = null);
+        Task<T?> ExecuteScalarAsync<T>(string sql, object? parameters = null);
     }
 
     public class DBHandler : IDBHandler
     {
-        //private readonly string _connectionString;
-        //public DBHandler(string connectionString)
-        //{
-        //    _connectionString = connectionString;
-        //}
-
-        // ЗАМЕНА: используем IDatabaseService вместо строки подключения
         private readonly IDatabaseService _databaseService;
 
         public DBHandler(IDatabaseService databaseService)
@@ -31,106 +24,43 @@ namespace MedicinesTracker.Repository
             _databaseService = databaseService;
         }
 
-        // Вспомогательный метод для получения соединения
-        private async Task<SqliteConnection> GetOpenConnectionAsync()
+        // Вспомогательный метод для выполнения операций с открытым соединением
+        private async Task<T> ExecuteWithConnectionAsync<T>(Func<SqliteConnection, Task<T>> operation)
         {
-            return await _databaseService.GetConnectionAsync();
+            using var connection = await _databaseService.GetOpenConnectionAsync();
+            return await operation(connection);
         }
 
-        // для запросов select, возвращающих список
         public async Task<IEnumerable<T>> QueryAsync<T>(string query, object? parameters = null)
         {
-            try
+            return await ExecuteWithConnectionAsync(async connection =>
             {
-                //using var connection = new SqliteConnection(_connectionString);
-                using var connection = await GetOpenConnectionAsync();
                 return await connection.QueryAsync<T>(query, parameters);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DATABASE ERROR] {query} - {ex.Message}");
-                throw;
-            }
+            });
         }
 
-        // для запросов select, возвращающих одно значение
         public async Task<T?> QueryFirstOrDefaultAsync<T>(string query, object? parameters = null)
         {
-            try
+            return await ExecuteWithConnectionAsync(async connection =>
             {
-                //using var connection = new SqliteConnection(_connectionString);
-                using var connection = await GetOpenConnectionAsync();
                 return await connection.QueryFirstOrDefaultAsync<T>(query, parameters);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DATABASE ERROR] {query} - {ex.Message}");
-                throw;
-            }
+            });
         }
 
-        // для запросов insert,update,delete
         public async Task<int> ExecuteAsync(string query, object? parameters = null)
         {
-            try
+            return await ExecuteWithConnectionAsync(async connection =>
             {
-                //using var connection = new SqliteConnection(_connectionString);
-                using var connection = await GetOpenConnectionAsync();
                 return await connection.ExecuteAsync(query, parameters);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DATABASE ERROR] {query} - {ex.Message}");
-                throw;
-            }
+            });
         }
 
-        public async Task<T> ExecuteScalarAsync<T>(string sql, object? parameters = null)
+        public async Task<T?> ExecuteScalarAsync<T>(string sql, object? parameters = null)
         {
-            //using var connection = new SqliteConnection(_connectionString);
-            //await connection.OpenAsync();
-            using var connection = await GetOpenConnectionAsync();
-
-            using var command = new SqliteCommand(sql, connection);
-
-            // Добавляем параметры, если они переданы
-            if (parameters != null)
+            return await ExecuteWithConnectionAsync(async connection =>
             {
-                foreach (var prop in parameters.GetType().GetProperties())
-                {
-                    command.Parameters.AddWithValue(prop.Name, prop.GetValue(parameters) ?? DBNull.Value);
-                }
-            }
-
-            try
-            {
-                var result = await command.ExecuteScalarAsync();
-
-                // Обрабатываем случай NULL из базы
-                if (result == null || result == DBNull.Value)
-                {
-                    // Для nullable-типов возвращаем default
-                    if (default(T) != null || Nullable.GetUnderlyingType(typeof(T)) != null)
-                    {
-                        return default!;
-                    }
-
-                    throw new InvalidOperationException("Cannot convert NULL to non-nullable type");
-                }
-
-                // Преобразуем результат к требуемому типу
-                return (T)Convert.ChangeType(result, typeof(T));
-            }
-            catch (SqliteException ex)
-            {
-                Debug.WriteLine($"[DATABASE ERROR] {sql} - {ex.Message}");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[DATABASE ERROR] {sql} - {ex.Message}");
-                throw;
-            }
+                return await connection.ExecuteScalarAsync<T?>(sql, parameters);
+            });
         }
     }
 }

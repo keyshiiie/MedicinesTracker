@@ -318,49 +318,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
-        [RelayCommand]
-        private async Task LoadDataAsync()
-        {
-            try
-            {
-                Debug.WriteLine($"LoadData: MedicineId={MedicineId}, ScheduleId={ScheduleId}, IsEditingExisting={IsEditingExisting}");
-
-                if (!ScheduleTypes.Any() || !WeekDays.Any() || !RecurrencePatterns.Any())
-                {
-                    await LoadReferenceData();
-                }
-
-                if (IsEditingExisting && ScheduleId > 0)
-                {
-                    // Редактирование: загружаем по ScheduleId
-                    Debug.WriteLine($"Загружаем данные для редактирования (ScheduleId={ScheduleId})");
-                    await LoadMedicineDataAsync(ScheduleId);
-                }
-                else if (MedicineId > 0)
-                {
-                    // Добавление: MedicineId должен быть передан
-                    Debug.WriteLine($"Добавление нового расписания для MedicineId={MedicineId}");
-                    ResetForm();
-
-                    // Убедимся, что MedicineId установлен в DTO
-                    MedicineSchedule.IdMedicine = MedicineId;
-                }
-                else
-                {
-                    Debug.WriteLine("Ошибка: не указан ни MedicineId, ни ScheduleId");
-                    await Shell.Current.DisplayAlertAsync("Ошибка",
-                        "Не указано лекарство для создания расписания", "OK");
-                    await Shell.Current.GoToAsync("..");
-                }
-            }
-            catch (Exception ex)
-            {
-                await Shell.Current.DisplayAlertAsync("Ошибка",
-                    $"Не удалось загрузить данные: {ex.Message}", "OK");
-            }
-        }
-
-        private async Task LoadMedicineDataAsync(int medicineId)
+        private async Task LoadMedicineDataAsync(int scheduleId)
         {
             try
             {
@@ -449,8 +407,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
                 else
                 {
+                    // Если расписание не найдено, не нужно сбрасывать форму
+                    // Показываем ошибку и возвращаемся назад
                     await Shell.Current.DisplayAlertAsync("Ошибка",
                         "Расписание для лекарства не найдено", "OK");
+                    await Shell.Current.GoToAsync("..");
+                    return;
                 }
             }
             catch (Exception ex)
@@ -482,6 +444,53 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             UpdateTimesText();
 
             UiState.Reset();
+        }
+
+        [RelayCommand]
+        private async Task LoadDataAsync()
+        {
+            try
+            {
+                Debug.WriteLine($"LoadData: MedicineId={MedicineId}, ScheduleId={ScheduleId}, IsEditingExisting={IsEditingExisting}");
+
+                if (!ScheduleTypes.Any() || !WeekDays.Any() || !RecurrencePatterns.Any())
+                {
+                    await LoadReferenceData();
+                }
+
+                if (IsEditingExisting && ScheduleId > 0)
+                {
+                    // Редактирование: загружаем по ScheduleId
+                    Debug.WriteLine($"Загружаем данные для редактирования (ScheduleId={ScheduleId})");
+                    await LoadMedicineDataAsync(ScheduleId);
+                }
+                else if (MedicineId > 0)
+                {
+                    // Добавление: MedicineId должен быть передан
+                    Debug.WriteLine($"Добавление нового расписания для MedicineId={MedicineId}");
+
+                    // Сначала сбрасываем форму
+                    ResetForm();
+
+                    // Затем устанавливаем даты по умолчанию
+                    SetDefaultDates();
+
+                    // Убедимся, что MedicineId установлен в DTO
+                    MedicineSchedule.IdMedicine = MedicineId;
+                }
+                else
+                {
+                    Debug.WriteLine("Ошибка: не указан ни MedicineId, ни ScheduleId");
+                    await Shell.Current.DisplayAlertAsync("Ошибка",
+                        "Не указано лекарство для создания расписания", "OK");
+                    await Shell.Current.GoToAsync("..");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlertAsync("Ошибка",
+                    $"Не удалось загрузить данные: {ex.Message}", "OK");
+            }
         }
 
         private async Task LoadReferenceData()
@@ -528,7 +537,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                var scheduleTypes = await _referencesDateRepository.GetAllSheduleTypeAsync();
+                var scheduleTypes = await _referencesDateRepository.GetAllScheduleTypeAsync();
                 ScheduleTypes = new ObservableCollection<ScheduleTypeModel>(scheduleTypes);
             }
             catch (Exception ex)
@@ -597,6 +606,32 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             {
                 await Shell.Current.DisplayAlertAsync("Ошибка",
                     $"Не удалось сохранить расписание: {ex.Message}", "OK");
+            }
+        }
+
+        private void SetDefaultDates()
+        {
+            var today = DateTime.Now.Date;
+
+            // Для одноразового расписания устанавливаем текущую дату
+            if (!IsEditingExisting && (MedicineSchedule.OneTimeDate == null ||
+                MedicineSchedule.OneTimeDate == string.Empty))
+            {
+                MedicineSchedule.OneTimeDate = today.ToString("yyyy-MM-dd");
+            }
+
+            // Для повторяющегося расписания
+            if (!IsEditingExisting && (MedicineSchedule.DateStart == null ||
+                MedicineSchedule.DateStart == string.Empty))
+            {
+                MedicineSchedule.DateStart = today.ToString("yyyy-MM-dd");
+            }
+
+            // Дата окончания - через месяц от сегодняшней
+            if (!IsEditingExisting && (MedicineSchedule.DateEnd == null ||
+                MedicineSchedule.DateEnd == string.Empty))
+            {
+                MedicineSchedule.DateEnd = today.AddMonths(1).ToString("yyyy-MM-dd");
             }
         }
     }

@@ -1,24 +1,24 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Modules.HistoryIntake.View.HistoryPage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.HistoryIntake.ViewModels"
              xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
              x:DataType="viewModels:HistoryPageVM"
-             Title="История">
+             Title = "История" >
 
     <ScrollView>
         <VerticalStackLayout Spacing="10">
-            <!-- Индикатор загрузки -->
-            <ActivityIndicator IsRunning="{Binding IsLoading}"
+            <!--Индикатор загрузки-->
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                HeightRequest="50"
                                WidthRequest="50"
-                               Color="{StaticResource Primary}" />
+                               Color="{StaticResource Primary}"/>
 
-            <!-- Фильтр по получателю -->
+                <!--Фильтр по получателю -->
             <Border Style="{StaticResource MedicineCardBorderStyle}">
                 <VerticalStackLayout Spacing="5">
                     <Label Text="Фильтр по получателю:"
@@ -46,9 +46,9 @@
                          Spacing="10"
                          IsVisible="{Binding HasData}">
                 <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="models:GroupedHistory">
-                        <VerticalStackLayout Spacing="5">
-                            <!-- Заголовок с датой -->
+                    <DataTemplate x:DataType="models:GroupedHistory" >
+                        <VerticalStackLayout Spacing = "5" >
+                            <!--Заголовок с датой -->
                             <Label Text="{Binding Date}"
                                    Style="{StaticResource CardTitleStyle}"/>
 
@@ -58,9 +58,9 @@
                                             EmptyView="Нет приёмов за эту дату">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:HistoryDto">
-                                        <Border Style="{StaticResource MedicineCardBorderStyle}">
-                                            <VerticalStackLayout Spacing="5">
-                                                <!-- Время и Статус -->
+                                        <Border Style = "{StaticResource MedicineCardBorderStyle}" >
+                                            <VerticalStackLayout Spacing = "5" >
+                                                <!--Время и Статус -->
                                                 <HorizontalStackLayout Spacing="10">
                                                     <Label Text="{Binding Time}" 
                                                            Style="{StaticResource CardDescriptionStyle}"/>
@@ -76,7 +76,8 @@
                                                     <Label Text="{Binding RecipientName}"
                                                            Style="{StaticResource CardDescriptionStyle}"/>
                                                 </VerticalStackLayout>
-
+                                                <Label Text="{Binding TakenDateTime}"
+                                                       Style="{StaticResource CardTitleStyle}"/>
                                                 <!-- Дозировка и единица измерения -->
                                                 <HorizontalStackLayout Spacing="5">
                                                     <Label Text="{Binding ActualDosage}"

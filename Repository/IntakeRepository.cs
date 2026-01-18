@@ -1,5 +1,14 @@
-﻿using MedicinesTracker.Models;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MedicinesTracker.Models;
 using MedicinesTracker.Models.Dto;
+using Microsoft.Data.Sqlite;
+using Syncfusion.Maui.Toolkit.Carousel;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Text;
 namespace MedicinesTracker.Repository
 {
     public interface IIntakeRepository
@@ -24,43 +33,37 @@ namespace MedicinesTracker.Repository
         public async Task<IEnumerable<HistoryDto>> GetAllIntakeAsync()
         {
             var query = @"
-            SELECT
-                i.IdIntake,
-                m.IdMedicine,
-                m.Name AS NameMedicine,
-                i.IsCompleted,
-                i.IdSchedule,
-                st.IdTime,
-                st.OrderInDay,
-                i.Date,
-                i.Time,
-                i.ActualDosage,
-                m.IdUnit,
-                r.Name AS RecipientName,
-                u.Name AS UnitName,
-                -- Вычисляем статус прямо в запросе
-                CASE 
-                    WHEN i.IsCompleted = 1 THEN 'Принято'
-                    WHEN i.Date < date('now') THEN 'Пропущено'
-                    WHEN i.Date = date('now') AND i.Time < time('now') THEN 'Пропущено'
-                    WHEN i.Date = date('now') AND i.Time >= time('now') THEN 'Ожидает'
-                    ELSE 'Запланировано'
-                END AS Status
-            FROM Intake i 
-            JOIN Medicine m ON i.IdMedicine = m.IdMedicine
-            JOIN Unit u ON m.IdUnit = u.IdUnit
-            JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-            JOIN ScheduleTime st ON st.IdTime = i.IdScheduleTime
-            WHERE i.Date <= date('now')  -- Только записи до текущей даты включительно
-            ORDER BY i.Date DESC, i.Time DESC";
+    SELECT
+        i.IdIntake,
+        m.IdMedicine,
+        m.Name AS NameMedicine,
+        i.IsCompleted,
+        i.IdSchedule,
+        i.IdScheduleTime,
+        st.OrderInDay,
+        i.Date,
+        i.Time,
+        i.TakenDateTime,
+        i.ActualDosage,
+        m.IdUnit,
+        r.Name AS RecipientName,
+        u.Name AS UnitName,
+        r.IdRecipient
+    FROM Intake i 
+    JOIN Medicine m ON i.IdMedicine = m.IdMedicine
+    JOIN Unit u ON m.IdUnit = u.IdUnit
+    JOIN Recipient r ON m.IdRecipient = r.IdRecipient
+    LEFT JOIN ScheduleTime st ON st.IdTime = i.IdScheduleTime  -- Важно: IdTime = IdScheduleTime
+    ORDER BY i.Date DESC, i.Time DESC";
 
             return await _dbHandler.QueryAsync<HistoryDto>(query);
         }
+
         public async Task<int> AddIntakeAsync(IntakeModel intakeModel)
         {
             var query = @"INSERT INTO Intake 
-            (IdMedicine, IsCompleted, IdSchedule, IdScheduleTime, Date, Time, ActualDosage)
-            VALUES (@IdMedicine, @IsCompleted, @IdSchedule, @IdScheduleTime, @Date, @Time, @ActualDosage);
+            (IdMedicine, IsCompleted, IdSchedule, IdScheduleTime, Date, Time, TakenDateTime, ActualDosage)
+            VALUES (@IdMedicine, @IsCompleted, @IdSchedule, @IdScheduleTime, @Date, @Time, @TakenDateTime, @ActualDosage);
             SELECT LAST_INSERT_ROWID();";
 
             var parameters = new
@@ -70,6 +73,7 @@ namespace MedicinesTracker.Repository
                 intakeModel.IdSchedule,
                 intakeModel.IdScheduleTime,
                 Date = intakeModel.Date, // Уже в формате yyyy-MM-dd
+                TakenDateTime = intakeModel.TakenDateTime,
                 intakeModel.Time,
                 intakeModel.ActualDosage
             };
@@ -79,17 +83,19 @@ namespace MedicinesTracker.Repository
         public async Task<int> UpdateIntakeAsync(IntakeModel intakeModel)
         {
             var query = @"UPDATE Intake 
-            SET IsCompleted = @IsCompleted, 
-                Date = @Date,
-                Time = @Time
-            WHERE IdIntake = @IdIntake";
+    SET IsCompleted = @IsCompleted,
+        Time = @Time,
+        TakenDateTime = @TakenDateTime,
+        ActualDosage = @ActualDosage  
+    WHERE IdIntake = @IdIntake";
 
             var parameters = new
             {
                 intakeModel.IdIntake,
                 intakeModel.IsCompleted,
-                Date = intakeModel.Date, // уже в формате "yyyy-MM-dd"
-                Time = intakeModel.Time, // уже в формате "HH:mm:ss"
+                Time = intakeModel.Time,
+                TakenDateTime = intakeModel.TakenDateTime,
+                ActualDosage = intakeModel.ActualDosage  // Добавьте если есть
             };
             return await _dbHandler.ExecuteAsync(query, parameters);
         }
@@ -281,6 +287,7 @@ namespace MedicinesTracker.Repository
             i.IdScheduleTime,
             i.Date,
             i.Time,
+            i.TakenDateTime,
             i.ActualDosage
         FROM Intake i
         WHERE i.IdMedicine = @MedicineId 
@@ -302,6 +309,7 @@ namespace MedicinesTracker.Repository
             i.IdScheduleTime,
             i.Date,
             i.Time,
+            i.TakenDateTime,
             i.ActualDosage
         FROM Intake i
         WHERE i.Date = @Date
@@ -322,9 +330,9 @@ namespace MedicinesTracker.Repository
         public async Task<int> DeleteFutureIntakesAsync(DateTime fromDate)
         {
             var query = @"
-        DELETE FROM Intake 
-        WHERE Date >= @FromDate 
-          AND IsCompleted = 0";
+            DELETE FROM Intake 
+            WHERE Date >= @FromDate 
+            AND IsCompleted = 0";
 
             var parameters = new { FromDate = fromDate.ToString("yyyy-MM-dd") };
             return await _dbHandler.ExecuteAsync(query, parameters);
