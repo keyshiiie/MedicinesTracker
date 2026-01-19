@@ -4,6 +4,7 @@ using MedicinesTracker.Models;
 using MedicinesTracker.Models.Dto;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
+using Plugin.LocalNotification;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
         private readonly IScheduleService _scheduleService;
         private readonly IIntakeRepository _intakeRepository;
         private readonly IStockRepository _stockRepository;
+        private readonly INotificationSchedulerService _notificationService;
         private readonly IntakeSchedulerService? _schedulerService; // Делаем nullable
 
         [ObservableProperty]
@@ -26,16 +28,19 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
         [ObservableProperty]
         private bool _isRefreshing;
 
+        // В TodayMedicineVM.cs обновите конструктор:
         public TodayMedicineVM(
             IScheduleService scheduleService,
             IIntakeRepository intakeRepository,
             IStockRepository stockRepository,
-            IntakeSchedulerService? schedulerService = null)
+            IntakeSchedulerService? schedulerService = null,
+            INotificationSchedulerService? notificationService = null) // Добавьте этот параметр
         {
             _scheduleService = scheduleService;
             _intakeRepository = intakeRepository;
             _schedulerService = schedulerService;
             _stockRepository = stockRepository;
+            _notificationService = notificationService; // Сохраните
         }
 
         public async Task InitializeAsync()
@@ -173,11 +178,16 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
                     // Обновляем количество в запасе
                     await _stockRepository.UpdateCurrentQuantityAsync(medicine.IdStock, newQuantity);
 
+                    // ПЕРЕПЛАНИРУЕМ УВЕДОМЛЕНИЯ
+                    if (_notificationService != null)
+                    {
+                        await _notificationService.ScheduleAllNotificationsAsync();
+                    }
+
                     await Shell.Current.DisplayAlertAsync("Успех",
                         $"Приём лекарства отмечен. Остаток: {newQuantity}",
                         "OK");
 
-                    // Обновляем данные после отметки
                     await LoadDataAsync();
                 }
                 else
@@ -235,5 +245,77 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
 
             return result;
         }
+
+        [RelayCommand]
+        private async Task TestNotificationAsync()
+        {
+            try
+            {
+                // Создаем тестовое уведомление на 2 минуты вперед
+                var testTime = DateTime.Now.AddMinutes(2);
+
+                // Создаем тестовое лекарство
+                var testMedicine = new MedicineWithScheduleDto
+                {
+                    IdMedicine = 999,
+                    MedicineName = "Тестовое лекарство",
+                    Dosage = 1,
+                    RecipientName = "Тест",
+                    Times = "13:12",
+                    ScheduleIsActive = true,
+                    ScheduleTypeCode = "RECURRING",
+                    ScheduleModeCode = "INTERVAL",
+                    DaysInterval = 1,
+                    DateStart = DateTime.Today.ToString("yyyy-MM-dd")
+                };
+
+                System.Diagnostics.Debug.WriteLine($"Тест: планирую уведомление на {testTime}");
+
+                // Используем reflection чтобы вызвать private метод
+                var method = typeof(NotificationSchedulerService).GetMethod("ScheduleNotificationAsync",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                if (method != null && _notificationService != null)
+                {
+                    method.Invoke(_notificationService, new object[] { testMedicine, testTime });
+                    await Shell.Current.DisplayAlertAsync("Тест",
+                        $"Уведомление запланировано на {testTime:HH:mm}. Подождите 2 минуты.", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка теста: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
+        private async Task DebugNotificationAsync()
+        {
+            try
+            {
+                if (_notificationService == null)
+                {
+                    await Shell.Current.DisplayAlertAsync("Ошибка", "NotificationService не инициализирован", "OK");
+                    return;
+                }
+
+                // Вызываем метод отладки через reflection
+                var method = typeof(NotificationSchedulerService).GetMethod("DebugLogMedicinesAsync",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
+                if (method != null)
+                {
+                    await (Task)method.Invoke(_notificationService, null);
+                    await Shell.Current.DisplayAlertAsync("Отладка",
+                        "Проверьте логи в Output Window", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка отладки: {ex.Message}");
+            }
+        }
+
+
     }
 }

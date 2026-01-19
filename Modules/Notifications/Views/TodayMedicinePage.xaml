@@ -71,6 +71,12 @@
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </StackLayout>
+                <Button 
+    Text="📋 Отладка уведомлений" 
+    Command="{Binding DebugNotificationCommand}"
+    Margin="10"
+    BackgroundColor="LightGray"
+    TextColor="Black" />
             </VerticalStackLayout>
         </ScrollView>
     </RefreshView>

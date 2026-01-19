@@ -103,9 +103,49 @@ namespace MedicinesTracker
         {
             base.OnStart();
 
-            _schedulerService = _serviceProvider.GetRequiredService<IntakeSchedulerService>();
-            await _schedulerService.InitializeAsync();
-            StartBackgroundCheck();
+            try
+            {
+                // Запрашиваем разрешение на уведомления
+                bool hasPermission = await NotificationPermissionService.CheckAndRequestAsync();
+                System.Diagnostics.Debug.WriteLine($"Разрешение на уведомления: {hasPermission}");
+
+                if (!hasPermission)
+                {
+                    // Показываем предупреждение, что уведомления не будут работать
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool openSettings = await Application.Current.MainPage.DisplayAlertAsync(
+                            "Уведомления отключены",
+                            "Вы не предоставили разрешение на уведомления. " +
+                            "Напоминания о приеме лекарств не будут работать.\n\n" +
+                            "Хотите открыть настройки, чтобы включить уведомления?",
+                            "Открыть настройки",
+                            "Позже");
+
+                        if (openSettings)
+                        {
+                            NotificationPermissionService.OpenAppSettings();
+                        }
+                    });
+                }
+
+                // Инициализируем планировщик приемов
+                _schedulerService = _serviceProvider.GetRequiredService<IntakeSchedulerService>();
+                System.Diagnostics.Debug.WriteLine("Инициализируем IntakeSchedulerService...");
+                await _schedulerService.InitializeAsync();
+
+                // Инициализируем уведомления
+                var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
+                System.Diagnostics.Debug.WriteLine("Инициализируем NotificationSchedulerService...");
+                await notificationService.InitializeAsync();
+
+                StartBackgroundCheck();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка при запуске: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
+            }
         }
 
         protected override async void OnResume()
@@ -117,6 +157,10 @@ namespace MedicinesTracker
             {
                 await _schedulerService.CheckAndUpdateAsync();
             }
+
+            // Перепланируем уведомления при возвращении в приложение
+            var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
+            await notificationService.ScheduleAllNotificationsAsync();
         }
 
         private void StartBackgroundCheck()

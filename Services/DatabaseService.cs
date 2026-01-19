@@ -318,7 +318,7 @@ namespace MedicinesTracker.Services
                     Time TEXT NOT NULL,
                     TakenDateTime TEXT,
                     ActualDosage INTEGER,
-                    FOREIGN KEY (IdMedicine) REFERENCES Medicine(IdMedicine) ON DELETE SET NULL ON UPDATE CASCADE,
+                    FOREIGN KEY (IdMedicine) REFERENCES Medicine(IdMedicine) ON DELETE CASCADE ON UPDATE CASCADE,
                     FOREIGN KEY (IdSchedule) REFERENCES MedicationSchedule(IdSchedule) ON DELETE SET NULL ON UPDATE CASCADE,
                     FOREIGN KEY (IdScheduleTime) REFERENCES ScheduleTime(IdTime) ON DELETE SET NULL ON UPDATE CASCADE
                 );

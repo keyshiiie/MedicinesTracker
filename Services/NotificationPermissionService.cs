@@ -9,7 +9,7 @@ namespace MedicinesTracker.Services
         {
             try
             {
-                Console.WriteLine("=== Проверка разрешений на уведомления ===");
+                System.Diagnostics.Debug.WriteLine("=== Проверка разрешений на уведомления ===");
 
                 // Только для Android 13+
                 if (DeviceInfo.Platform == DevicePlatform.Android)
@@ -17,24 +17,24 @@ namespace MedicinesTracker.Services
 #if ANDROID
                     if (OperatingSystem.IsAndroidVersionAtLeast(33)) // Android 13+
                     {
-                        Console.WriteLine("Android 13+ обнаружен, проверяем разрешения...");
+                        System.Diagnostics.Debug.WriteLine("Android 13+ обнаружен, проверяем разрешения...");
                         return await CheckAndRequestAndroid13Async();
                     }
                     else
                     {
-                        Console.WriteLine("Android <13 - разрешения не требуются");
+                        System.Diagnostics.Debug.WriteLine("Android <13 - разрешения не требуются");
                         return true; // Для Android <13 разрешения не нужны
                     }
 #endif
                 }
 
-                Console.WriteLine("Не Android платформа, разрешения не требуются");
+                System.Diagnostics.Debug.WriteLine("Не Android платформа, разрешения не требуются");
                 return true; // Для iOS/Windows всегда true
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка проверки разрешений: {ex.Message}");
-                return true; // В случае ошибки возвращаем true
+                System.Diagnostics.Debug.WriteLine($"Ошибка проверки разрешений: {ex.Message}");
+                return false; // В случае ошибки возвращаем false
             }
         }
 
@@ -43,36 +43,82 @@ namespace MedicinesTracker.Services
         {
             try
             {
-                Console.WriteLine("Проверяем статус разрешения POST_NOTIFICATIONS...");
+                System.Diagnostics.Debug.WriteLine("Проверяем статус разрешения POST_NOTIFICATIONS...");
 
-                // Используем статический класс Permissions
+                // Проверяем текущий статус
                 var status = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
-                Console.WriteLine($"Текущий статус: {status}");
+                System.Diagnostics.Debug.WriteLine($"Текущий статус: {status}");
 
                 if (status == PermissionStatus.Granted)
                 {
-                    Console.WriteLine("Разрешение уже предоставлено");
+                    System.Diagnostics.Debug.WriteLine("Разрешение уже предоставлено");
                     return true;
                 }
 
                 if (status == PermissionStatus.Denied)
                 {
-                    Console.WriteLine("Разрешение отклонено, нужно открыть настройки");
-                    return false;
+                    // Если разрешение отклонено, пытаемся запросить снова
+                    System.Diagnostics.Debug.WriteLine("Разрешение ранее отклонено, запрашиваем снова...");
+                    
+                    // Показываем объяснение пользователю
+                    bool shouldRequest = await ShowPermissionExplanation();
+                    if (!shouldRequest)
+                    {
+                        return false;
+                    }
+                    
+                    status = await Permissions.RequestAsync<Permissions.PostNotifications>();
+                    System.Diagnostics.Debug.WriteLine($"Результат запроса: {status}");
+                    
+                    return status == PermissionStatus.Granted;
                 }
 
                 // PermissionStatus.Unknown - еще не запрашивали
-                Console.WriteLine("Запрашиваем разрешение...");
+                System.Diagnostics.Debug.WriteLine("Запрашиваем разрешение впервые...");
+                
+                // Показываем объяснение перед запросом
+                bool shouldRequestFirstTime = await ShowPermissionExplanation();
+                if (!shouldRequestFirstTime)
+                {
+                    return false;
+                }
+                
                 status = await Permissions.RequestAsync<Permissions.PostNotifications>();
-                Console.WriteLine($"Результат запроса: {status}");
+                System.Diagnostics.Debug.WriteLine($"Результат запроса: {status}");
 
                 return status == PermissionStatus.Granted;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка в CheckAndRequestAndroid13Async: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка в CheckAndRequestAndroid13Async: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 return false;
+            }
+        }
+
+        private static async Task<bool> ShowPermissionExplanation()
+        {
+            try
+            {
+                // Используем MainThread для вывода диалога
+                bool result = false;
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    result = await Application.Current.MainPage.DisplayAlertAsync(
+                        "Разрешение на уведомления",
+                        "Приложению нужно разрешение на отправку уведомлений, " +
+                        "чтобы напоминать вам о времени приема лекарств.\n\n" +
+                        "Без этого разрешения напоминания не будут работать.",
+                        "Разрешить",
+                        "Не сейчас");
+                });
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка показа объяснения: {ex.Message}");
+                return true; // Если не получилось показать, все равно запрашиваем
             }
         }
 #endif
@@ -81,12 +127,15 @@ namespace MedicinesTracker.Services
         {
             try
             {
-                Console.WriteLine("Открываем настройки приложения...");
-                AppInfo.Current.ShowSettingsUI();
+                System.Diagnostics.Debug.WriteLine("Открываем настройки приложения...");
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    AppInfo.Current.ShowSettingsUI();
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка открытия настроек: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка открытия настроек: {ex.Message}");
             }
         }
     }
