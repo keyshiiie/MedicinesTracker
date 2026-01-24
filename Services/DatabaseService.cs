@@ -337,7 +337,10 @@ namespace MedicinesTracker.Services
                 CREATE INDEX IF NOT EXISTS idx_schedule_medicine ON MedicationSchedule(IdMedicine, IsActive);
                 CREATE INDEX IF NOT EXISTS idx_schedule_type ON MedicationSchedule(IdScheduleType);
                 CREATE INDEX IF NOT EXISTS idx_stock_medicine ON Stock(IdMedicine);
-                CREATE INDEX IF NOT EXISTS idx_intake_datetime ON Intake(Date, Time);";
+                CREATE INDEX IF NOT EXISTS idx_intake_datetime ON Intake(Date, Time);
+
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_intake_unique 
+                ON Intake(IdMedicine, IdSchedule, IdScheduleTime, Date, Time);";
 
             using var command = new SqliteCommand(createTablesSql, connection);
             await command.ExecuteNonQueryAsync();

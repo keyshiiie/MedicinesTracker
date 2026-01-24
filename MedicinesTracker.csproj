@@ -178,6 +178,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiIcon Include="Resources\AppIcon\icon1.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Update="Modules\Medications\Views\MedicineSchedulePage.xaml.cs">
 			<DependentUpon>MedicineSchedulePage.xaml</DependentUpon>
 		</Compile>

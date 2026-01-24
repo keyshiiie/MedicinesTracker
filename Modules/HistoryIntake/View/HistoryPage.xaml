@@ -5,7 +5,7 @@
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.HistoryIntake.ViewModels"
              xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
              x:DataType="viewModels:HistoryPageVM"
-             Title = "История" >
+             Title="История">
 
     <ScrollView>
         <VerticalStackLayout Spacing="10">
@@ -46,8 +46,8 @@
                          Spacing="10"
                          IsVisible="{Binding HasData}">
                 <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="models:GroupedHistory" >
-                        <VerticalStackLayout Spacing = "5" >
+                    <DataTemplate x:DataType="models:GroupedHistory">
+                        <VerticalStackLayout Spacing="5">
                             <!--Заголовок с датой -->
                             <Label Text="{Binding Date}"
                                    Style="{StaticResource CardTitleStyle}"/>
@@ -58,26 +58,26 @@
                                             EmptyView="Нет приёмов за эту дату">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="models:HistoryDto">
-                                        <Border Style = "{StaticResource MedicineCardBorderStyle}" >
-                                            <VerticalStackLayout Spacing = "5" >
-                                                <!--Время и Статус -->
-                                                <HorizontalStackLayout Spacing="10">
-                                                    <Label Text="{Binding Time}" 
+                                        <Border Style="{StaticResource MedicineCardBorderStyle}">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <Label Text="{Binding RecipientName}"
                                                            Style="{StaticResource CardDescriptionStyle}"/>
+                                                    <!-- Статус -->
                                                     <Label Text="{Binding Status}"
                                                            TextColor="{Binding StatusColor}"
-                                                           FontAttributes="Bold"/>
-                                                </HorizontalStackLayout>
-
+                                                           FontAttributes="Bold"
+                                                           Grid.Column="1"/>
+                                                </Grid>
                                                 <!-- Название лекарства и получатель -->
                                                 <VerticalStackLayout Spacing="2">
                                                     <Label Text="{Binding NameMedicine}"
                                                            Style="{StaticResource CardTitleStyle}"/>
-                                                    <Label Text="{Binding RecipientName}"
+                                                    <Label Text="{Binding Time, StringFormat='Необходимо принять в: {0}'}" 
+                                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                                    <Label Text="{Binding TakenDateTime, StringFormat='Принято в: {0}'}"
                                                            Style="{StaticResource CardDescriptionStyle}"/>
                                                 </VerticalStackLayout>
-                                                <Label Text="{Binding TakenDateTime}"
-                                                       Style="{StaticResource CardTitleStyle}"/>
                                                 <!-- Дозировка и единица измерения -->
                                                 <HorizontalStackLayout Spacing="5">
                                                     <Label Text="{Binding ActualDosage}"

@@ -1,141 +1,171 @@
-﻿using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
-using MedicinesTracker.Repository;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using MedicinesTracker.Models;
+using MedicinesTracker.Models.Dto;
+using MedicinesTracker.Repository;
+using System.Diagnostics;
 
 namespace MedicinesTracker.Services
 {
-    public class IntakeSchedulerService
+    public interface IIntakeSchedulerService
+    {
+        Task GenerateTodayIntakesAsync();
+        Task RegenerateIntakesForMedicineAsync(int medicineId);
+        Task CheckAndUpdateAsync();
+        Task RegenerateAllFutureIntakesAsync();
+    }
+
+    public class IntakeSchedulerService : IIntakeSchedulerService
     {
         private readonly IMedicineRepository _medicineRepository;
+        private readonly IScheduleTimeRepository _scheduleTimeRepository;
         private readonly IIntakeRepository _intakeRepository;
-        private const int DAYS_AHEAD = 7;
 
         public IntakeSchedulerService(
-            IIntakeRepository intakeRepository,
-            IMedicineRepository medicineRepository)
+            IMedicineRepository medicineRepository,
+            IScheduleTimeRepository scheduleTimeRepository,
+            IIntakeRepository intakeRepository)
         {
-            _intakeRepository = intakeRepository;
             _medicineRepository = medicineRepository;
+            _scheduleTimeRepository = scheduleTimeRepository;
+            _intakeRepository = intakeRepository;
         }
 
-        public async Task InitializeAsync()
+        public async Task GenerateTodayIntakesAsync()
         {
             try
             {
-                // проверяем, когда последняя генерация была
-                var lastGenerationDate = Preferences.Get("LastIntakeGeneration", DateTime.MinValue);
+                Debug.WriteLine("=== Генерация записей приема НА СЕГОДНЯ ===");
+
                 var today = DateTime.Today;
 
-                if (lastGenerationDate < today)
+                // Получаем все активные лекарства с расписанием
+                var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
+                var medicineList = medicines.ToList();
+
+                Debug.WriteLine($"Найдено активных лекарств: {medicineList.Count}");
+
+                foreach (var medicine in medicineList)
                 {
-                    Debug.WriteLine($"Генерация записей на {DAYS_AHEAD} дней вперед");
+                    if (!medicine.ScheduleIsActive) continue;
 
-                    // генерация на неделю вперёд
-                    await GenerateIntakesForPeriod(today, today.AddDays(DAYS_AHEAD - 1));
-
-                    // сохраняем дату генерации
-                    Preferences.Set("LastIntakeGeneration", today);
-
-                    Debug.WriteLine("Записи успешно сгенерированы");
+                    await GenerateIntakesForMedicineOnDateAsync(medicine, today);
                 }
-                else
-                {
-                    Debug.WriteLine("Записи уже сгенерированы сегодня");
-                }
+
+                Debug.WriteLine("✅ Записи приема на сегодня сгенерированы");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка инициализации планировщика: {ex.Message}");
+                Debug.WriteLine($"❌ Ошибка генерации записей: {ex.Message}");
             }
         }
 
-        public async Task CheckAndUpdateAsync()
+        public async Task RegenerateIntakesForMedicineAsync(int medicineId)
         {
             try
             {
-                var today = DateTime.Today;
-                var lastCheck = Preferences.Get("LastSchedulerCheck", DateTime.MinValue);
+                Debug.WriteLine($"=== Перегенерация записей для лекарства ID: {medicineId} ===");
 
-                // не чаще раза в день проверяем
-                if (lastCheck.Date < today)
+                // Удаляем будущие записи (с сегодняшнего дня)
+                await _intakeRepository.DeleteFutureIntakesForMedicineAsync(medicineId, DateTime.Today);
+
+                // Получаем лекарство с расписанием
+                var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
+                var medicine = medicines.FirstOrDefault(m => m.IdMedicine == medicineId);
+
+                if (medicine == null || !medicine.ScheduleIsActive)
                 {
-                    // проверяем, есть ли записи на сегодня
-                    var todayIntakes = await _intakeRepository.GetIntakesByDateAsync(today.ToString("yyyy-MM-dd"));
-
-                    if (!todayIntakes.Any())
-                    {
-                        Debug.WriteLine("Нет записей на сегодня, генерируем...");
-                        await GenerateIntakesForPeriod(today, today);
-                    }
-
-                    // Проверяем, нужно ли генерировать на будущие дни
-                    await EnsureFutureIntakes();
-
-                    Preferences.Set("LastSchedulerCheck", DateTime.Now);
+                    Debug.WriteLine($"Лекарство ID:{medicineId} не активно или не найдено");
+                    return;
                 }
+
+                // Генерируем записи ТОЛЬКО НА СЕГОДНЯ
+                await GenerateIntakesForMedicineOnDateAsync(medicine, DateTime.Today);
+
+                Debug.WriteLine($"✅ Записи для лекарства {medicineId} перегенерированы (только на сегодня)");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка проверки планировщика: {ex.Message}");
+                Debug.WriteLine($"❌ Ошибка перегенерации: {ex.Message}");
             }
         }
 
-        private async Task EnsureFutureIntakes()
+        private async Task GenerateIntakesForMedicineOnDateAsync(MedicineWithScheduleDto medicine, DateTime date)
         {
-            var today = DateTime.Today;
-            var lastGenerationDate = Preferences.Get("LastIntakeGeneration", DateTime.MinValue);
-
-            // если последняя генерация была более 3 дней назад, то генерируем на неделю
-            if ((today - lastGenerationDate).Days >= 3)
+            try
             {
-                await GenerateIntakesForPeriod(today, today.AddDays(DAYS_AHEAD - 1));
-                Preferences.Set("LastIntakeGeneration", today);
-            }
-        }
+                var dateStr = date.ToString("yyyy-MM-dd");
 
-        private async Task GenerateIntakesForPeriod(DateTime startDate, DateTime endDate)
-        {
-            var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
+                // Проверяем, нужно ли принимать лекарство в эту дату
+                if (!ShouldTakeMedicineOnDate(medicine, date))
+                {
+                    Debug.WriteLine($"Лекарство {medicine.MedicineName} не нужно принимать {dateStr}");
+                    return;
+                }
 
-            foreach (var medicine in medicines)
-            {
-                // Парсим времена приема
+                Debug.WriteLine($"Генерация для {medicine.MedicineName} на {dateStr}");
+
+                // Разбираем времена приема из строки
                 var times = ParseTimes(medicine.Times);
 
                 foreach (var time in times)
                 {
-                    for (var date = startDate; date <= endDate; date = date.AddDays(1))
-                    {
-                        if (ShouldTakeMedicine(medicine, date))
-                        {
-                            // Упрощенный IdScheduleTime (можно улучшить)
-                            var scheduleTimeId = 1;
-                            if (!string.IsNullOrEmpty(medicine.TimeOrders))
-                            {
-                                var orders = medicine.TimeOrders.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                                var timeIndex = Array.IndexOf(times, time);
-                                if (timeIndex >= 0 && timeIndex < orders.Length)
-                                {
-                                    int.TryParse(orders[timeIndex], out scheduleTimeId);
-                                }
-                            }
+                    if (string.IsNullOrEmpty(time)) continue;
 
-                            await CreateIntakeForMedicine(medicine, date, time, scheduleTimeId);
-                        }
+                    // Получаем IdScheduleTime для этого времени
+                    var scheduleTime = await _scheduleTimeRepository.GetScheduleTimeByScheduleAndTimeAsync(
+                        medicine.IdSchedule, time);
+
+                    if (scheduleTime == null)
+                    {
+                        Debug.WriteLine($"Не найден ScheduleTime для расписания {medicine.IdSchedule} и времени {time}");
+                        continue;
+                    }
+
+                    if (!scheduleTime.IsActive) continue;
+
+                    // Проверяем, существует ли уже запись
+                    var exists = await _intakeRepository.IntakeExistsAsync(
+                        medicine.IdMedicine,
+                        dateStr,
+                        time);
+
+                    if (!exists)
+                    {
+                        // Создаем новую запись
+                        var intakeModel = new IntakeModel
+                        {
+                            IdMedicine = medicine.IdMedicine,
+                            IdSchedule = medicine.IdSchedule,
+                            IdScheduleTime = scheduleTime.IdTime,
+                            Date = dateStr,
+                            Time = time,
+                            ActualDosage = medicine.Dosage,
+                            IsCompleted = false,
+                            TakenDateTime = null
+                        };
+
+                        var intakeId = await _intakeRepository.AddIntakeAsync(intakeModel);
+                        Debug.WriteLine($"✅ Создана запись: {medicine.MedicineName} - {dateStr} {time} (ID: {intakeId})");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Запись уже существует: {medicine.MedicineName} - {dateStr} {time}");
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка генерации для {medicine.MedicineName} на {date:yyyy-MM-dd}: {ex.Message}");
+            }
         }
 
-        private string[] ParseTimes(string? timesString) // Делаем параметр nullable
+        private string[] ParseTimes(string? timesString)
         {
             if (string.IsNullOrEmpty(timesString))
-                return new[] { "08:00" }; // Время по умолчанию
+                return new string[0];
 
             return timesString
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -144,17 +174,12 @@ namespace MedicinesTracker.Services
                 .ToArray();
         }
 
-        private bool ShouldTakeMedicine(MedicineWithScheduleDto medicine, DateTime date)
+        private bool ShouldTakeMedicineOnDate(MedicineWithScheduleDto medicine, DateTime date)
         {
             var dateStr = date.ToString("yyyy-MM-dd");
 
-            // Если расписание неактивно
-            if (!medicine.ScheduleIsActive)
-                return false;
-
             if (medicine.ScheduleTypeCode == "ONETIME")
             {
-                // Одноразовый прием
                 return medicine.OneTimeDate == dateStr;
             }
             else if (medicine.ScheduleTypeCode == "RECURRING")
@@ -162,21 +187,18 @@ namespace MedicinesTracker.Services
                 // Проверяем период действия
                 if (!string.IsNullOrEmpty(medicine.DateStart))
                 {
-                    var startDate = DateTime.Parse(medicine.DateStart); // Используем Parse без параметра
-                    if (date < startDate)
-                        return false;
+                    var startDate = DateTime.Parse(medicine.DateStart);
+                    if (date < startDate) return false;
                 }
 
                 if (!string.IsNullOrEmpty(medicine.DateEnd))
                 {
                     var endDate = DateTime.Parse(medicine.DateEnd);
-                    if (date > endDate)
-                        return false;
+                    if (date > endDate) return false;
                 }
 
                 if (medicine.ScheduleModeCode == "INTERVAL" && medicine.DaysInterval.HasValue)
                 {
-                    // Логика интервального приема
                     DateTime referenceDate;
                     if (!string.IsNullOrEmpty(medicine.OneTimeDate))
                     {
@@ -196,7 +218,6 @@ namespace MedicinesTracker.Services
                 }
                 else if (medicine.ScheduleModeCode == "WEEKDAYS" && !string.IsNullOrEmpty(medicine.WeekDayIds))
                 {
-                    // Логика приема по дням недели
                     var dayNumber = date.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)date.DayOfWeek;
                     var dayIds = medicine.WeekDayIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(id => int.TryParse(id, out var num) ? num : 0)
@@ -204,84 +225,44 @@ namespace MedicinesTracker.Services
 
                     return dayIds.Contains(dayNumber);
                 }
+
+                // Если режим не указан, принимается каждый день
+                return true;
             }
 
             return false;
         }
 
-        private async Task CreateIntakeForMedicine(MedicineWithScheduleDto medicine, DateTime date, string time, int scheduleTimeId)
+        public async Task CheckAndUpdateAsync()
         {
-            try
-            {
-                // Проверяем, нет ли уже записи
-                var existing = await _intakeRepository.GetIntakeByMedicineAndDateAsync(
-                    medicine.IdMedicine,
-                    date.ToString("yyyy-MM-dd"));
-
-                if (existing == null)
-                {
-                    // Создаем новую запись
-                    var intake = new IntakeModel
-                    {
-                        IdMedicine = medicine.IdMedicine,
-                        IdSchedule = medicine.IdSchedule,
-                        IdScheduleTime = scheduleTimeId,
-                        IsCompleted = false,
-                        Date = date.ToString("yyyy-MM-dd"),
-                        Time = time,
-                        ActualDosage = medicine.Dosage
-                    };
-
-                    await _intakeRepository.AddIntakeAsync(intake);
-                    Debug.WriteLine($"Создана запись: {medicine.MedicineName} - {date:yyyy-MM-dd} {time}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка создания записи для {medicine.MedicineName}: {ex.Message}");
-            }
+            // Проверяем и генерируем записи на сегодня
+            await GenerateTodayIntakesAsync();
         }
 
-        // Метод для удаления старых записей (опционально)
-        public async Task CleanupOldIntakesAsync(int keepDays = 30)
+        public async Task RegenerateAllFutureIntakesAsync()
         {
             try
             {
-                var cutoffDate = DateTime.Today.AddDays(-keepDays);
+                Debug.WriteLine("=== Перегенерация всех записей НА СЕГОДНЯ ===");
 
-                // Удаляем записи старше keepDays дней
-                var deletedCount = await _intakeRepository.DeleteFutureIntakesAsync(cutoffDate);
+                // Удаляем все будущие записи (с сегодняшнего дня)
+                await _intakeRepository.DeleteFutureIntakesAsync(DateTime.Today);
 
-                if (deletedCount > 0)
+                // Получаем все активные лекарства
+                var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
+                var medicineList = medicines.ToList();
+
+                // Генерируем ТОЛЬКО НА СЕГОДНЯ
+                foreach (var medicine in medicineList)
                 {
-                    Debug.WriteLine($"Удалено {deletedCount} старых записей приема");
+                    await GenerateIntakesForMedicineOnDateAsync(medicine, DateTime.Today);
                 }
+
+                Debug.WriteLine("✅ Все записи на сегодня перегенерированы");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка очистки старых записей: {ex.Message}");
-            }
-        }
-
-        // Метод для принудительной перегенерации
-        public async Task RegenerateIntakesAsync(int daysAhead = 7)
-        {
-            try
-            {
-                var today = DateTime.Today;
-
-                // Удаляем будущие записи
-                await _intakeRepository.DeleteFutureIntakesAsync(today);
-
-                // Генерируем заново
-                await GenerateIntakesForPeriod(today, today.AddDays(daysAhead - 1));
-
-                Preferences.Set("LastIntakeGeneration", today);
-                Debug.WriteLine($"Перегенерированы записи на {daysAhead} дней вперед");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка перегенерации записей: {ex.Message}");
+                Debug.WriteLine($"❌ Ошибка перегенерации всех записей: {ex.Message}");
             }
         }
     }

@@ -1,146 +1,171 @@
-﻿#if ANDROID
-using Android.App;
+﻿using Android.App;
 using Android.Content;
 using Android.OS;
 using AndroidX.Core.App;
-using System;
 
 namespace MedicinesTracker.Platforms.Android
 {
-    [BroadcastReceiver(Enabled = true, Exported = false)]
+    [BroadcastReceiver(
+        Name = "com.medicinestracker.NotificationPublisher",
+        Enabled = true,
+        Exported = false)]
+    [IntentFilter(new[]
+    {
+        Intent.ActionBootCompleted,
+        "ACTION_SHOW_NOTIFICATION"
+    })]
     public class NotificationPublisher : BroadcastReceiver
     {
         private const string CHANNEL_ID = "medication_reminders";
         private const string CHANNEL_NAME = "Напоминания о приеме лекарств";
 
-        public override void OnReceive(Context context, Intent intent)
+        public override void OnReceive(Context? context, Intent? intent)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("=== NotificationPublisher.OnReceive ===");
-                System.Diagnostics.Debug.WriteLine($"Действие: {intent.Action}");
-                System.Diagnostics.Debug.WriteLine($"Время: {DateTime.Now}");
+                System.Diagnostics.Debug.WriteLine($"=== NotificationPublisher.OnReceive ===");
 
+                if (context == null || intent == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ Context или Intent равен null");
+                    return;
+                }
+
+                // Если это команда на показ уведомления
+                if (intent.Action == "ACTION_SHOW_NOTIFICATION")
+                {
+                    ShowNotification(context, intent);
+                }
+                else if (intent.Action == Intent.ActionBootCompleted)
+                {
+                    System.Diagnostics.Debug.WriteLine("✅ Перезагрузка устройства, служба будет запущена");
+                    // Служба запустится при первом открытии приложения
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка в NotificationPublisher: {ex.Message}");
+            }
+        }
+
+        private void ShowNotification(Context context, Intent intent)
+        {
+            try
+            {
                 var medicineName = intent.GetStringExtra("medicine_name") ?? "Лекарство";
                 var dosage = intent.GetIntExtra("dosage", 1);
                 var recipientName = intent.GetStringExtra("recipient_name") ?? "Пациент";
+                var medicineId = intent.GetIntExtra("medicine_id", 0);
+                var intakeId = intent.GetIntExtra("intake_id", 0);
 
-                System.Diagnostics.Debug.WriteLine($"Лекарство: {medicineName}");
-                System.Diagnostics.Debug.WriteLine($"Дозировка: {dosage}");
-                System.Diagnostics.Debug.WriteLine($"Получатель: {recipientName}");
+                // Получаем время приема из Intent
+                var scheduledTime = intent.GetStringExtra("scheduled_time") ?? DateTime.Now.ToString("HH:mm");
+                var notificationTime = DateTime.Now;
+
+                System.Diagnostics.Debug.WriteLine($"Показываю уведомление: {medicineName} в {scheduledTime}");
 
                 // Создаем канал уведомлений
                 CreateNotificationChannel(context);
 
-                // Получаем иконку
-                int iconId = GetNotificationIconId(context);
-                System.Diagnostics.Debug.WriteLine($"Иконка ID: {iconId}");
+                // Intent для открытия приложения при нажатии на уведомление
+                var openIntent = new Intent(context, typeof(MainActivity));
+                openIntent.PutExtra("notification_clicked", true);
+                openIntent.PutExtra("medicine_id", medicineId);
+                openIntent.PutExtra("intake_id", intakeId);
+                openIntent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
+
+                var pendingIntent = PendingIntent.GetActivity(
+                    context,
+                    GenerateNotificationId(medicineId, notificationTime),
+                    openIntent,
+                    PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
+
+                // Иконка для уведомления - используем системную
+                int notificationIcon = global::Android.Resource.Drawable.StatNotifyChat;
+
+                // Форматируем текст с временем
+                var notificationText = $"{recipientName}: {medicineName} - {dosage} шт.\nВремя: {scheduledTime}";
 
                 // Создаем уведомление
                 var notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
                     .SetContentTitle("💊 Время приема лекарства")
-                    .SetContentText($"{recipientName}: {medicineName} - {dosage} шт.")
-                    .SetPriority((int)NotificationPriority.High)
+                    .SetContentText(notificationText)
+                    .SetStyle(new NotificationCompat.BigTextStyle()
+                        .BigText(notificationText)
+                        .SetBigContentTitle("💊 Время приема лекарства")
+                        .SetSummaryText($"Запланировано на {scheduledTime}"))
+                    .SetSmallIcon(notificationIcon)
+                    .SetPriority(NotificationCompat.PriorityHigh)
                     .SetAutoCancel(true)
-                    .SetSmallIcon(iconId);
+                    .SetContentIntent(pendingIntent)
+                    .SetDefaults(NotificationCompat.DefaultAll); // Вибрация, звук по умолчанию
+
+                // Добавляем время в уведомление (подзаголовок)
+                notificationBuilder.SetSubText($"Время: {scheduledTime}");
 
                 var notification = notificationBuilder.Build();
 
                 // Показываем уведомление
                 var notificationManager = NotificationManagerCompat.From(context);
-                var notificationId = Math.Abs(DateTime.Now.Ticks.GetHashCode());
-
-                System.Diagnostics.Debug.WriteLine($"Показываю уведомление ID: {notificationId}");
+                var notificationId = GenerateNotificationId(medicineId, notificationTime);
 
                 notificationManager.Notify(notificationId, notification);
 
-                System.Diagnostics.Debug.WriteLine($"✅ Уведомление отправлено: {medicineName} в {DateTime.Now}");
+                System.Diagnostics.Debug.WriteLine($"✅ Уведомление показано: {medicineName} в {scheduledTime}");
+
+                // Отмечаем уведомление как показанное
+                MarkNotificationAsShown(context, intakeId);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка в NotificationPublisher: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка показа уведомления: {ex.Message}");
             }
         }
 
-        private int GetNotificationIconId(Context context)
+        private void MarkNotificationAsShown(Context context, int intakeId)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("Получаем ID иконки...");
-
-                // Способ 1: Используем вашу SVG иконку
-                var iconId = context.Resources.GetIdentifier("notification_icon", "drawable", context.PackageName);
-                if (iconId != 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Найдена иконка: notification_icon (ID: {iconId})");
-                    return iconId;
-                }
-
-                // Способ 2: Используем иконку приложения
-                iconId = context.Resources.GetIdentifier("appicon", "mipmap", context.PackageName);
-                if (iconId != 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Найдена иконка: appicon (ID: {iconId})");
-                    return iconId;
-                }
-
-                // Способ 3: Дефолтная иконка MAUI
-                iconId = context.ApplicationInfo.Icon;
-                if (iconId != 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Используется иконка приложения (ID: {iconId})");
-                    return iconId;
-                }
-
-                // Способ 4: Системная иконка
-                System.Diagnostics.Debug.WriteLine("Используется системная иконка StatNotifyMore");
-                return global::Android.Resource.Drawable.StatNotifyMore;
+                var prefs = context.GetSharedPreferences("notifications", FileCreationMode.Private);
+                using var editor = prefs.Edit();
+                editor.PutBoolean($"shown_{intakeId}", true);
+                editor.Commit();
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Ошибка получения иконки: {ex.Message}");
-                return global::Android.Resource.Drawable.StatNotifyMore;
-            }
+            catch { }
         }
 
         private void CreateNotificationChannel(Context context)
         {
-            System.Diagnostics.Debug.WriteLine("Создаем канал уведомлений...");
-
-            // Для Android 8.0+
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    CHANNEL_NAME,
-                    NotificationImportance.High)
+                try
                 {
-                    Description = "Уведомления о времени приема лекарств"
-                };
+                    var channel = new NotificationChannel(
+                        CHANNEL_ID,
+                        CHANNEL_NAME,
+                        NotificationImportance.High);
 
-                // Настройка вибрации и светодиода
-                channel.EnableVibration(true);
-                channel.SetVibrationPattern(new long[] { 0, 500, 200, 500 });
-                channel.EnableLights(true);
-                channel.LightColor = global::Android.Graphics.Color.Green;
+                    channel.Description = "Уведомления о времени приема лекарств";
 
-                var notificationManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
-                if (notificationManager != null)
-                {
-                    notificationManager.CreateNotificationChannel(channel);
+                    // Устанавливаем вибрацию
+                    channel.EnableVibration(true);
+                    channel.SetVibrationPattern(new long[] { 0, 500, 200, 500 });
+
+                    var notificationManager = (NotificationManager)context.GetSystemService(Context.NotificationService);
+                    notificationManager?.CreateNotificationChannel(channel);
+
                     System.Diagnostics.Debug.WriteLine("✅ Канал уведомлений создан");
                 }
-                else
+                catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("❌ NotificationManager не найден");
+                    System.Diagnostics.Debug.WriteLine($"❌ Ошибка создания канала: {ex.Message}");
                 }
             }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("Android версия < 8.0, канал не нужен");
-            }
+        }
+
+        private int GenerateNotificationId(int medicineId, DateTime time)
+        {
+            return Math.Abs($"{medicineId}{time:yyyyMMddHHmm}".GetHashCode());
         }
     }
 }
-#endif

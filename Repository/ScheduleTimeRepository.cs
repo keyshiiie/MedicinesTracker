@@ -10,6 +10,9 @@ namespace MedicinesTracker.Repository
         Task<int> AddScheduleTimeAsync(ScheduleTimeModel scheduleTimeModel);
         Task<int> UpdateScheduleTimeAsync(ScheduleTimeModel scheduleTimeModel);
         Task<int> DeleteScheduleTimesAsync(int scheduleId);
+        Task<int?> GetScheduleTimeIdByTimeAsync(int scheduleId, string time);
+        Task<IEnumerable<ScheduleTimeModel>> GetScheduleTimesByScheduleIdAsync(int scheduleId);
+        Task<ScheduleTimeModel?> GetScheduleTimeByScheduleAndTimeAsync(int scheduleId, string time);
     }
     public class ScheduleTimeRepository : IScheduleTimeRepository
     {
@@ -69,6 +72,57 @@ namespace MedicinesTracker.Repository
             var query = @"DELETE FROM ScheduleTime WHERE IdSchedule = @ScheduleId";
             var parameters = new { ScheduleId = scheduleId };
             return await _dbHandler.ExecuteAsync(query, parameters);
+        }
+
+        public async Task<int?> GetScheduleTimeIdByTimeAsync(int scheduleId, string time)
+        {
+            var query = @"
+            SELECT IdTime 
+            FROM ScheduleTime 
+            WHERE IdSchedule = @ScheduleId 
+            AND Time = @Time
+            LIMIT 1";
+
+            var parameters = new { ScheduleId = scheduleId, Time = time };
+
+            return await _dbHandler.ExecuteScalarAsync<int?>(query, parameters);
+        }
+
+        public async Task<IEnumerable<ScheduleTimeModel>> GetScheduleTimesByScheduleIdAsync(int scheduleId)
+        {
+            var query = @"
+            SELECT 
+                IdTime,
+                IdSchedule,
+                Time,
+                OrderInDay,
+                IsActive
+            FROM ScheduleTime 
+            WHERE IdSchedule = @ScheduleId 
+            AND IsActive = 1
+            ORDER BY OrderInDay";
+
+            var parameters = new { ScheduleId = scheduleId };
+            return await _dbHandler.QueryAsync<ScheduleTimeModel>(query, parameters);
+        }
+
+        public async Task<ScheduleTimeModel?> GetScheduleTimeByScheduleAndTimeAsync(int scheduleId, string time)
+        {
+            var query = @"
+            SELECT 
+                IdTime,
+                IdSchedule,
+                Time,
+                OrderInDay,
+                IsActive
+            FROM ScheduleTime 
+            WHERE IdSchedule = @ScheduleId 
+            AND Time = @Time
+            AND IsActive = 1
+            LIMIT 1";
+
+            var parameters = new { ScheduleId = scheduleId, Time = time };
+            return await _dbHandler.QueryFirstOrDefaultAsync<ScheduleTimeModel>(query, parameters);
         }
     }
 }

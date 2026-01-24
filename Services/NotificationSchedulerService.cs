@@ -1,5 +1,4 @@
-﻿// Services/NotificationSchedulerService.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,20 +17,28 @@ namespace MedicinesTracker.Services
         Task ScheduleNotificationsForTodayAsync();
         Task ScheduleAllNotificationsAsync();
         void CancelAllNotifications();
+        Task DebugLogMedicinesAsync();
+        Task CancelNotificationForIntakeAsync(int intakeId);
+        // В интерфейс INotificationSchedulerService добавьте:
+        Task CancelNotificationsForMedicineAsync(int medicineId);
+        Task ScheduleNotificationsForMedicineAsync(int medicineId);
     }
 
     public class NotificationSchedulerService : INotificationSchedulerService
     {
         private readonly IIntakeRepository _intakeRepository;
         private readonly IMedicineRepository _medicineRepository;
+        private readonly IScheduleTimeRepository _scheduleTimeRepository;
         private bool _isInitialized = false;
 
         public NotificationSchedulerService(
             IIntakeRepository intakeRepository,
-            IMedicineRepository medicineRepository)
+            IMedicineRepository medicineRepository,
+            IScheduleTimeRepository scheduleTimeRepository)
         {
             _intakeRepository = intakeRepository;
             _medicineRepository = medicineRepository;
+            _scheduleTimeRepository = scheduleTimeRepository;
         }
 
         public async Task InitializeAsync()
@@ -41,51 +48,36 @@ namespace MedicinesTracker.Services
 
             System.Diagnostics.Debug.WriteLine("=== NotificationSchedulerService.InitializeAsync ===");
             _isInitialized = true;
-            await ScheduleAllNotificationsAsync();
+            await ScheduleNotificationsForTodayAsync();
         }
 
         public async Task ScheduleAllNotificationsAsync()
         {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("=== ScheduleAllNotificationsAsync начато ===");
-
-                // Получаем все активные лекарства с расписанием
-                var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
-
-                System.Diagnostics.Debug.WriteLine($"Найдено лекарств с расписанием: {medicines?.Count() ?? 0}");
-
-                // Преобразуем в List для использования
-                var medicineList = medicines.ToList();
-
-                // Планируем на ближайшие 7 дней
-                for (int i = 0; i < 7; i++)
-                {
-                    var date = DateTime.Today.AddDays(i);
-                    System.Diagnostics.Debug.WriteLine($"Планируем на дату: {date:yyyy-MM-dd}");
-                    await ScheduleNotificationsForDateAsync(date, medicineList);
-                }
-
-                System.Diagnostics.Debug.WriteLine("=== ScheduleAllNotificationsAsync завершено ===");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Ошибка планирования уведомлений: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-            }
+            // Теперь планируем только на сегодня
+            await ScheduleNotificationsForTodayAsync();
         }
 
         public async Task ScheduleNotificationsForTodayAsync()
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("=== ScheduleNotificationsForTodayAsync начато ===");
+
+                // Получаем все активные лекарства с расписанием
                 var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
                 var medicineList = medicines.ToList();
-                await ScheduleNotificationsForDateAsync(DateTime.Today, medicineList);
+
+                System.Diagnostics.Debug.WriteLine($"Найдено лекарств с расписанием: {medicineList.Count}");
+
+                // Планируем ТОЛЬКО НА СЕГОДНЯ
+                var date = DateTime.Today;
+                await ScheduleNotificationsForDateAsync(date, medicineList);
+
+                System.Diagnostics.Debug.WriteLine("=== ScheduleNotificationsForTodayAsync завершено ===");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка планирования уведомлений на сегодня: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка планирования уведомлений: {ex.Message}");
             }
         }
 
@@ -93,12 +85,15 @@ namespace MedicinesTracker.Services
         {
             var dateStr = date.ToString("yyyy-MM-dd");
 
-            System.Diagnostics.Debug.WriteLine($"=== Планирование для даты: {dateStr} (Сегодня: {DateTime.Today:yyyy-MM-dd}) ===");
+            System.Diagnostics.Debug.WriteLine($"=== Планирование для даты: {dateStr} ===");
 
             foreach (var medicine in medicines)
             {
                 if (!medicine.ScheduleIsActive)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Лекарство {medicine.MedicineName} не активно");
                     continue;
+                }
 
                 var times = ParseTimes(medicine.Times);
                 System.Diagnostics.Debug.WriteLine($"Лекарство: {medicine.MedicineName}, Времена: {string.Join(", ", times)}");
@@ -109,64 +104,136 @@ namespace MedicinesTracker.Services
                 System.Diagnostics.Debug.WriteLine($"Принимать {medicine.MedicineName} {dateStr}: {shouldTake}");
 
                 if (!shouldTake)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Пропускаем {medicine.MedicineName} - не нужно принимать сегодня");
                     continue;
+                }
 
                 foreach (var time in times)
                 {
-                    var notificationTime = DateTime.Parse($"{dateStr} {time}");
-                    System.Diagnostics.Debug.WriteLine($"  Время: {time}, Полное время: {notificationTime}");
+                    try
+                    {
+                        var notificationTime = DateTime.Parse($"{dateStr} {time}");
 
-                    // УБЕРИТЕ ЭТУ ПРОВЕРКУ ДЛЯ СЕГОДНЯШНИХ УВЕДОМЛЕНИЙ:
-                    // if (date.Date == DateTime.Today && notificationTime < DateTime.Now)
-                    //     continue;
+                        System.Diagnostics.Debug.WriteLine($"  Время: {time}, Полное время: {notificationTime}");
 
-                    // Для отладки: планируем уведомления даже если время прошло
-                    await ScheduleNotificationAsync(medicine, notificationTime);
+                        // Планируем уведомление
+                        await ScheduleNotificationAsync(medicine, notificationTime);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Ошибка парсинга времени {time}: {ex.Message}");
+                    }
                 }
             }
         }
 
+        public async Task CancelNotificationsForMedicineAsync(int medicineId)
+        {
+#if ANDROID
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"=== Отмена уведомлений для лекарства ID: {medicineId} ===");
 
+                var context = Android.App.Application.Context;
+                var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
 
+                if (alarmManager == null) return;
+
+                // 1. Получаем все записи приема для этого лекарства на сегодня
+                var today = DateTime.Today.ToString("yyyy-MM-dd");
+                var intakes = await _intakeRepository.GetIntakesByMedicineAndDateAsync(medicineId, today);
+
+                foreach (var intake in intakes)
+                {
+                    // 2. Для каждой записи вычисляем requestCode
+                    var notificationTime = DateTime.Parse($"{today} {intake.Time}");
+                    var requestCode = GenerateNotificationId(medicineId, notificationTime);
+
+                    // 3. Отменяем уведомление
+                    var intent = new Intent(context,
+                        Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
+
+                    intent.SetAction("ACTION_SHOW_NOTIFICATION");
+
+                    var pendingIntent = PendingIntent.GetBroadcast(
+                        context,
+                        requestCode,
+                        intent,
+                        PendingIntentFlags.Immutable | PendingIntentFlags.NoCreate);
+
+                    if (pendingIntent != null)
+                    {
+                        alarmManager.Cancel(pendingIntent);
+                        pendingIntent.Cancel();
+                        System.Diagnostics.Debug.WriteLine($"✅ Уведомление отменено для intake {intake.IdIntake}, requestCode: {requestCode}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка отмены уведомлений: {ex.Message}");
+            }
+#endif
+            await Task.CompletedTask;
+        }
+
+        public async Task ScheduleNotificationsForMedicineAsync(int medicineId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"=== Планирование уведомлений для лекарства ID: {medicineId} ===");
+
+                // Получаем лекарство с расписанием
+                var medicines = await _medicineRepository.GetActiveMedicinesWithSchedulesAsync();
+                var medicine = medicines.FirstOrDefault(m => m.IdMedicine == medicineId);
+
+                if (medicine == null || !medicine.ScheduleIsActive)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Лекарство ID:{medicineId} не активно или не найдено");
+                    return;
+                }
+
+                var today = DateTime.Today;
+                var medicineList = new List<MedicineWithScheduleDto> { medicine };
+
+                await ScheduleNotificationsForDateAsync(today, medicineList);
+
+                System.Diagnostics.Debug.WriteLine($"✅ Уведомления запланированы для лекарства {medicineId}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка планирования уведомлений: {ex.Message}");
+            }
+        }
         private bool ShouldTakeMedicine(MedicineWithScheduleDto medicine, DateTime date)
         {
             var dateStr = date.ToString("yyyy-MM-dd");
 
             if (!medicine.ScheduleIsActive)
             {
-                System.Diagnostics.Debug.WriteLine($"  Расписание не активно");
                 return false;
             }
 
             if (medicine.ScheduleTypeCode == "ONETIME")
             {
-                var result = medicine.OneTimeDate == dateStr;
-                System.Diagnostics.Debug.WriteLine($"  Одноразовое: {result} (OneTimeDate: {medicine.OneTimeDate}, date: {dateStr})");
-                return result;
+                return medicine.OneTimeDate == dateStr;
             }
             else if (medicine.ScheduleTypeCode == "RECURRING")
             {
-                System.Diagnostics.Debug.WriteLine($"  Проверка повторяющегося расписания:");
-
                 // Проверяем период действия
                 if (!string.IsNullOrEmpty(medicine.DateStart))
                 {
                     var startDate = DateTime.Parse(medicine.DateStart);
                     if (date < startDate)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Дата {dateStr} раньше начала {medicine.DateStart}");
                         return false;
-                    }
                 }
 
                 if (!string.IsNullOrEmpty(medicine.DateEnd))
                 {
                     var endDate = DateTime.Parse(medicine.DateEnd);
                     if (date > endDate)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"    Дата {dateStr} позже окончания {medicine.DateEnd}");
                         return false;
-                    }
                 }
 
                 if (medicine.ScheduleModeCode == "INTERVAL" && medicine.DaysInterval.HasValue)
@@ -182,15 +249,11 @@ namespace MedicinesTracker.Services
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"    Нет reference date");
                         return false;
                     }
 
                     var daysDiff = (date - referenceDate).Days;
-                    var result = daysDiff % medicine.DaysInterval.Value == 0;
-
-                    System.Diagnostics.Debug.WriteLine($"    Интервал {medicine.DaysInterval} дней: {result} (daysDiff: {daysDiff})");
-                    return result;
+                    return daysDiff % medicine.DaysInterval.Value == 0;
                 }
                 else if (medicine.ScheduleModeCode == "WEEKDAYS" && !string.IsNullOrEmpty(medicine.WeekDayIds))
                 {
@@ -199,17 +262,13 @@ namespace MedicinesTracker.Services
                         .Select(id => int.TryParse(id, out var num) ? num : 0)
                         .Where(id => id > 0);
 
-                    var result = dayIds.Contains(dayNumber);
-                    System.Diagnostics.Debug.WriteLine($"    Дни недели: {result} (dayNumber: {dayNumber}, WeekDayIds: {medicine.WeekDayIds})");
-                    return result;
+                    return dayIds.Contains(dayNumber);
                 }
 
-                // Если режим не указан или не распознан, принимается каждый день
-                System.Diagnostics.Debug.WriteLine($"    Режим не указан, принимается каждый день: true");
+                // Если режим не указан, принимается каждый день
                 return true;
             }
 
-            System.Diagnostics.Debug.WriteLine($"    Неизвестный тип расписания: {medicine.ScheduleTypeCode}");
             return false;
         }
 
@@ -228,109 +287,179 @@ namespace MedicinesTracker.Services
         private async Task ScheduleNotificationAsync(MedicineWithScheduleDto medicine, DateTime notificationTime)
         {
 #if ANDROID
-    try
-    {
-        var context = Android.App.Application.Context;
-        var alarmManager = context.GetSystemService(Context.AlarmService) as Android.App.AlarmManager;
-
-        if (alarmManager == null)
-        {
-            System.Diagnostics.Debug.WriteLine($"❌ AlarmManager не найден!");
-            return;
-        }
-
-        // Используем полное имя класса с пространством имен
-        var intent = new Intent(context, 
-            Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
-        
-        intent.SetAction($"NOTIFICATION_{medicine.IdMedicine}_{notificationTime.Ticks}");
-        intent.PutExtra("medicine_id", medicine.IdMedicine);
-        intent.PutExtra("medicine_name", medicine.MedicineName);
-        intent.PutExtra("dosage", medicine.Dosage);
-        intent.PutExtra("recipient_name", medicine.RecipientName);
-
-        // Уникальный ID для каждого уведомления
-        var requestCode = GenerateNotificationId(medicine.IdMedicine, notificationTime);
-        
-        System.Diagnostics.Debug.WriteLine($"Создаем PendingIntent для: {medicine.MedicineName}");
-        System.Diagnostics.Debug.WriteLine($"Время: {notificationTime}");
-        System.Diagnostics.Debug.WriteLine($"RequestCode: {requestCode}");
-
-        // ВАЖНО: Используем FLAG_IMMUTABLE для Android 12+
-        var pendingIntent = PendingIntent.GetBroadcast(
-            context,
-            requestCode,
-            intent,
-            PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
-
-        // Конвертируем время в миллисекунды
-        var triggerTime = GetDateTimeInMillis(notificationTime);
-        var nowMillis = GetDateTimeInMillis(DateTime.Now);
-        
-        System.Diagnostics.Debug.WriteLine($"Триггерное время (мс): {triggerTime}");
-        System.Diagnostics.Debug.WriteLine($"Текущее время (мс): {nowMillis}");
-        System.Diagnostics.Debug.WriteLine($"Разница (мс): {triggerTime - nowMillis}");
-        System.Diagnostics.Debug.WriteLine($"Разница (сек): {(triggerTime - nowMillis) / 1000}");
-
-        // Если время уже прошло, планируем на 30 секунд вперед
-        if (triggerTime <= nowMillis)
-        {
-            triggerTime = nowMillis + 30000; // 30 секунд для теста
-            System.Diagnostics.Debug.WriteLine($"Время прошло, планируем на 30 секунд вперед: {triggerTime}");
-        }
-
-        // Проверяем разрешение SCHEDULE_EXACT_ALARM для Android 12+
-        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.S)
-        {
-            var canSchedule = alarmManager.CanScheduleExactAlarms();
-            System.Diagnostics.Debug.WriteLine($"CanScheduleExactAlarms: {canSchedule}");
-            
-            if (!canSchedule)
+            try
             {
-                // Показываем диалог для запроса разрешения
-                System.Diagnostics.Debug.WriteLine("❌ Нет разрешения на точные уведомления!");
-                // Можно показать диалог пользователю
-                return;
+                var context = Android.App.Application.Context;
+
+                // 1. Получаем или создаем запись о приеме
+                var intakeId = await GetOrCreateIntakeIdAsync(medicine, notificationTime);
+
+                if (intakeId == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Не удалось получить intake_id для лекарства: {medicine.MedicineName}");
+                    return;
+                }
+
+                // 2. Проверяем, не было ли уже уведомления
+                if (WasNotificationShown(context, intakeId))
+                {
+                    System.Diagnostics.Debug.WriteLine($"⏰ Уведомление уже было показано для intake_id: {intakeId}");
+                    return;
+                }
+
+                // 3. ИСПРАВЛЕННАЯ ПРОВЕРКА: Если время уже прошло, но не более 6 часов, все равно показываем
+                var timeDifference = notificationTime - DateTime.Now;
+
+                if (timeDifference.TotalHours < -6) // Пропускаем если прошло более 6 часов
+                {
+                    System.Diagnostics.Debug.WriteLine($"⏰ Время приема {medicine.MedicineName} прошло более 6 часов назад, пропускаем");
+                    return;
+                }
+                else if (timeDifference.TotalSeconds < 0)
+                {
+                    // Если время только что прошло (до 6 часов), планируем через 30 секунд
+                    System.Diagnostics.Debug.WriteLine($"⏰ Время {medicine.MedicineName} только что прошло ({timeDifference.TotalMinutes:0} минут), планируем через 30 секунд");
+                    notificationTime = DateTime.Now.AddSeconds(30);
+                }
+
+                var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
+
+                if (alarmManager == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ AlarmManager не найден!");
+                    return;
+                }
+
+                // 4. Создаем Intent для показа уведомления
+                var intent = new Intent(context,
+                    Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
+
+                intent.SetAction("ACTION_SHOW_NOTIFICATION");
+                intent.PutExtra("medicine_id", medicine.IdMedicine);
+                intent.PutExtra("medicine_name", medicine.MedicineName);
+                intent.PutExtra("dosage", medicine.Dosage);
+                intent.PutExtra("recipient_name", medicine.RecipientName);
+                intent.PutExtra("intake_id", intakeId);
+                intent.PutExtra("scheduled_time", notificationTime.ToString("HH:mm"));
+
+                // Уникальный ID для каждого уведомления
+                var requestCode = GenerateNotificationId(medicine.IdMedicine, notificationTime);
+
+                System.Diagnostics.Debug.WriteLine($"Создаем уведомление для: {medicine.MedicineName}");
+                System.Diagnostics.Debug.WriteLine($"Время: {notificationTime:yyyy-MM-dd HH:mm}");
+                System.Diagnostics.Debug.WriteLine($"RequestCode: {requestCode}");
+                System.Diagnostics.Debug.WriteLine($"IntakeId: {intakeId}");
+
+                var pendingIntent = PendingIntent.GetBroadcast(
+                    context,
+                    requestCode,
+                    intent,
+                    PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
+
+                // 5. Конвертируем время в миллисекунды
+                var triggerTime = GetDateTimeInMillis(notificationTime);
+                var nowMillis = GetDateTimeInMillis(DateTime.Now);
+
+                System.Diagnostics.Debug.WriteLine($"Триггерное время (мс): {triggerTime}");
+                System.Diagnostics.Debug.WriteLine($"Текущее время (мс): {nowMillis}");
+                System.Diagnostics.Debug.WriteLine($"Разница (сек): {(triggerTime - nowMillis) / 1000}");
+
+                // 6. Используем setExactAndAllowWhileIdle для точного времени
+                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.M)
+                {
+                    alarmManager.SetExactAndAllowWhileIdle(
+                        AlarmType.RtcWakeup,
+                        triggerTime,
+                        pendingIntent);
+
+                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExactAndAllowWhileIdle");
+                }
+                else
+                {
+                    alarmManager.SetExact(
+                        AlarmType.RtcWakeup,
+                        triggerTime,
+                        pendingIntent);
+
+                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExact");
+                }
             }
-        }
-
-        // Используем setExactAndAllowWhileIdle для точного времени
-        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.M)
-        {
-            alarmManager.SetExactAndAllowWhileIdle(
-                Android.App.AlarmType.RtcWakeup,
-                triggerTime,
-                pendingIntent);
-            
-            System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExactAndAllowWhileIdle");
-        }
-        else
-        {
-            alarmManager.SetExact(
-                Android.App.AlarmType.RtcWakeup,
-                triggerTime,
-                pendingIntent);
-            
-            System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExact");
-        }
-
-        System.Diagnostics.Debug.WriteLine($"✅ Запланировано уведомление: {medicine.MedicineName} на {notificationTime}");
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"❌ Ошибка планирования: {ex.Message}");
-        System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-    }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка планирования: {ex.Message}");
+            }
 #endif
             await Task.CompletedTask;
         }
 
-        private int GenerateNotificationId(int medicineId, DateTime time)
+#if ANDROID
+        private async Task<int> GetOrCreateIntakeIdAsync(MedicineWithScheduleDto medicine, DateTime notificationTime)
         {
-            return $"{medicineId}{time:HHmm}".GetHashCode();
+            try
+            {
+                var dateStr = notificationTime.ToString("yyyy-MM-dd");
+                var timeStr = notificationTime.ToString("HH:mm");
+
+                // 1. Сначала проверяем, есть ли уже запись в Intake
+                var existingIntake = await _intakeRepository.GetIntakeByMedicineAndDateTimeAsync(
+                    medicine.IdMedicine,
+                    dateStr,
+                    timeStr);
+
+                if (existingIntake != null)
+                {
+                    // 2. Если запись уже существует, возвращаем ее ID
+                    System.Diagnostics.Debug.WriteLine($"✅ Запись Intake уже существует: ID={existingIntake.IdIntake}");
+                    return existingIntake.IdIntake;
+                }
+
+                // 3. Только если записи нет - создаем новую
+                System.Diagnostics.Debug.WriteLine($"🆕 Создаем новую запись Intake для лекарства: {medicine.MedicineName}");
+        
+                // Получаем ID ScheduleTime
+                var scheduleTime = await _scheduleTimeRepository.GetScheduleTimeByScheduleAndTimeAsync(
+                    medicine.IdSchedule, timeStr);
+                
+                if (scheduleTime == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Не найден ScheduleTime для времени {timeStr}");
+                    return 0;
+                }
+        
+                var intakeModel = new Models.IntakeModel
+                {
+                    IdMedicine = medicine.IdMedicine,
+                    IdSchedule = medicine.IdSchedule,
+                    IdScheduleTime = scheduleTime.IdTime,
+                    Date = dateStr,
+                    Time = timeStr,
+                    ActualDosage = medicine.Dosage,
+                    IsCompleted = false,
+                    TakenDateTime = null
+                };
+
+                return await _intakeRepository.AddIntakeAsync(intakeModel);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка получения/создания intake_id: {ex.Message}");
+                return 0;
+            }
         }
 
-#if ANDROID
+        private bool WasNotificationShown(Context context, int intakeId)
+        {
+            try
+            {
+                var prefs = context.GetSharedPreferences("notifications", FileCreationMode.Private);
+                return prefs.GetBoolean($"shown_{intakeId}", false);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private long GetDateTimeInMillis(DateTime dateTime)
         {
             var utcTime = TimeZoneInfo.ConvertTimeToUtc(dateTime);
@@ -339,36 +468,88 @@ namespace MedicinesTracker.Services
         }
 #endif
 
+        private int GenerateNotificationId(int medicineId, DateTime time)
+        {
+            return Math.Abs($"{medicineId}{time:yyyyMMddHHmm}".GetHashCode());
+        }
+
         public void CancelAllNotifications()
         {
 #if ANDROID
             try
             {
                 var context = Android.App.Application.Context;
-                var alarmManager = context.GetSystemService(Context.AlarmService) as Android.App.AlarmManager;
+                var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
 
                 if (alarmManager == null)
                     return;
 
                 // Создаем Intent с тем же типом для отмены
-                var intent = new Intent(context, Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
-                var pendingIntent = PendingIntent.GetBroadcast(
-                    context,
-                    0,
-                    intent,
-                    PendingIntentFlags.Immutable | PendingIntentFlags.NoCreate);
-
-                if (pendingIntent != null)
+                var intent = new Intent(context, 
+                    Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
+                
+                intent.SetAction("ACTION_SHOW_NOTIFICATION");
+                
+                // Отменяем все уведомления для сегодняшнего дня
+                for (int i = 0; i < 1000; i++) // Максимальный ID для отмены
                 {
-                    alarmManager.Cancel(pendingIntent);
-                    pendingIntent.Cancel();
+                    var pendingIntent = PendingIntent.GetBroadcast(
+                        context,
+                        i,
+                        intent,
+                        PendingIntentFlags.Immutable | PendingIntentFlags.NoCreate);
+
+                    if (pendingIntent != null)
+                    {
+                        alarmManager.Cancel(pendingIntent);
+                        pendingIntent.Cancel();
+                        System.Diagnostics.Debug.WriteLine($"✅ Уведомление {i} отменено");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка отмены уведомлений: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка отмены уведомлений: {ex.Message}");
             }
 #endif
+        }
+
+        public async Task CancelNotificationForIntakeAsync(int intakeId)
+        {
+#if ANDROID
+            try
+            {
+                var context = Android.App.Application.Context;
+                var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
+                
+                if (alarmManager == null) return;
+                
+                // Создаем Intent с тем же action
+                var intent = new Intent(context, 
+                    Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
+                
+                intent.SetAction("ACTION_SHOW_NOTIFICATION");
+                
+                // Используем intakeId как requestCode для поиска
+                var pendingIntent = PendingIntent.GetBroadcast(
+                    context,
+                    intakeId,
+                    intent,
+                    PendingIntentFlags.Immutable | PendingIntentFlags.NoCreate);
+                
+                if (pendingIntent != null)
+                {
+                    alarmManager.Cancel(pendingIntent);
+                    pendingIntent.Cancel();
+                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление для intake {intakeId} отменено");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка отмены уведомления: {ex.Message}");
+            }
+#endif
+            await Task.CompletedTask;
         }
 
         public async Task DebugLogMedicinesAsync()

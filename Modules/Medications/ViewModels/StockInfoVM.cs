@@ -31,6 +31,11 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private bool _isEditingExisting;
 
         private bool _isInitialized = false;
+        [ObservableProperty]
+        private bool _isBusy;
+
+        [ObservableProperty]
+        private string _loadingMessage = "Сохранение...";
 
         public StockInfoVM(IStockRepository stockRepository,
             IValidatorService validatorService)
@@ -118,6 +123,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     return;
                 }
 
+                // Блокируем UI на время сохранения
+                IsBusy = true;
                 int rowsAffected;
 
                 // Совместная логика сохранения/редактирования
@@ -125,7 +132,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 {
                     // Редактирование существующего
                     Debug.WriteLine("Режим: Редактирование существующего запаса лекарства");
-                    Stock.IdStock = StockId;
                     rowsAffected = await _stockRepository.UpdateStockAsync(Stock);
                     // Возвращаемся назад
                     await Shell.Current.GoToAsync("..");
@@ -135,7 +141,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     // Добавление нового
                     Debug.WriteLine("Режим: Добавление нового запаса лекарства");
                     rowsAffected = await _stockRepository.AddStockAsync(Stock, MedicineId);
-                    await OpenMedicineSchedulePage(); 
+                    if (rowsAffected > 0)
+                    {
+                        MainThread.BeginInvokeOnMainThread(async () =>
+                        {
+                            await OpenMedicineSchedulePage();
+                        });
+                    }
                 }
 
                 Debug.WriteLine($"Результат операции: {rowsAffected} строк затронуто");
@@ -162,24 +174,41 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     $"Не удалось сохранить: {ex.Message}",
                     "ОК");
             }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         [RelayCommand]
         private async Task OpenMedicineSchedulePage()
         {
-            if (MedicineId <= 0) return; // 0 или -1
-
-            var route = "MedicineSchedulePage";
-            var parameters = new Dictionary<string, object>
+            try
             {
-                { "idSchedule", 0 },  // 0 = новое расписание
-                    {
-                        "unitName",
-                        UnitName ?? string.Empty  // Берём из выбранного UnitModel
-                    },
-                { "idMedicine", MedicineId }
-            };
-            await Shell.Current.GoToAsync(route, parameters);
+                if (MedicineId <= 0) return;
+
+                Debug.WriteLine($"Переход к созданию расписания для MedicineId={MedicineId}");
+
+                var route = "MedicineSchedulePage";
+                var parameters = new Dictionary<string, object>
+                {
+                    { "idSchedule", 0 },
+                    { "unitName", UnitName ?? string.Empty },
+                    { "idMedicine", MedicineId }
+                };
+
+                // Используем анимированный переход
+                await Shell.Current.GoToAsync(route, true, parameters);
+            }
+            catch (Exception ex)
+            {
+                // Можно показать сообщение или вернуться назад
+                await Shell.Current.DisplayAlertAsync(
+                    "Ошибка",
+                    "Не удалось перейти к созданию расписания",
+                    "ОК");
+                await Shell.Current.GoToAsync("..");
+            }
         }
 
         private async Task LoadMedicineDataAsync(int stockId)

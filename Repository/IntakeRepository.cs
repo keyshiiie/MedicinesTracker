@@ -21,6 +21,17 @@ namespace MedicinesTracker.Repository
         Task<IEnumerable<IntakeModel>> GetIntakesByDateAsync(string date);
         Task<int> DeleteFutureIntakesAsync(DateTime fromDate);
         Task<bool> HasIntakesForDateAsync(string date);
+        // Добавьте этот метод:
+        Task<IEnumerable<IntakeModel>> GetIntakesByMedicineAndDateAsync(int medicineId, string date);
+
+        // Или если нужно получить по времени:
+        Task<IntakeModel?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time);
+        Task<bool> HasIntakeAtTimeAsync(int medicineId, string date, string time);
+        Task<int> EnsureIntakeExistsAsync(IntakeModel intakeModel);
+
+        Task<bool> IntakeExistsAsync(int medicineId, string date, string time);
+        Task<int> DeleteFutureIntakesForMedicineAsync(int medicineId, DateTime fromDate);
+        Task<int> DeleteOldIntakesAsync(DateTime cutoffDate);
     }
     public class IntakeRepository : IIntakeRepository
     {
@@ -83,11 +94,11 @@ namespace MedicinesTracker.Repository
         public async Task<int> UpdateIntakeAsync(IntakeModel intakeModel)
         {
             var query = @"UPDATE Intake 
-    SET IsCompleted = @IsCompleted,
-        Time = @Time,
-        TakenDateTime = @TakenDateTime,
-        ActualDosage = @ActualDosage  
-    WHERE IdIntake = @IdIntake";
+            SET IsCompleted = @IsCompleted,
+                Time = @Time,
+                TakenDateTime = @TakenDateTime,
+                ActualDosage = @ActualDosage  
+            WHERE IdIntake = @IdIntake";
 
             var parameters = new
             {
@@ -244,35 +255,6 @@ namespace MedicinesTracker.Repository
             ORDER BY 6, 5, 2;";
 
             var todayMedicines = await _dbHandler.QueryAsync<TodayMedicineDto>(query);
-
-            // Создаем записи в Intake для тех лекарств, у которых их еще нет
-            var medicinesWithoutIntake = todayMedicines
-                .Where(m => m.IdIntake == 0)
-                .ToList();
-
-            if (medicinesWithoutIntake.Any())
-            {
-                foreach (var medicine in medicinesWithoutIntake)
-                {
-                    var intakeModel = new IntakeModel
-                    {
-                        IdMedicine = medicine.IdMedicine,
-                        IdSchedule = medicine.IdSchedule,
-                        IdScheduleTime = medicine.IdScheduleTime,
-                        IsCompleted = false,
-                        Date = DateTime.Now.Date.ToString("yyyy-MM-dd"),
-                        Time = medicine.Time,
-                        ActualDosage = medicine.Dosage
-                    };
-
-                    var newId = await AddIntakeAsync(intakeModel);
-                    // Обновляем IdIntake в коллекции
-                    medicine.IdIntake = newId;
-                    // Поскольку запись только создана, IsCompleted = false
-                    medicine.IsCompleted = false;
-                }
-            }
-
             return todayMedicines;
         }
 
@@ -335,6 +317,153 @@ namespace MedicinesTracker.Repository
             AND IsCompleted = 0";
 
             var parameters = new { FromDate = fromDate.ToString("yyyy-MM-dd") };
+            return await _dbHandler.ExecuteAsync(query, parameters);
+        }
+
+        public async Task<IEnumerable<IntakeModel>> GetIntakesByMedicineAndDateAsync(int medicineId, string date)
+        {
+            var query = @"
+    SELECT 
+        i.IdIntake,
+        i.IdMedicine,
+        i.IsCompleted,
+        i.IdSchedule,
+        i.IdScheduleTime,
+        i.Date,
+        i.Time,
+        i.TakenDateTime,
+        i.ActualDosage
+    FROM Intake i
+    WHERE i.IdMedicine = @MedicineId 
+      AND i.Date = @Date
+    ORDER BY i.Time";
+
+            var parameters = new { MedicineId = medicineId, Date = date };
+            return await _dbHandler.QueryAsync<IntakeModel>(query, parameters);
+        }
+
+        public async Task<IntakeModel?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time)
+        {
+            var query = @"
+    SELECT 
+        i.IdIntake,
+        i.IdMedicine,
+        i.IsCompleted,
+        i.IdSchedule,
+        i.IdScheduleTime,
+        i.Date,
+        i.Time,
+        i.TakenDateTime,
+        i.ActualDosage
+    FROM Intake i
+    WHERE i.IdMedicine = @MedicineId 
+      AND i.Date = @Date
+      AND i.Time = @Time
+    LIMIT 1";
+
+            var parameters = new
+            {
+                MedicineId = medicineId,
+                Date = date,
+                Time = time // Теперь точно по времени
+            };
+            return await _dbHandler.QueryFirstOrDefaultAsync<IntakeModel>(query, parameters);
+        }
+
+        public async Task<bool> HasIntakeAtTimeAsync(int medicineId, string date, string time)
+        {
+            var query = @"
+            SELECT COUNT(*) 
+            FROM Intake 
+            WHERE IdMedicine = @MedicineId 
+            AND Date = @Date
+            AND Time = @Time";
+
+            var parameters = new
+            {
+                MedicineId = medicineId,
+                Date = date,
+                Time = time
+            };
+
+            var count = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
+            return count > 0;
+        }
+
+        public async Task<int> EnsureIntakeExistsAsync(IntakeModel intakeModel)
+        {
+            // Проверяем по всем ключевым полям
+            var existing = await GetIntakeByMedicineAndDateTimeAsync(
+                intakeModel.IdMedicine,
+                intakeModel.Date,
+                intakeModel.Time);
+
+            if (existing != null)
+            {
+                // ОБНОВЛЯЕМ существующую запись, а не возвращаем ID
+                var updateQuery = @"
+            UPDATE Intake 
+            SET IdSchedule = @IdSchedule,
+                IdScheduleTime = @IdScheduleTime,
+                ActualDosage = @ActualDosage,
+                IsCompleted = @IsCompleted
+            WHERE IdIntake = @IdIntake";
+
+                var updateParameters = new
+                {
+                    existing.IdIntake,
+                    intakeModel.IdSchedule,
+                    intakeModel.IdScheduleTime,
+                    intakeModel.ActualDosage,
+                    intakeModel.IsCompleted
+                };
+
+                await _dbHandler.ExecuteAsync(updateQuery, updateParameters);
+                return existing.IdIntake;
+            }
+
+            // Только если записи нет - создаем новую
+            return await AddIntakeAsync(intakeModel);
+        }
+
+        public async Task<bool> IntakeExistsAsync(int medicineId, string date, string time)
+        {
+            var query = @"
+            SELECT COUNT(*) FROM Intake 
+            WHERE IdMedicine = @MedicineId 
+            AND Date = @Date 
+            AND Time = @Time";
+
+            var parameters = new { MedicineId = medicineId, Date = date, Time = time };
+            var count = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
+            return count > 0;
+        }
+
+        public async Task<int> DeleteFutureIntakesForMedicineAsync(int medicineId, DateTime fromDate)
+        {
+            var query = @"
+            DELETE FROM Intake 
+            WHERE IdMedicine = @MedicineId 
+            AND Date >= @FromDate
+            AND IsCompleted = 0";
+
+            var parameters = new
+            {
+                MedicineId = medicineId,
+                FromDate = fromDate.ToString("yyyy-MM-dd")
+            };
+
+            return await _dbHandler.ExecuteAsync(query, parameters);
+        }
+
+        public async Task<int> DeleteOldIntakesAsync(DateTime cutoffDate)
+        {
+            var query = @"
+            DELETE FROM Intake 
+            WHERE Date < @CutoffDate
+            AND IsCompleted = 1";
+
+            var parameters = new { CutoffDate = cutoffDate.ToString("yyyy-MM-dd") };
             return await _dbHandler.ExecuteAsync(query, parameters);
         }
     }

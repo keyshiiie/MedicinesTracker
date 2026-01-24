@@ -13,6 +13,10 @@
         </Grid.RowDefinitions>
         <VerticalStackLayout Spacing="10">
             <VerticalStackLayout Spacing="5">
+                <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                                   IsVisible="{Binding IsBusy}" />
+                <Label Text="{Binding LoadingMessage}" 
+                       IsVisible="{Binding IsBusy}" />
                 <Label 
                     Text="Текущий запас"
                     Style="{StaticResource CardDescriptionStyle}"/>

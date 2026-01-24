@@ -61,7 +61,7 @@ namespace MedicinesTracker
             builder.Services.AddSingleton<IValidatorService, ValidatorService>();
             builder.Services.AddSingleton<IScheduleTimeRepository, ScheduleTimeRepository>();
             builder.Services.AddSingleton<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
-            builder.Services.AddSingleton<IntakeSchedulerService>();
+            builder.Services.AddSingleton<IIntakeSchedulerService, IntakeSchedulerService>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
 
             // В MauiProgram.cs, в секцию "4. Регистрируем сервисы" добавьте:
