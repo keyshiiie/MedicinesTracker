@@ -287,107 +287,110 @@ namespace MedicinesTracker.Services
         private async Task ScheduleNotificationAsync(MedicineWithScheduleDto medicine, DateTime notificationTime)
         {
 #if ANDROID
-            try
-            {
-                var context = Android.App.Application.Context;
+    try
+    {
+        System.Diagnostics.Debug.WriteLine($"=== ScheduleNotificationAsync для {medicine.MedicineName} ===");
+        
+        var context = Android.App.Application.Context;
 
-                // 1. Получаем или создаем запись о приеме
-                var intakeId = await GetOrCreateIntakeIdAsync(medicine, notificationTime);
+        // 1. Получаем или создаем запись о приеме
+        var intakeId = await GetOrCreateIntakeIdAsync(medicine, notificationTime);
 
-                if (intakeId == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"❌ Не удалось получить intake_id для лекарства: {medicine.MedicineName}");
-                    return;
-                }
+        if (intakeId == 0)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Не удалось получить intake_id для лекарства: {medicine.MedicineName}");
+            return;
+        }
 
-                // 2. Проверяем, не было ли уже уведомления
-                if (WasNotificationShown(context, intakeId))
-                {
-                    System.Diagnostics.Debug.WriteLine($"⏰ Уведомление уже было показано для intake_id: {intakeId}");
-                    return;
-                }
+        // 2. Проверяем, не было ли уже уведомления
+        if (WasNotificationShown(context, intakeId))
+        {
+            System.Diagnostics.Debug.WriteLine($"⏰ Уведомление уже было показано для intake_id: {intakeId}");
+            return;
+        }
 
-                // 3. ИСПРАВЛЕННАЯ ПРОВЕРКА: Если время уже прошло, но не более 6 часов, все равно показываем
-                var timeDifference = notificationTime - DateTime.Now;
+        // 3. Проверка времени
+        var timeDifference = notificationTime - DateTime.Now;
 
-                if (timeDifference.TotalHours < -6) // Пропускаем если прошло более 6 часов
-                {
-                    System.Diagnostics.Debug.WriteLine($"⏰ Время приема {medicine.MedicineName} прошло более 6 часов назад, пропускаем");
-                    return;
-                }
-                else if (timeDifference.TotalSeconds < 0)
-                {
-                    // Если время только что прошло (до 6 часов), планируем через 30 секунд
-                    System.Diagnostics.Debug.WriteLine($"⏰ Время {medicine.MedicineName} только что прошло ({timeDifference.TotalMinutes:0} минут), планируем через 30 секунд");
-                    notificationTime = DateTime.Now.AddSeconds(30);
-                }
+        if (timeDifference.TotalHours < -6)
+        {
+            System.Diagnostics.Debug.WriteLine($"⏰ Время приема {medicine.MedicineName} прошло более 6 часов назад, пропускаем");
+            return;
+        }
+        else if (timeDifference.TotalSeconds < 0)
+        {
+            System.Diagnostics.Debug.WriteLine($"⏰ Время {medicine.MedicineName} только что прошло ({timeDifference.TotalMinutes:0} минут), планируем через 30 секунд");
+            notificationTime = DateTime.Now.AddSeconds(30);
+        }
 
-                var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
+        var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
 
-                if (alarmManager == null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"❌ AlarmManager не найден!");
-                    return;
-                }
+        if (alarmManager == null)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ AlarmManager не найден!");
+            return;
+        }
 
-                // 4. Создаем Intent для показа уведомления
-                var intent = new Intent(context,
-                    Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
+        // 4. ✅ ДОБАВЛЯЕМ unit_name в Intent
+        var intent = new Intent(context,
+            Java.Lang.Class.FromType(typeof(MedicinesTracker.Platforms.Android.NotificationPublisher)));
 
-                intent.SetAction("ACTION_SHOW_NOTIFICATION");
-                intent.PutExtra("medicine_id", medicine.IdMedicine);
-                intent.PutExtra("medicine_name", medicine.MedicineName);
-                intent.PutExtra("dosage", medicine.Dosage);
-                intent.PutExtra("recipient_name", medicine.RecipientName);
-                intent.PutExtra("intake_id", intakeId);
-                intent.PutExtra("scheduled_time", notificationTime.ToString("HH:mm"));
+        intent.SetAction("ACTION_SHOW_NOTIFICATION");
+        intent.PutExtra("medicine_id", medicine.IdMedicine);
+        intent.PutExtra("medicine_name", medicine.MedicineName);
+        intent.PutExtra("dosage", medicine.Dosage);
+        intent.PutExtra("recipient_name", medicine.RecipientName);
+        intent.PutExtra("intake_id", intakeId);
+        intent.PutExtra("unit_name", medicine.UnitName); // ✅ Добавляем единицу измерения
+        intent.PutExtra("scheduled_time", notificationTime.ToString("HH:mm"));
 
-                // Уникальный ID для каждого уведомления
-                var requestCode = GenerateNotificationId(medicine.IdMedicine, notificationTime);
+        // Уникальный ID для каждого уведомления
+        var requestCode = GenerateNotificationId(medicine.IdMedicine, notificationTime);
 
-                System.Diagnostics.Debug.WriteLine($"Создаем уведомление для: {medicine.MedicineName}");
-                System.Diagnostics.Debug.WriteLine($"Время: {notificationTime:yyyy-MM-dd HH:mm}");
-                System.Diagnostics.Debug.WriteLine($"RequestCode: {requestCode}");
-                System.Diagnostics.Debug.WriteLine($"IntakeId: {intakeId}");
+        System.Diagnostics.Debug.WriteLine($"Создаем уведомление для: {medicine.MedicineName}");
+        System.Diagnostics.Debug.WriteLine($"Дозировка: {medicine.Dosage} {medicine.UnitName}");
+        System.Diagnostics.Debug.WriteLine($"Время: {notificationTime:HH:mm}");
+        System.Diagnostics.Debug.WriteLine($"RequestCode: {requestCode}");
+        System.Diagnostics.Debug.WriteLine($"IntakeId: {intakeId}");
 
-                var pendingIntent = PendingIntent.GetBroadcast(
-                    context,
-                    requestCode,
-                    intent,
-                    PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
+        var pendingIntent = PendingIntent.GetBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
-                // 5. Конвертируем время в миллисекунды
-                var triggerTime = GetDateTimeInMillis(notificationTime);
-                var nowMillis = GetDateTimeInMillis(DateTime.Now);
+        // 5. Конвертируем время в миллисекунды
+        var triggerTime = GetDateTimeInMillis(notificationTime);
+        var nowMillis = GetDateTimeInMillis(DateTime.Now);
 
-                System.Diagnostics.Debug.WriteLine($"Триггерное время (мс): {triggerTime}");
-                System.Diagnostics.Debug.WriteLine($"Текущее время (мс): {nowMillis}");
-                System.Diagnostics.Debug.WriteLine($"Разница (сек): {(triggerTime - nowMillis) / 1000}");
+        System.Diagnostics.Debug.WriteLine($"Триггерное время (мс): {triggerTime}");
+        System.Diagnostics.Debug.WriteLine($"Текущее время (мс): {nowMillis}");
+        System.Diagnostics.Debug.WriteLine($"Разница (сек): {(triggerTime - nowMillis) / 1000}");
 
-                // 6. Используем setExactAndAllowWhileIdle для точного времени
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.M)
-                {
-                    alarmManager.SetExactAndAllowWhileIdle(
-                        AlarmType.RtcWakeup,
-                        triggerTime,
-                        pendingIntent);
+        // 6. Планируем уведомление
+        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.M)
+        {
+            alarmManager.SetExactAndAllowWhileIdle(
+                AlarmType.RtcWakeup,
+                triggerTime,
+                pendingIntent);
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExactAndAllowWhileIdle");
-                }
-                else
-                {
-                    alarmManager.SetExact(
-                        AlarmType.RtcWakeup,
-                        triggerTime,
-                        pendingIntent);
+            System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExactAndAllowWhileIdle");
+        }
+        else
+        {
+            alarmManager.SetExact(
+                AlarmType.RtcWakeup,
+                triggerTime,
+                pendingIntent);
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExact");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка планирования: {ex.Message}");
-            }
+            System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExact");
+        }
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"❌ Ошибка планирования: {ex.Message}");
+    }
 #endif
             await Task.CompletedTask;
         }

@@ -5,7 +5,7 @@
              x:DataType="viewModels:MedicineDetailVM"
              xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
-             Title="Информация о лекарстве">
+             Title="Информация">
     <VerticalStackLayout>
         <Border Margin="0,0,0,10">
             <Border.GestureRecognizers>
@@ -17,10 +17,20 @@
             </Border.GestureRecognizers>
             <StackLayout Spacing="10" 
                          Padding="15">
-                <HorizontalStackLayout Spacing="15">
-                    <Image Source="medicine_card_icon.png"
-                           Style="{StaticResource MedicineIconStyle}"/>
-                    <VerticalStackLayout Spacing="5" >
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Style="{StaticResource ImageBorderCardStyle}"
+                            VerticalOptions="Center">
+                        <Image Source="pill.png"
+                               Style="{StaticResource MedicineIconStyle}"/>
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
                         <StackLayout Spacing="5">
                             <Label Text="Основная информация"
                                    Style="{StaticResource CardTitleStyle}"/>
@@ -32,7 +42,7 @@
                                    Style="{StaticResource DetailLinkIconStyle}"/>
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
-                </HorizontalStackLayout>
+                </Grid>
             </StackLayout>
         </Border>
         <Border Margin="0,0,0,10">
@@ -45,11 +55,20 @@
             </Border.GestureRecognizers>
             <StackLayout Spacing="10" 
                          Padding="15">
-                <HorizontalStackLayout Spacing="10">
-                    <Image 
-                        Source="medicine_box_filled.png"
-                        Style="{StaticResource MedicineIconStyle}"/>
-                    <VerticalStackLayout Spacing="5" >
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Style="{StaticResource ImageBorderCardStyle}"
+                            VerticalOptions="Center">
+                        <Image Source="medicine_box.png"
+                               Style="{StaticResource MedicineIconStyle}"/>
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="Запас"
@@ -62,7 +81,7 @@
                                    Style="{StaticResource DetailLinkIconStyle}"/>
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
-                </HorizontalStackLayout>
+                </Grid>
             </StackLayout>
         </Border>
         <Border Margin="0,0,0,10">
@@ -76,11 +95,20 @@
             <StackLayout 
                 Spacing="10"
                 Padding="15">
-                <HorizontalStackLayout Spacing="10">
-                    <Image 
-                        Source="date_time.png"
-                        Style="{StaticResource MedicineIconStyle}"/>
-                    <VerticalStackLayout Spacing="5" >
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Style="{StaticResource ImageBorderCardStyle}"
+                            VerticalOptions="Center">
+                        <Image Source="calendar.png"
+                               Style="{StaticResource MedicineIconStyle}"/>
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
                         <StackLayout Spacing="5">
                             <Label 
                                 Text="Расписание приёма"
@@ -93,7 +121,7 @@
                                    Style="{StaticResource DetailLinkIconStyle}"/>
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
-                </HorizontalStackLayout>
+                </Grid>
             </StackLayout>
         </Border>
         <Button Style="{StaticResource DeleteButtonStyle}"

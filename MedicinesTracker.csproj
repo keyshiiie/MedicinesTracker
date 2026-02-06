@@ -182,6 +182,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiIcon Include="Resources\AppIcon\icon_medicine.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiIcon Include="Resources\AppIcon\icons_medicines.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Update="Modules\Medications\Views\MedicineSchedulePage.xaml.cs">
 			<DependentUpon>MedicineSchedulePage.xaml</DependentUpon>
 		</Compile>

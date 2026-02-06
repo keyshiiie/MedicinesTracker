@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Models;
+using MedicinesTracker.Modules.Medications.Models;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
 using System.Diagnostics;
@@ -14,6 +15,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     {
         private readonly IStockRepository _stockRepository;
         private readonly IValidatorService _validatorService;
+        private readonly IMedicineBuilder _medicineBuilder;
 
         [ObservableProperty]
         private StockModel _stock = new();
@@ -35,13 +37,15 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private bool _isBusy;
 
         [ObservableProperty]
-        private string _loadingMessage = "Сохранение...";
-
-        public StockInfoVM(IStockRepository stockRepository,
-            IValidatorService validatorService)
+        private ButtonUiState _saveButtonState = new();
+        public StockInfoVM(
+            IStockRepository stockRepository,
+            IValidatorService validatorService,
+            IMedicineBuilder medicineBuilder)
         {
             _stockRepository = stockRepository;
             _validatorService = validatorService;
+            _medicineBuilder = medicineBuilder;
         }
 
         public async Task InitializeAsync()
@@ -52,16 +56,14 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MedicineListVM ERROR] {ex.Message}");
+                Debug.WriteLine($"[StockInfoVM ERROR] {ex.Message}");
             }
         }
 
         partial void OnStockIdChanged(int value)
         {
-            Debug.WriteLine($"OnMedicineIdChanged вызван со значением: {value}");
-
             IsEditingExisting = value > 0;
-
+            UpdateButtonState();
             if (value >= 0 && !_isInitialized)
             {
                 _isInitialized = true;
@@ -72,107 +74,99 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
+        private void UpdateButtonState()
+        {
+            SaveButtonState.Text = IsEditingExisting ? "Сохранить" : "Продолжить";
+            SaveButtonState.IsPrimary = true;
+        }
+
         [RelayCommand]
         private async Task LoadDataAsync()
         {
             try
             {
-                Debug.WriteLine($"LoadData вызван. Режим: {(IsEditingExisting ? "Редактирование" : "Добавление")}");
+                Debug.WriteLine($"LoadData: IsEditingExisting={IsEditingExisting}, StockId={StockId}");
 
-                // Если это редактирование, загружаем данные лекарства
                 if (IsEditingExisting && StockId > 0)
                 {
-                    await LoadMedicineDataAsync(StockId);
+                    await LoadStockDataAsync(StockId);
                 }
                 else
                 {
-                    // Если это добавление, сбрасываем модель
                     ResetForm();
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка загрузки: {ex.Message}");
-                await Shell.Current.DisplayAlertAsync(
-                    "Ошибка",
-                    $"Не удалось загрузить данные: {ex.Message}",
-                    "OK");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось загрузить данные: {ex.Message}", "OK");
             }
         }
 
         private void ResetForm()
         {
-            // Сбрасываем модель для нового лекарства
             Stock = new StockModel();
             OnPropertyChanged(nameof(Stock));
-
-            Debug.WriteLine("Форма сброшена для добавления нового запаса лекарства");
         }
 
         [RelayCommand]
         private async Task SaveMedicine()
         {
-            if (MedicineId == 0) return;
             try
             {
                 var errors = _validatorService.GetStockValidationErrors(Stock);
-
                 if (errors.Any())
                 {
                     await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
                     return;
                 }
 
-                // Блокируем UI на время сохранения
-                IsBusy = true;
-                int rowsAffected;
-
-                // Совместная логика сохранения/редактирования
+                // РАЗДЕЛЕНИЕ ЛОГИКИ: РЕДАКТИРОВАНИЕ vs ДОБАВЛЕНИЕ
                 if (IsEditingExisting && StockId > 0)
                 {
-                    // Редактирование существующего
-                    Debug.WriteLine("Режим: Редактирование существующего запаса лекарства");
-                    rowsAffected = await _stockRepository.UpdateStockAsync(Stock);
-                    // Возвращаемся назад
-                    await Shell.Current.GoToAsync("..");
-                }
-                else
-                {
-                    // Добавление нового
-                    Debug.WriteLine("Режим: Добавление нового запаса лекарства");
-                    rowsAffected = await _stockRepository.AddStockAsync(Stock, MedicineId);
+                    // РЕДАКТИРОВАНИЕ - старая логика
+                    Debug.WriteLine("Режим: Редактирование существующего запаса");
+                    IsBusy = true;
+
+                    var rowsAffected = await _stockRepository.UpdateStockAsync(Stock);
                     if (rowsAffected > 0)
                     {
-                        MainThread.BeginInvokeOnMainThread(async () =>
-                        {
-                            await OpenMedicineSchedulePage();
-                        });
+                        await Shell.Current.DisplayAlertAsync("Успех", "Запас обновлен", "OK");
+                        await Shell.Current.GoToAsync("..");
                     }
                 }
-
-                Debug.WriteLine($"Результат операции: {rowsAffected} строк затронуто");
-
-                if (rowsAffected > 0)
+                else if (!IsEditingExisting)
                 {
-                    Debug.WriteLine("Сохранение успешно, возврат назад");
+                    // ДОБАВЛЕНИЕ - через Builder
+                    Debug.WriteLine("Режим: Добавление запаса через Builder");
+
+                    // Проверяем, есть ли базовая информация в Builder
+                    var state = _medicineBuilder.GetState();
+                    if (state.Medicine == null)
+                    {
+                        await Shell.Current.DisplayAlertAsync("Ошибка",
+                            "Сначала заполните основную информацию лекарства", "OK");
+                        return;
+                    }
+
+                    // Добавляем запас в Builder
+                    _medicineBuilder.WithStockInfo(Stock);
+
+                    Debug.WriteLine($"StockInfo добавлен в Builder. Статус: {_medicineBuilder.IsComplete}");
+
+                    // Переходим к созданию расписания
+                    await OpenMedicineSchedulePage();
                 }
                 else
                 {
-                    Debug.WriteLine("Предупреждение: Операция не затронула ни одной строки");
-                    await Shell.Current.DisplayAlertAsync(
-                        "Предупреждение!",
-                        "Операция не была выполнена",
-                        "ОК");
+                    await Shell.Current.DisplayAlertAsync("Ошибка",
+                        "Невозможно сохранить: не указаны данные", "OK");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Исключение при сохранении: {ex.Message}");
-                Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-                await Shell.Current.DisplayAlertAsync(
-                    "Ошибка!",
-                    $"Не удалось сохранить: {ex.Message}",
-                    "ОК");
+                Debug.WriteLine($"Ошибка при сохранении: {ex.Message}");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}", "ОК");
             }
             finally
             {
@@ -185,61 +179,51 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                if (MedicineId <= 0) return;
+                var parameters = new Dictionary<string, object>();
 
-                Debug.WriteLine($"Переход к созданию расписания для MedicineId={MedicineId}");
-
-                var route = "MedicineSchedulePage";
-                var parameters = new Dictionary<string, object>
+                // Для добавления нового лекарства НЕ передаем MedicineId (его еще нет!)
+                // Для редактирования передаем ID
+                if (IsEditingExisting && MedicineId > 0)
                 {
-                    { "idSchedule", 0 },
-                    { "unitName", UnitName ?? string.Empty },
-                    { "idMedicine", MedicineId }
-                };
+                    parameters.Add("idMedicine", MedicineId);
+                    parameters.Add("idSchedule", 0); // 0 = новое расписание
+                }
+                else
+                {
+                    // Для добавления нового - передаем специальный флаг
+                    parameters.Add("isNewMedicine", true);
+                }
 
-                // Используем анимированный переход
-                await Shell.Current.GoToAsync(route, true, parameters);
+                // Для обоих случаев передаем unitName
+                parameters.Add("unitName", UnitName ?? string.Empty);
+
+                await Shell.Current.GoToAsync("MedicineSchedulePage", parameters);
             }
             catch (Exception ex)
             {
-                // Можно показать сообщение или вернуться назад
-                await Shell.Current.DisplayAlertAsync(
-                    "Ошибка",
-                    "Не удалось перейти к созданию расписания",
-                    "ОК");
+                await Shell.Current.DisplayAlertAsync("Ошибка", "Не удалось перейти к созданию расписания", "ОК");
                 await Shell.Current.GoToAsync("..");
             }
         }
 
-        private async Task LoadMedicineDataAsync(int stockId)
+        private async Task LoadStockDataAsync(int stockId)
         {
             try
             {
-                Debug.WriteLine($"Загрузка данных запаса лекарства с ID: {stockId}");
-
-                // Загружаем данные лекарства по ID
                 var stock = await _stockRepository.GetStockByIdAsync(stockId);
-
                 if (stock != null)
                 {
                     Stock = stock;
                 }
                 else
                 {
-                    Debug.WriteLine($"Запас с ID {stockId} не найден");
-                    await Shell.Current.DisplayAlertAsync(
-                        "Ошибка",
-                        "Запас лекарства не найден",
-                        "OK");
+                    await Shell.Current.DisplayAlertAsync("Ошибка", "Запас лекарства не найден", "OK");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка загрузки данных запаса лекарства: {ex.Message}");
-                await Shell.Current.DisplayAlertAsync(
-                    "Ошибка",
-                    $"Не удалось загрузить данные запаса лекарства: {ex.Message}",
-                    "OK");
+                Debug.WriteLine($"Ошибка загрузки данных запаса: {ex.Message}");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось загрузить данные запаса: {ex.Message}", "OK");
             }
         }
     }

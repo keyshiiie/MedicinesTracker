@@ -76,7 +76,10 @@
             </Grid>
         </VerticalStackLayout>
         <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
-            <controls:SaveButton Command="{Binding SaveMedicineCommand}"/>
+            <Button 
+                Command="{Binding SaveMedicineCommand}"
+                Text="{Binding SaveButtonState.Text}"
+                Style="{StaticResource SaveMedicineButtonStyle}"/>
         </HorizontalStackLayout>
     </Grid>
 </ContentPage>

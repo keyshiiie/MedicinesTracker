@@ -5,7 +5,7 @@
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Settings.ViewModels"
              x:DataType="viewModels:EditRecipientVM"
              xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
-             Title="Редактирование получателя">
+             Title="Получатель">
     <Grid RowDefinitions="*,Auto,Auto">
         <VerticalStackLayout Spacing="5">
             <Label Text="Имя получателя" 

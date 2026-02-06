@@ -4,7 +4,7 @@
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
              x:Class="MedicinesTracker.Modules.Medications.Views.BaseInfoPage"
              x:DataType="viewModels:BaseInfoVM"
-             Title="Основная информация">
+             Title="Информация">
 
     <Grid HorizontalOptions="Fill">
         <Grid.RowDefinitions>
@@ -63,8 +63,12 @@
                 </Border>
             </VerticalStackLayout>
         </VerticalStackLayout>
+        <!-- BaseInfoPage.xaml -->
         <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
-            <Button Style="{StaticResource SaveMedicineButtonStyle}" Command="{Binding SaveMedicineCommand}"/>
+            <Button 
+                Command="{Binding SaveMedicineCommand}"
+                Text="{Binding SaveButtonState.Text}"
+                Style="{StaticResource SaveMedicineButtonStyle}"/>
         </HorizontalStackLayout>
     </Grid>
 </ContentPage>

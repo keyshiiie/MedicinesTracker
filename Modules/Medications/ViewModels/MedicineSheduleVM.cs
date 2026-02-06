@@ -14,10 +14,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     [QueryProperty(nameof(MedicineId), "idMedicine")]
     [QueryProperty(nameof(ScheduleId), "idSchedule")]
     [QueryProperty(nameof(UnitName), "unitName")]
+    [QueryProperty(nameof(IsNewMedicine), "isNewMedicine")] // Добавляем флаг
     public partial class MedicineScheduleVM : ObservableObject
     {
         private readonly IScheduleService _scheduleService;
         private readonly IReferencesDataRepository _referencesDateRepository;
+        private readonly IValidatorService _validator;
+        private readonly IMedicineBuilder _medicineBuilder;
 
         [ObservableProperty]
         private ScheduleUIState _uiState = new();
@@ -26,10 +29,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private string? _previousScheduleTypeCode;
         private string? _previousScheduleModeCode;
 
-        private readonly IValidatorService _validator;
-
         [ObservableProperty]
         private MedicineScheduleDto _medicineSchedule = new();
+
+        [ObservableProperty]
+        private bool _isNewMedicine;
+
 
         [ObservableProperty]
         private int _scheduleId;
@@ -64,12 +69,9 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private bool _isEditingExisting;
 
-        private bool _isInitialized = false;
-
         [ObservableProperty]
         private bool _canEditSchedule = true;
 
-        // Новые свойства для отображения выбранных дней
         [ObservableProperty]
         private ObservableCollection<TimeSpan> _selectedTimes = new();
 
@@ -85,13 +87,23 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private string _selectedTimesText = "Не выбрано";
 
-        public MedicineScheduleVM(IScheduleService sheduleService,
+        [ObservableProperty]
+        private bool _isSaving = false;
+
+        [ObservableProperty]
+        private ButtonUiState _saveButtonState = new();
+
+        private bool _isInitialized = false;
+        public MedicineScheduleVM(
+            IScheduleService scheduleService,
             IReferencesDataRepository referencesDateRepository,
-            IValidatorService validatorService)
+            IValidatorService validatorService,
+            IMedicineBuilder medicineBuilder)
         {
-            _scheduleService = sheduleService;
+            _scheduleService = scheduleService;
             _referencesDateRepository = referencesDateRepository;
             _validator = validatorService;
+            _medicineBuilder = medicineBuilder;
         }
 
         public async Task InitializeAsync()
@@ -102,26 +114,29 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MedicineListVM ERROR] {ex.Message}");
+                Debug.WriteLine($"[MedicineScheduleVM ERROR] {ex.Message}");
             }
         }
 
-        // Обработка изменения MedicineId
         partial void OnScheduleIdChanged(int value)
         {
-            IsEditingExisting = value > 0;
+            _isEditingExisting = value > 0;
+            UpdateButtonState();
             CanEditSchedule = !IsEditingExisting;
 
-            Debug.WriteLine($"ScheduleId изменен: {value}, IsEditingExisting: {IsEditingExisting}");
-
-            if (value >= 0 && !_isInitialized)
+            if (value >= 0)
             {
-                _isInitialized = true;
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
                     await LoadDataAsync();
                 });
             }
+        }
+
+        private void UpdateButtonState()
+        {
+            SaveButtonState.Text = IsEditingExisting ? "Сохранить" : "Продолжить";
+            SaveButtonState.IsPrimary = true;
         }
 
         partial void OnMedicineIdChanged(int value)
@@ -422,36 +437,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
-        private void ResetForm()
-        {
-            MedicineSchedule = new MedicineScheduleDto
-            {
-                IdMedicine = MedicineId, // Устанавливаем MedicineId
-                Dosage = 1, // Значение по умолчанию
-                ScheduleIsActive = true // По умолчанию активно
-            };
-
-            SelectedScheduleType = null;
-            SelectedScheduleMode = null;
-            SelectedRecurrencePattern = null;
-
-            // Сбрасываем выбранные дни
-            ResetSelectedDays();
-
-            // Сбрасываем время
-            SelectedTimes.Clear();
-            NewTime = TimeSpan.FromHours(8);
-            UpdateTimesText();
-
-            UiState.Reset();
-        }
-
         [RelayCommand]
         private async Task LoadDataAsync()
         {
             try
             {
-                Debug.WriteLine($"LoadData: MedicineId={MedicineId}, ScheduleId={ScheduleId}, IsEditingExisting={IsEditingExisting}");
+                Debug.WriteLine($"LoadData: MedicineId={MedicineId}, ScheduleId={ScheduleId}, " +
+                              $"IsEditingExisting={IsEditingExisting}, IsNewMedicine={IsNewMedicine}");
 
                 if (!ScheduleTypes.Any() || !WeekDays.Any() || !RecurrencePatterns.Any())
                 {
@@ -466,8 +458,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
                 else if (MedicineId > 0)
                 {
-                    // Добавление: MedicineId должен быть передан
-                    Debug.WriteLine($"Добавление нового расписания для MedicineId={MedicineId}");
+                    // Добавление расписания к существующему лекарству
+                    Debug.WriteLine($"Добавление нового расписания для существующего MedicineId={MedicineId}");
 
                     // Сначала сбрасываем форму
                     ResetForm();
@@ -478,9 +470,23 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     // Убедимся, что MedicineId установлен в DTO
                     MedicineSchedule.IdMedicine = MedicineId;
                 }
+                else if (IsNewMedicine)
+                {
+                    // Создание нового лекарства через Builder (MedicineId еще не существует)
+                    Debug.WriteLine($"Создание нового лекарства через Builder (MedicineId будет создан в конце)");
+
+                    // Сначала сбрасываем форму
+                    ResetForm();
+
+                    // Затем устанавливаем даты по умолчанию
+                    SetDefaultDates();
+
+                    // MedicineId будет установлен позже из Builder
+                    MedicineSchedule.IdMedicine = 0;
+                }
                 else
                 {
-                    Debug.WriteLine("Ошибка: не указан ни MedicineId, ни ScheduleId");
+                    Debug.WriteLine("Ошибка: не указаны параметры для создания расписания");
                     await Shell.Current.DisplayAlertAsync("Ошибка",
                         "Не указано лекарство для создания расписания", "OK");
                     await Shell.Current.GoToAsync("..");
@@ -559,53 +565,162 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
+        // Исправьте метод Save()
         [RelayCommand]
         private async Task Save()
         {
-            // Получаем выбранные дни
-            var selectedDays = WeekDays?.Where(d => d.IsSelected).ToList() ?? new List<WeekDayModel>();
+            // Проверяем, не идет ли уже сохранение
+            if (IsSaving) return;
 
-            var errors = _validator.GetScheduleValidationErrors(
-                UiState.IsRecurringSchedule,
-                UiState.IsIntervalMode,
-                UiState.IsWeekDaysMode,
-                MedicineSchedule.DateStart,
-                MedicineSchedule.OneTimeDate,
-                SelectedScheduleType,
-                SelectedScheduleMode,
-                SelectedRecurrencePattern,
-                selectedDays,
-                SelectedTimes.ToList()); // Добавляем проверку времени
-
-            if (errors.Any())
-            {
-                await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
-                return;
-            }
+            IsSaving = true;
 
             try
             {
-                // Используем сервис для сохранения
-                int scheduleId = await _scheduleService.SaveScheduleAsync(
-                    MedicineSchedule,
+                // Валидация
+                var selectedDays = WeekDays?.Where(d => d.IsSelected).ToList() ?? new List<WeekDayModel>();
+                var errors = _validator.GetScheduleValidationErrors(
+                    UiState.IsRecurringSchedule,
+                    UiState.IsIntervalMode,
+                    UiState.IsWeekDaysMode,
+                    MedicineSchedule.DateStart,
+                    MedicineSchedule.OneTimeDate,
+                    SelectedScheduleType,
+                    SelectedScheduleMode,
+                    SelectedRecurrencePattern,
                     selectedDays,
                     SelectedTimes.ToList());
 
-                if (IsEditingExisting)
+                if (errors.Any())
                 {
-                    // Возвращаемся назад
-                    await Shell.Current.GoToAsync("..");
+                    await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
+                    return;
+                }
+
+                // РАЗДЕЛЕНИЕ ЛОГИКИ: РЕДАКТИРОВАНИЕ vs ДОБАВЛЕНИЕ
+                if (IsEditingExisting && ScheduleId > 0)
+                {
+                    // РЕДАКТИРОВАНИЕ - старая логика через IScheduleService
+                    Debug.WriteLine("Режим: Редактирование существующего расписания");
+
+                    var scheduleId = await _scheduleService.SaveScheduleAsync(
+                        MedicineSchedule,
+                        selectedDays,
+                        SelectedTimes.ToList());
+
+                    await Shell.Current.DisplayAlertAsync("Успех", "Расписание обновлено", "OK");
+                    await Shell.Current.GoToAsync("//medicines");
+                }
+                else if (MedicineId > 0)
+                {
+                    // Добавление расписания к существующему лекарству
+                    Debug.WriteLine($"Режим: Добавление расписания к существующему лекарству ID={MedicineId}");
+
+                    // Используем ScheduleService
+                    MedicineSchedule.IdMedicine = MedicineId;
+                    var scheduleId = await _scheduleService.SaveScheduleAsync(
+                        MedicineSchedule,
+                        selectedDays,
+                        SelectedTimes.ToList());
+
+                    await Shell.Current.DisplayAlertAsync("Успех", "Расписание добавлено", "OK");
+                    await Shell.Current.GoToAsync("//medicines");
+                }
+                else if (IsNewMedicine)
+                {
+                    // ДОБАВЛЕНИЕ нового лекарства через Builder
+                    Debug.WriteLine("Режим: Добавление нового лекарства через Builder");
+
+                    // Проверяем, есть ли все данные в Builder
+                    var state = _medicineBuilder.GetState();
+                    if (state.Medicine == null || state.Stock == null)
+                    {
+                        await Shell.Current.DisplayAlertAsync("Ошибка",
+                            "Сначала заполните основную информацию и запас лекарства", "OK");
+                        return;
+                    }
+
+                    // Добавляем расписание в Builder (MedicineId будет установлен позже)
+                    _medicineBuilder.WithSchedule(MedicineSchedule, selectedDays, SelectedTimes.ToList());
+
+                    Debug.WriteLine($"Schedule добавлен в Builder. Статус готовности: {_medicineBuilder.IsComplete}");
+
+                    // Теперь ВСЕ данные собраны - сохраняем через Builder
+                    await SaveAllWithBuilder();
                 }
                 else
                 {
-                    // Возвращаемся назад
-                    await Shell.Current.GoToAsync("//medicines");
+                    await Shell.Current.DisplayAlertAsync("Ошибка",
+                        "Неизвестный режим сохранения", "OK");
                 }
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlertAsync("Ошибка",
-                    $"Не удалось сохранить расписание: {ex.Message}", "OK");
+                Debug.WriteLine($"Ошибка при сохранении расписания: {ex.Message}");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось сохранить расписание: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsSaving = false;
+            }
+        }
+
+        private void ResetForm()
+        {
+            MedicineSchedule = new MedicineScheduleDto
+            {
+                // Для нового лекарства через Builder MedicineId будет 0
+                IdMedicine = IsNewMedicine ? 0 : MedicineId,
+                Dosage = 1, // Значение по умолчанию
+                ScheduleIsActive = true // По умолчанию активно
+            };
+
+            SelectedScheduleType = null;
+            SelectedScheduleMode = null;
+            SelectedRecurrencePattern = null;
+
+            // Сбрасываем выбранные дни
+            ResetSelectedDays();
+
+            // Сбрасываем время
+            SelectedTimes.Clear();
+            NewTime = TimeSpan.FromHours(8);
+            UpdateTimesText();
+
+            UiState.Reset();
+        }
+
+        private async Task SaveAllWithBuilder()
+        {
+            try
+            {
+                // Показываем индикатор загрузки
+                IsSaving = true;
+
+                // Сохраняем ВСЕ данные через Builder (лекарство + запас + расписание)
+                var medicineId = await _medicineBuilder.BuildAsync();
+
+                await Shell.Current.DisplayAlertAsync("Успех",
+                    $"Лекарство успешно создано! ID: {medicineId}", "OK");
+
+                // Возвращаемся к списку лекарств
+                await Shell.Current.GoToAsync("//medicines");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка при сохранении через Builder: {ex.Message}");
+
+                var retry = await Shell.Current.DisplayAlertAsync("Ошибка",
+                    $"Не удалось сохранить лекарство: {ex.Message}\n\nПопробовать снова?",
+                    "Да", "Нет");
+
+                if (retry)
+                {
+                    await SaveAllWithBuilder();
+                }
+            }
+            finally
+            {
+                IsSaving = false;
             }
         }
 

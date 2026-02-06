@@ -51,8 +51,11 @@
                                 </Grid>
                                 <!-- Основная информация о лекарстве -->
                                 <HorizontalStackLayout Spacing="10">
-                                    <Image Source="medicine_card_icon.png"
+                                    <Border Style="{StaticResource ImageBorderCardStyle}">
+                                        <Image Source="pill.png"
                                            Style="{StaticResource MedicineIconStyle}"/>
+                                    </Border>
+                                    
                                     <Label Text="{Binding MedicineName}"
                                            Style="{StaticResource CardTitleStyle}"/>
                                 </HorizontalStackLayout>

@@ -14,17 +14,14 @@
         <ToolbarItem IconImageSource="settings_light.png" Command="{Binding NavigateToSettingsCommand}" />
     </Shell.ToolbarItems>
     <TabBar>
-        <Tab Title="Лекарства" Icon="medicine.png">
+        <Tab Title="Лекарства" Icon="medicine_box.png">
             <ShellContent ContentTemplate="{DataTemplate medicationsViews:MedicineListPage}" Route="medicines" />
         </Tab>
-        <Tab Title="Сегодня" Icon="list_check_line.png">
+        <Tab Title="Сегодня" Icon="calendar.png">
             <ShellContent ContentTemplate="{DataTemplate notificationsViews:TodayMedicinePage}" Route="todayMedicines" />
         </Tab>
-        <Tab Title="История" Icon="calendar.png">
+        <Tab Title="История" Icon="history.png">
             <ShellContent ContentTemplate="{DataTemplate historyViews:HistoryPage}" Route="history" />
-        </Tab>
-        <Tab Title="Уведомления" Icon="bell_notification_outline.png">
-            <ShellContent ContentTemplate="{DataTemplate notificationsViews:NotificationListPage}" Route="notification" />
         </Tab>
     </TabBar>
 </Shell>

@@ -57,10 +57,8 @@ namespace MedicinesTracker.Platforms.Android
                 var recipientName = intent.GetStringExtra("recipient_name") ?? "Пациент";
                 var medicineId = intent.GetIntExtra("medicine_id", 0);
                 var intakeId = intent.GetIntExtra("intake_id", 0);
-
-                // Получаем время приема из Intent
+                var unitName = intent.GetStringExtra("unit_name") ?? "таблетка(и)"; // Добавляем единицу измерения
                 var scheduledTime = intent.GetStringExtra("scheduled_time") ?? DateTime.Now.ToString("HH:mm");
-                var notificationTime = DateTime.Now;
 
                 System.Diagnostics.Debug.WriteLine($"Показываю уведомление: {medicineName} в {scheduledTime}");
 
@@ -76,38 +74,38 @@ namespace MedicinesTracker.Platforms.Android
 
                 var pendingIntent = PendingIntent.GetActivity(
                     context,
-                    GenerateNotificationId(medicineId, notificationTime),
+                    GenerateNotificationId(medicineId, DateTime.Now),
                     openIntent,
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
-                // Иконка для уведомления - используем системную
+                // Иконка для уведомления
                 int notificationIcon = global::Android.Resource.Drawable.StatNotifyChat;
 
-                // Форматируем текст с временем
-                var notificationText = $"{recipientName}: {medicineName} - {dosage} шт.\nВремя: {scheduledTime}";
+                // ✅ ИСПРАВЛЕННЫЙ ТЕКСТ: вместо времени показываем единицу измерения
+                var notificationText = $"{medicineName} - {dosage} {unitName} для {recipientName}";
 
                 // Создаем уведомление
                 var notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .SetContentTitle("💊 Время приема лекарства")
+                    .SetContentTitle("💊 Примите лекарство!")
                     .SetContentText(notificationText)
                     .SetStyle(new NotificationCompat.BigTextStyle()
                         .BigText(notificationText)
-                        .SetBigContentTitle("💊 Время приема лекарства")
+                        .SetBigContentTitle("💊 Примите лекарство!")
                         .SetSummaryText($"Запланировано на {scheduledTime}"))
                     .SetSmallIcon(notificationIcon)
                     .SetPriority(NotificationCompat.PriorityHigh)
                     .SetAutoCancel(true)
                     .SetContentIntent(pendingIntent)
-                    .SetDefaults(NotificationCompat.DefaultAll); // Вибрация, звук по умолчанию
+                    .SetDefaults(NotificationCompat.DefaultAll);
 
-                // Добавляем время в уведомление (подзаголовок)
-                notificationBuilder.SetSubText($"Время: {scheduledTime}");
+                // ✅ ИСПРАВЛЕННЫЙ ПОДЗАГОЛОВОК: показываем время здесь
+                notificationBuilder.SetSubText($"Время приёма: {scheduledTime}");
 
                 var notification = notificationBuilder.Build();
 
                 // Показываем уведомление
                 var notificationManager = NotificationManagerCompat.From(context);
-                var notificationId = GenerateNotificationId(medicineId, notificationTime);
+                var notificationId = GenerateNotificationId(medicineId, DateTime.Now);
 
                 notificationManager.Notify(notificationId, notification);
 

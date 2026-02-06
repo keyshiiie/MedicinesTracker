@@ -9,20 +9,11 @@
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
-	<application>
+	<application android:icon="@mipmap/icons_medicines" android:label="Трекер Лекарств">
 		<!-- Сервис переднего плана -->
-		<service
-			android:name=".Platforms.Android.Services.ForegroundNotificationService"
-			android:enabled="true"
-			android:exported="false"
-			android:foregroundServiceType="dataSync" />
-
+		<service android:name=".Platforms.Android.Services.ForegroundNotificationService" android:enabled="true" android:exported="false" android:foregroundServiceType="dataSync" />
 		<!-- BroadcastReceiver -->
-		<receiver
-			android:name=".Platforms.Android.NotificationPublisher"
-			android:enabled="true"
-			android:exported="false">
+		<receiver android:name=".Platforms.Android.NotificationPublisher" android:enabled="true" android:exported="false">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
 				<action android:name="ACTION_SHOW_NOTIFICATION" />
