@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Medications.Views.ScheduleTypeSelectionPage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             x:DataType="viewModels:ScheduleTypeSelectionVM"
+             Title="Тип расписания">
+
+    <VerticalStackLayout Spacing="15" 
+                         VerticalOptions="Center">
+
+        <!-- Заголовок и описание -->
+        <VerticalStackLayout Spacing="5">
+            <Label Text="Выберите тип расписания"
+                   Style="{StaticResource PageDescriptionStyle}"/>
+        </VerticalStackLayout>
+
+        <!-- Выбор типа с помощью Picker -->
+        <VerticalStackLayout Spacing="10">
+
+            <Border Style="{StaticResource EditFielsBorderStyle}">
+                <Picker ItemsSource="{Binding ScheduleTypes}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedScheduleType, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите тип расписания"/>
+            </Border>
+        </VerticalStackLayout>
+
+        <!-- Кнопки -->
+        <Grid ColumnDefinitions="*,Auto">
+            <Button Text="Далее"
+                    Command="{Binding ContinueCommand}"
+                    IsEnabled="{Binding IsValid}"
+                    Style="{StaticResource SaveMedicineButtonStyle}"
+                    Grid.Column="1"/>
+        </Grid>
+
+    </VerticalStackLayout>
+</ContentPage>

@@ -101,43 +101,58 @@ namespace MedicinesTracker.Services
         }
 
         public List<string> GetScheduleValidationErrors(
-            bool isRecurring,
-            bool isIntervalMode,
-            bool isWeekDaysMode,
-            string? dateStart,
-            string? oneTimeDate,
-            ScheduleTypeModel? selectedType,
-            ScheduleModeModel? selectedMode,
-            RecurrencePatternModel? selectedPattern,
-            List<WeekDayModel> selectedDays,
-            List<TimeSpan> selectedTimes) // Добавляем проверку времени
+    bool isRecurring,
+    bool isIntervalMode,
+    bool isWeekDaysMode,
+    string? dateStart,
+    string? oneTimeDate,
+    ScheduleTypeModel? selectedType,
+    ScheduleModeModel? selectedMode,
+    RecurrencePatternModel? selectedPattern,
+    List<WeekDayModel> selectedDays,
+    List<TimeSpan> selectedTimes)
         {
             var errors = new List<string>();
 
+            // Проверяем, если тип не передан явно, но мы знаем isRecurring
             if (selectedType == null)
-                errors.Add("Выберите тип расписания");
+            {
+                // Если мы знаем isRecurring, значит тип уже выбран
+                // Проверяем только даты в зависимости от типа
+                if (isRecurring && string.IsNullOrEmpty(dateStart))
+                    errors.Add("Укажите дату начала приёма");
+                else if (!isRecurring && string.IsNullOrEmpty(oneTimeDate))
+                    errors.Add("Укажите дату приёма");
+            }
 
             if (isRecurring)
             {
+                // Для повторяющихся расписаний проверяем режим ТОЛЬКО если он не был передан
                 if (selectedMode == null)
+                {
+                    // Режим не выбран - это ошибка
                     errors.Add("Выберите способ задания расписания");
+                }
+                else
+                {
+                    // Если режим выбран, проверяем в зависимости от типа режима
+                    if (isIntervalMode && selectedPattern == null)
+                        errors.Add("Выберите частоту приёма");
 
-                if (isIntervalMode && selectedPattern == null)
-                    errors.Add("Выберите частоту приёма");
-
-                if (isWeekDaysMode && !selectedDays.Any())
-                    errors.Add("Выберите хотя бы один день недели");
+                    if (isWeekDaysMode && !selectedDays.Any())
+                        errors.Add("Выберите хотя бы один день недели");
+                }
 
                 if (string.IsNullOrEmpty(dateStart))
                     errors.Add("Укажите дату начала приёма");
             }
-            else
+            else // Одноразовые
             {
                 if (string.IsNullOrEmpty(oneTimeDate))
                     errors.Add("Укажите дату приёма");
             }
 
-            // Проверка времени
+            // Проверка времени (для всех типов расписаний)
             if (!selectedTimes.Any())
                 errors.Add("Выберите хотя бы одно время приёма");
 

@@ -64,7 +64,7 @@ namespace MedicinesTracker
             builder.Services.AddSingleton<IIntakeSchedulerService, IntakeSchedulerService>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
             builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
-            builder.Services.AddSingleton<IMedicineBuilder, MedicineBuilder>();
+            builder.Services.AddScoped<IMedicineBuilder, MedicineBuilder>();
 
             // В MauiProgram.cs, в секцию "4. Регистрируем сервисы" добавьте:
             builder.Services.AddSingleton<INotificationSchedulerService, NotificationSchedulerService>();
@@ -75,7 +75,9 @@ namespace MedicinesTracker
             builder.Services.AddTransient<TodayMedicineVM>();
             builder.Services.AddTransient<MedicineDetailVM>();
             builder.Services.AddTransient<BaseInfoVM>();
-            builder.Services.AddTransient<MedicineScheduleVM>();
+            builder.Services.AddTransient<ScheduleTypeSelectionVM>();
+            builder.Services.AddTransient<ScheduleModeSelectionVM>();
+            builder.Services.AddTransient<ScheduleDetailsVM>();
             builder.Services.AddTransient<StockInfoVM>();
             builder.Services.AddTransient<SettingsPageVM>();
             builder.Services.AddTransient<EditRecipientVM>();

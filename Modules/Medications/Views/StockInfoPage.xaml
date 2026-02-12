@@ -11,7 +11,10 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <VerticalStackLayout Spacing="10">
+        <VerticalStackLayout Spacing="15"
+                             VerticalOptions="Center">
+            <Label Text="Заполните поля данными о запасе лекарства"
+                   Style="{StaticResource CardDescriptionStyle}"/>
             <VerticalStackLayout Spacing="5">
                 <ActivityIndicator IsRunning="{Binding IsBusy}" 
                                    IsVisible="{Binding IsBusy}" />
@@ -36,7 +39,7 @@
                         Text="{Binding UnitName}"
                         Style="{StaticResource FieldTitleStyle}"
                         Grid.Column="1"
-                        Padding="10,0,0,0"/>        
+                        Padding="10,0,0,0"/>
                 </Grid>
             </VerticalStackLayout>
             <VerticalStackLayout Spacing="5">
@@ -64,7 +67,7 @@
             </VerticalStackLayout>
             <Grid ColumnDefinitions="Auto,*">
                 <Label 
-                    Text="Уведомления:"
+                    Text="Уведомления"
                     Style="{StaticResource CardDescriptionStyle}" 
                     VerticalOptions="Center"
                     HorizontalOptions="Start"/>
@@ -74,12 +77,12 @@
                     HorizontalOptions="End"      
                     VerticalOptions="Center"/>
             </Grid>
+            <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+                <Button 
+                    Command="{Binding SaveMedicineCommand}"
+                    Text="{Binding SaveButtonState.Text}"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+            </HorizontalStackLayout>
         </VerticalStackLayout>
-        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
-            <Button 
-                Command="{Binding SaveMedicineCommand}"
-                Text="{Binding SaveButtonState.Text}"
-                Style="{StaticResource SaveMedicineButtonStyle}"/>
-        </HorizontalStackLayout>
     </Grid>
 </ContentPage>

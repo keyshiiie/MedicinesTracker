@@ -76,7 +76,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private void UpdateButtonState()
         {
-            SaveButtonState.Text = IsEditingExisting ? "Сохранить" : "Продолжить";
+            SaveButtonState.Text = IsEditingExisting ? "Сохранить" : "Далее";
             SaveButtonState.IsPrimary = true;
         }
 
@@ -181,28 +181,37 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             {
                 var parameters = new Dictionary<string, object>();
 
-                // Для добавления нового лекарства НЕ передаем MedicineId (его еще нет!)
-                // Для редактирования передаем ID
-                if (IsEditingExisting && MedicineId > 0)
+                // Для добавления нового лекарства через Builder
+                if (!IsEditingExisting)
                 {
-                    parameters.Add("idMedicine", MedicineId);
-                    parameters.Add("idSchedule", 0); // 0 = новое расписание
+                    // Переходим к выбору типа расписания
+                    parameters.Add("isNewMedicine", true);
+                    // MedicineId будет 0 при создании нового лекарства
+                    parameters.Add("medicineId", 0);
+
+                    Debug.WriteLine($"StockInfoVM: Переходим к созданию расписания для нового лекарства");
+                    await Shell.Current.GoToAsync("ScheduleTypeSelectionPage", parameters);
+                }
+                else if (IsEditingExisting && MedicineId > 0)
+                {
+                    // Для редактирования существующего лекарства
+                    parameters.Add("medicineId", MedicineId);
+                    parameters.Add("isNewMedicine", false);
+
+                    Debug.WriteLine($"StockInfoVM: Переходим к созданию расписания для существующего лекарства ID={MedicineId}");
+                    await Shell.Current.GoToAsync("ScheduleTypeSelectionPage", parameters);
                 }
                 else
                 {
-                    // Для добавления нового - передаем специальный флаг
-                    parameters.Add("isNewMedicine", true);
+                    await Shell.Current.DisplayAlertAsync("Ошибка",
+                        "Не указано лекарство для создания расписания", "OK");
                 }
-
-                // Для обоих случаев передаем unitName
-                parameters.Add("unitName", UnitName ?? string.Empty);
-
-                await Shell.Current.GoToAsync("MedicineSchedulePage", parameters);
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlertAsync("Ошибка", "Не удалось перейти к созданию расписания", "ОК");
-                await Shell.Current.GoToAsync("..");
+                Debug.WriteLine($"Ошибка перехода: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                await Shell.Current.DisplayAlertAsync("Ошибка",
+                    $"Не удалось перейти к созданию расписания: {ex.Message}", "ОК");
             }
         }
 

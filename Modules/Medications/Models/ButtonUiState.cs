@@ -5,7 +5,7 @@ namespace MedicinesTracker.Modules.Medications.Models
 {
     public class ButtonUiState : ObservableObject
     {
-        private string _text = "Продолжить";
+        private string _text = "Далее";
         private bool _isPrimary = true;
         private bool _isEnabled = true;
 

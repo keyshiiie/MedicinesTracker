@@ -44,7 +44,7 @@
                 <VerticalStackLayout Spacing="5" 
                                  IsVisible="{Binding UiState.ShowFrequencyPicker}">
                     <Label Text="Частота приёма:"
-                       Style="{StaticResource CardDescriptionStyle}"/>
+                           Style="{StaticResource FieldTitleStyle}"/>
                     <Border Style="{StaticResource EditFielsBorderStyle}">
                         <Picker ItemsSource="{Binding RecurrencePatterns}"
                                 ItemDisplayBinding="{Binding Name}"
@@ -58,7 +58,7 @@
                 <VerticalStackLayout Spacing="5" 
                                  IsVisible="{Binding UiState.ShowWeekDaysPicker}">
                     <Label Text="Дни недели:"
-                       Style="{StaticResource CardDescriptionStyle}"/>
+                       Style="{StaticResource FieldTitleStyle}"/>
 
                     <!-- Контейнер для дней недели -->
                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding WeekDays}"
@@ -90,7 +90,7 @@
                 <VerticalStackLayout Spacing="5" 
                                  IsVisible="{Binding UiState.ShowRecurringDateFields}">
                     <Label Text="Дата начала приёма:"
-                       Style="{StaticResource CardDescriptionStyle}"/>
+                       Style="{StaticResource FieldTitleStyle}"/>
                     <Border Style="{StaticResource EditFielsBorderStyle}">
                         <DatePicker Style="{StaticResource PrimaryDatePickerStyle}"
                                 Date="{Binding MedicineSchedule.DateStart, 
@@ -103,7 +103,7 @@
                 <VerticalStackLayout Spacing="5" 
                                      IsVisible="{Binding UiState.ShowRecurringDateFields}">
                     <Label Text="Дата завершения приёма:"
-                           Style="{StaticResource CardDescriptionStyle}"/>
+                           Style="{StaticResource FieldTitleStyle}"/>
                     <Border Style="{StaticResource EditFielsBorderStyle}">
                         <DatePicker Style="{StaticResource PrimaryDatePickerStyle}" 
                                 Date="{Binding MedicineSchedule.DateEnd,

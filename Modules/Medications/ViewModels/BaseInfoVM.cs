@@ -75,7 +75,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private void UpdateButtonState()
         {
-            SaveButtonState.Text = IsEditingExisting ? "Сохранить" : "Продолжить";
+            SaveButtonState.Text = IsEditingExisting ? "Сохранить" : "Далее";
             SaveButtonState.IsPrimary = true;
         }
 

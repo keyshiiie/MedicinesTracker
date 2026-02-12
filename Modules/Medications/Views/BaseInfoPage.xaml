@@ -6,13 +6,11 @@
              x:DataType="viewModels:BaseInfoVM"
              Title="Информация">
 
-    <Grid HorizontalOptions="Fill">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <VerticalStackLayout Spacing="10" Grid.Row="0">
-            <VerticalStackLayout Spacing="5">
+        <VerticalStackLayout Spacing="15"
+                             VerticalOptions="Center">
+            <Label Text="Заполните поля данными о принимаемом лекарстве"
+                   Style="{StaticResource CardDescriptionStyle}"/>
+        <VerticalStackLayout Spacing="5">
                 <Label 
                     Text="Название"
                     Style="{StaticResource CardDescriptionStyle}"/>
@@ -62,13 +60,11 @@
                     </Picker>
                 </Border>
             </VerticalStackLayout>
+            <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
+                <Button 
+                    Command="{Binding SaveMedicineCommand}"
+                    Text="{Binding SaveButtonState.Text}"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+            </HorizontalStackLayout>
         </VerticalStackLayout>
-        <!-- BaseInfoPage.xaml -->
-        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
-            <Button 
-                Command="{Binding SaveMedicineCommand}"
-                Text="{Binding SaveButtonState.Text}"
-                Style="{StaticResource SaveMedicineButtonStyle}"/>
-        </HorizontalStackLayout>
-    </Grid>
 </ContentPage>
