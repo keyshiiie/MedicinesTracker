@@ -11,8 +11,11 @@
     Shell.FlyoutBehavior="Disabled">
 
     <Shell.ToolbarItems>
-        <ToolbarItem IconImageSource="settings_light.png" Command="{Binding NavigateToSettingsCommand}" />
+        <ToolbarItem 
+            IconImageSource="settings_light.png" 
+            Clicked="SettingsToolbarItem_Clicked" />
     </Shell.ToolbarItems>
+
     <TabBar>
         <Tab Title="Лекарства" Icon="medicine_box.png">
             <ShellContent ContentTemplate="{DataTemplate medicationsViews:MedicineListPage}" Route="medicines" />

@@ -8,6 +8,7 @@ using System.Diagnostics;
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
     [QueryProperty(nameof(MedicineId), "idMedicine")]
+    [QueryProperty(nameof(MedicineName), "medicineName")]
     [QueryProperty(nameof(ScheduleId), "idSchedule")]
     [QueryProperty(nameof(StockId), "idStock")]
     [QueryProperty(nameof(UnitName), "unitName")]
@@ -18,6 +19,9 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         [ObservableProperty]
         private int _medicineId;
+
+        [ObservableProperty]
+        private string _medicineName;
 
         [ObservableProperty]
         private int _scheduleId = 0;

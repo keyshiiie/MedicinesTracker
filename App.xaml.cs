@@ -1,32 +1,36 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
+﻿#if ANDROID
+using Android.App;
+using Android.Content;
+using Android.OS;
+#endif
+using CommunityToolkit.Mvvm.Messaging;
 using MedicinesTracker.Modules.Notifications.ViewModels;
 using MedicinesTracker.Modules.Notifications.Views;
 using MedicinesTracker.Services;
-using MedicinesTracker.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics;
+using System.Diagnostics;  // Для System.Diagnostics.Debug
+using Application = Microsoft.Maui.Controls.Application;  // Алиас для MAUI Application
 
 namespace MedicinesTracker
 {
-    public partial class App : Application
+    public partial class App : Application  // Теперь это MAUI Application
     {
-        private readonly AppShellVM _appShellVM;
+        // Удаляем _appShellVM
         private readonly IServiceProvider _serviceProvider;
         private readonly IPreferencesService _preferencesService;
-        private readonly IIntakeSchedulerService _intakeScheduler;
+        private readonly IIntakeGeneratorService _intakeGenerator;
         private NavigationPage? _introNavigationPage;
 
         public App(
-            AppShellVM appShellVM,
+            // Удаляем AppShellVM из параметров
             IServiceProvider serviceProvider,
             IPreferencesService preferencesService,
-            IIntakeSchedulerService intakeScheduler) 
+            IIntakeGeneratorService intakeGenerator)
         {
             InitializeComponent();
-            _appShellVM = appShellVM;
             _serviceProvider = serviceProvider;
             _preferencesService = preferencesService;
-            _intakeScheduler = intakeScheduler; 
+            _intakeGenerator = intakeGenerator;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
@@ -84,8 +88,8 @@ namespace MedicinesTracker
             {
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    // Просто заменяем текущую страницу на AppShell
-                    var appShell = new AppShell(_appShellVM);
+                    // Создаем AppShell без ViewModel
+                    var appShell = new AppShell(); // Убрали _appShellVM
 
                     // Получаем текущее окно
                     var window = Application.Current?.Windows.FirstOrDefault();
@@ -101,13 +105,16 @@ namespace MedicinesTracker
 
         private Window CreateMainWindow()
         {
+            // Создаем AppShell без ViewModel
+            var appShell = new AppShell(); // Убрали _appShellVM
+
             // Запускаем запрос разрешений асинхронно
             Task.Run(async () =>
             {
                 await RequestNotificationPermissionIfNeeded();
             });
 
-            return new Window(new AppShell(_appShellVM));
+            return new Window(appShell);
         }
 
         protected override async void OnStart()
@@ -116,26 +123,74 @@ namespace MedicinesTracker
 
             try
             {
-                Debug.WriteLine("=== App.OnStart ===");
+                System.Diagnostics.Debug.WriteLine("=== App.OnStart ===");
 
-                // 1. СРАЗУ запрашиваем разрешение на уведомления
+                // 1. Запрашиваем разрешения на уведомления
                 await RequestNotificationPermissionIfNeeded();
 
-                // 2. Генерируем записи только на сегодня
-                await _intakeScheduler.GenerateTodayIntakesAsync();
+                // 2. Запрашиваем разрешение на точные будильники (Android 12+)
+                await RequestExactAlarmPermissionIfNeeded();
 
-                // 3. Инициализируем уведомления только на сегодня
-                var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
-                await notificationService.ScheduleNotificationsForTodayAsync();
+                // 3. Генерируем записи на сегодня
+                await _intakeGenerator.GenerateTodayIntakesAsync();
 
-                // 4. Запускаем ежедневную проверку в 00:01
+                // 4. Планируем уведомления
+                var notificationPlanner = _serviceProvider.GetRequiredService<INotificationPlannerService>();
+                await notificationPlanner.PlanForTodayAsync();
+
+                // 5. Запускаем ежедневную проверку
                 StartDailyCheck();
 
-                Debug.WriteLine("=== App.OnStart завершен ===");
+                System.Diagnostics.Debug.WriteLine("✅ App.OnStart завершен");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при запуске: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
+            }
+        }
+
+        private async Task RequestExactAlarmPermissionIfNeeded()
+        {
+            try
+            {
+#if ANDROID
+                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.S)
+                {
+                    var context = Android.App.Application.Context;
+                    var alarmManager = context.GetSystemService(Android.Content.Context.AlarmService) as Android.App.AlarmManager;
+
+                    if (alarmManager != null && !alarmManager.CanScheduleExactAlarms())
+                    {
+                        System.Diagnostics.Debug.WriteLine("⚠️ Нет разрешения на точные будильники");
+
+                        // Проверяем, запрашивали ли уже
+                        bool asked = Preferences.Get("ExactAlarmPermissionAsked", false);
+
+                        if (!asked)
+                        {
+                            var confirm = await Application.Current.MainPage.DisplayAlertAsync(
+                                "Разрешение на точные уведомления",
+                                "Для своевременных напоминаний приложению нужно разрешение на точные будильники.\n\nХотите предоставить его?",
+                                "Да",
+                                "Не сейчас");
+
+                            if (confirm)
+                            {
+                                var intent = new Android.Content.Intent(Android.Provider.Settings.ActionRequestScheduleExactAlarm);
+                                intent.SetData(Android.Net.Uri.Parse($"package:{context.PackageName}"));
+                                intent.SetFlags(ActivityFlags.NewTask);
+                                context.StartActivity(intent);
+                            }
+
+                            Preferences.Set("ExactAlarmPermissionAsked", true);
+                        }
+                    }
+                }
+#endif
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка при запросе разрешения: {ex.Message}");
             }
         }
 
@@ -143,80 +198,51 @@ namespace MedicinesTracker
         {
             try
             {
-                Debug.WriteLine("=== Запрос разрешений на уведомления ===");
+                System.Diagnostics.Debug.WriteLine("=== Запрос разрешений на уведомления ===");
 
                 var permissionRequested = Preferences.Get("NotificationPermissionRequested", false);
 
                 if (!permissionRequested)
                 {
-                    Debug.WriteLine("Запрашиваем разрешение впервые...");
+                    System.Diagnostics.Debug.WriteLine("Запрашиваем разрешение впервые...");
                     bool hasPermission = await NotificationPermissionService.CheckAndRequestAsync();
                     Preferences.Set("NotificationPermissionRequested", true);
-                    Debug.WriteLine($"Разрешение на уведомления: {hasPermission}");
-
-                    // ЗАПУСКАЕМ СЛУЖБУ ТОЛЬКО ПОСЛЕ ПОЛУЧЕНИЯ РАЗРЕШЕНИЙ
-                    if (hasPermission)
-                    {
-                        StartBackgroundService();
-                    }
+                    System.Diagnostics.Debug.WriteLine($"Разрешение на уведомления: {hasPermission}");
                 }
                 else
                 {
-                    Debug.WriteLine("Разрешение уже было запрошено ранее");
-                    // Если разрешение уже было, запускаем службу сразу
-                    StartBackgroundService();
+                    System.Diagnostics.Debug.WriteLine("Разрешение уже было запрошено ранее");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при запросе разрешения: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка при запросе разрешения: {ex.Message}");
             }
-        }
-
-        private void StartBackgroundService()
-        {
-#if ANDROID
-            try
-            {
-                Debug.WriteLine("🚀 Запускаем фоновую службу уведомлений...");
-
-                // Запускаем службу
-                ForegroundServiceStarter.StartForegroundService();
-                Debug.WriteLine("✅ Фоновая служба запущена");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Ошибка запуска фоновой службы: {ex.Message}");
-            }
-#endif
         }
 
         private void StartDailyCheck()
         {
-            // Запускаем таймер на ежедневную генерацию в 00:01
             Dispatcher.StartTimer(TimeSpan.FromMinutes(1), () =>
             {
                 var now = DateTime.Now;
                 if (now.Hour == 0 && now.Minute == 1)
                 {
-                    Debug.WriteLine("🔄 Ежедневная генерация записей на сегодня в 00:01");
+                    System.Diagnostics.Debug.WriteLine("🔄 Ежедневная генерация записей на сегодня в 00:01");
 
                     Task.Run(async () =>
                     {
                         try
                         {
-                            // Генерируем записи на сегодня
-                            await _intakeScheduler.GenerateTodayIntakesAsync();
+                            await _intakeGenerator.GenerateTodayIntakesAsync();
 
-                            // Планируем уведомления на сегодня
-                            var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
-                            await notificationService.ScheduleNotificationsForTodayAsync();
+                            var notificationPlanner = _serviceProvider.GetRequiredService<INotificationPlannerService>();
+                            await notificationPlanner.PlanForTodayAsync();
 
-                            Debug.WriteLine("✅ Ежедневная генерация завершена");
+                            System.Diagnostics.Debug.WriteLine("✅ Ежедневная генерация завершена");
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"❌ Ошибка ежедневной генерации: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"❌ Ошибка ежедневной генерации: {ex.Message}");
                         }
                     });
                 }
@@ -227,26 +253,17 @@ namespace MedicinesTracker
         protected override async void OnResume()
         {
             base.OnResume();
-            Debug.WriteLine("=== App.OnResume ===");
+            System.Diagnostics.Debug.WriteLine("=== App.OnResume ===");
 
             try
             {
-                // 1. Проверяем, не сменился ли день
                 await CheckDayChangeAndGenerateIntakes();
-
-                // 2. Перепланируем уведомления на сегодня
                 await RescheduleNotificationsIfNeeded();
-
-                // 3. Перезапускаем фоновую службу (на случай если она остановилась)
-#if ANDROID
-                StartBackgroundService();
-#endif
-
-                Debug.WriteLine("✅ Приложение возобновлено и обновлено");
+                System.Diagnostics.Debug.WriteLine("✅ Приложение возобновлено и обновлено");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при возобновлении: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка при возобновлении: {ex.Message}");
             }
         }
 
@@ -254,37 +271,33 @@ namespace MedicinesTracker
         {
             try
             {
-                // Получаем время, когда приложение ушло в сон
                 var lastSleepStr = Preferences.Get("LastAppSleepTime", string.Empty);
 
                 if (!string.IsNullOrEmpty(lastSleepStr) &&
                     DateTime.TryParse(lastSleepStr, out var lastSleepTime))
                 {
-                    // Проверяем, сменился ли день
                     var now = DateTime.Now;
 
                     if (lastSleepTime.Date < now.Date)
                     {
-                        Debug.WriteLine("📅 Обнаружена смена дня, генерируем новые записи на сегодня...");
-                        await _intakeScheduler.GenerateTodayIntakesAsync();
+                        System.Diagnostics.Debug.WriteLine("📅 Обнаружена смена дня, генерируем новые записи на сегодня...");
+                        await _intakeGenerator.GenerateTodayIntakesAsync();
                     }
                     else
                     {
-                        Debug.WriteLine("✅ Тот же день, проверяем наличие записей на сегодня...");
-                        // Все равно проверяем, есть ли записи на сегодня
-                        await _intakeScheduler.CheckAndUpdateAsync();
+                        System.Diagnostics.Debug.WriteLine("✅ Тот же день, проверяем наличие записей на сегодня...");
+                        await _intakeGenerator.CheckAndUpdateAsync();
                     }
                 }
                 else
                 {
-                    // Если нет сохраненного времени, просто проверяем
-                    Debug.WriteLine("🔄 Проверяем наличие записей на сегодня...");
-                    await _intakeScheduler.GenerateTodayIntakesAsync();
+                    System.Diagnostics.Debug.WriteLine("🔄 Проверяем наличие записей на сегодня...");
+                    await _intakeGenerator.GenerateTodayIntakesAsync();
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при проверке смены дня: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка при проверке смены дня: {ex.Message}");
             }
         }
 
@@ -292,112 +305,24 @@ namespace MedicinesTracker
         {
             try
             {
-                var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
+                var notificationPlanner = _serviceProvider.GetRequiredService<INotificationPlannerService>();
 
-                // Отменяем старые уведомления и планируем новые на сегодня
-                notificationService.CancelAllNotifications();
-                await notificationService.ScheduleNotificationsForTodayAsync();
+                notificationPlanner.CancelAll();
+                await notificationPlanner.PlanForTodayAsync();
 
-                Debug.WriteLine("✅ Уведомления перепланированы на сегодня");
+                System.Diagnostics.Debug.WriteLine("✅ Уведомления перепланированы на сегодня");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при перепланировании уведомлений: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Ошибка при перепланировании уведомлений: {ex.Message}");
             }
-        }
-
-        private void StartIntakeGenerationInBackground()
-        {
-            // Запускаем в фоне с задержкой, чтобы не блокировать запуск приложения
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(2000); // Даем UI полностью загрузиться
-
-                    Debug.WriteLine("🚀 Запуск генерации записей приема лекарств...");
-
-                    // Генерируем записи на сегодня (если еще не генерировали)
-                    await _intakeScheduler.GenerateTodayIntakesAsync();
-
-                    Debug.WriteLine("✅ Генерация записей приема завершена");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"❌ Ошибка при генерации записей: {ex.Message}");
-                }
-            });
-        }
-
-        private void ScheduleNotificationsInBackground()
-        {
-            // Уведомления планируем в фоне
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(3000); // Еще небольшая задержка
-
-                    var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
-
-                    Debug.WriteLine("📅 Планируем уведомления...");
-                    await notificationService.ScheduleAllNotificationsAsync();
-
-                    Debug.WriteLine("✅ Уведомления запланированы");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"❌ Ошибка при планировании уведомлений: {ex.Message}");
-                }
-            });
         }
 
         protected override void OnSleep()
         {
             base.OnSleep();
-            Debug.WriteLine("=== App.OnSleep ===");
-
-            // Сохраняем время, когда приложение ушло в сон
+            System.Diagnostics.Debug.WriteLine("=== App.OnSleep ===");
             Preferences.Set("LastAppSleepTime", DateTime.Now.ToString("O"));
-
-#if ANDROID
-            // Фоновая служба продолжит работать, но можем добавить логику при необходимости
-            Debug.WriteLine("Фоновая служба продолжит работу");
-#endif
-        }
-
-        
-
-        // Убираем старый метод StartBackgroundCheck(), т.к. теперь генерация по событиям
-        // Но оставляем для совместимости или уведомлений если нужно
-        private void StartPeriodicBackgroundCheck()
-        {
-            if (Dispatcher is null) return;
-
-            Debug.WriteLine("Запускаем периодическую проверку каждые 12 часов...");
-
-            Dispatcher.StartTimer(TimeSpan.FromHours(12), () =>
-            {
-                Debug.WriteLine("=== Периодическая проверка ===");
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        // Проверяем только уведомления
-                        var notificationService = _serviceProvider.GetRequiredService<INotificationSchedulerService>();
-                        await notificationService.ScheduleAllNotificationsAsync();
-
-                        Debug.WriteLine("✅ Периодическая проверка уведомлений завершена");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"❌ Ошибка периодической проверки: {ex.Message}");
-                    }
-                });
-
-                return true;
-            });
         }
     }
 }

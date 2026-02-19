@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MedicinesTracker.Models;
 using MedicinesTracker.Models.Dto;
 using MedicinesTracker.Repository;
 using System.Collections.ObjectModel;
@@ -10,10 +11,8 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
     public partial class HistoryPageVM : ObservableObject
     {
         private readonly IIntakeRepository _intakeRepository;
+        private readonly IRecipientRepository _recipientRepository; // Добавляем
         private List<HistoryDto> _allIntakes = new();
-
-        [ObservableProperty]
-        private ObservableCollection<GroupedHistory> _intakes = new();
 
         [ObservableProperty]
         private ObservableCollection<GroupedHistory> _filteredIntakes = new();
@@ -23,7 +22,7 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsFiltered))]
-        private RecipientFilter? _selectedRecipient; // Добавлено "?"
+        private RecipientFilter? _selectedRecipient;
 
         [ObservableProperty]
         private bool _isLoading;
@@ -36,19 +35,19 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
         [ObservableProperty]
         private string _emptyMessage = "Нет данных о приеме лекарств";
 
-        public HistoryPageVM(IIntakeRepository intakeRepository)
+        public HistoryPageVM(
+            IIntakeRepository intakeRepository,
+            IRecipientRepository recipientRepository) // Добавляем в конструктор
         {
             _intakeRepository = intakeRepository;
-
-            // Подписываемся на изменение SelectedRecipient
+            _recipientRepository = recipientRepository;
             PropertyChanged += OnPropertyChanged;
         }
 
-        private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) // Добавлено "?"
+        private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(SelectedRecipient))
             {
-                // При изменении выбранного получателя автоматически применяем фильтр
                 ApplyFilter();
             }
         }
@@ -73,13 +72,21 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
             IsLoading = true;
             try
             {
+                Debug.WriteLine("=== Загрузка истории ===");
+
+                // 1. Загружаем ВСЕХ получателей (не только тех, у кого есть записи)
+                var recipients = await _recipientRepository.GetAllRecipientsAsync();
+                UpdateRecipientsList(recipients);
+
+                Debug.WriteLine($"Загружено получателей: {Recipients.Count}");
+
+                // 2. Загружаем записи приема
                 var data = await _intakeRepository.GetAllIntakeAsync();
-                _allIntakes = data?.ToList() ?? new List<HistoryDto>(); // Обработка возможного null
+                _allIntakes = data?.ToList() ?? new List<HistoryDto>();
 
-                // Обновляем список получателей
-                UpdateRecipientsList(_allIntakes);
+                Debug.WriteLine($"Загружено записей: {_allIntakes.Count}");
 
-                // Загружаем данные без фильтра
+                // 3. Применяем фильтр
                 ApplyFilter();
             }
             catch (Exception ex)
@@ -96,40 +103,44 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
         [RelayCommand]
         private void ClearFilter()
         {
-            SelectedRecipient = default!;
+            SelectedRecipient = null;
         }
 
         private void ApplyFilter()
         {
             try
             {
+                Debug.WriteLine($"Применяем фильтр. Выбран: {SelectedRecipient?.Name ?? "Все"}");
+
                 // Фильтруем данные
                 var filteredData = SelectedRecipient != null
                     ? _allIntakes.Where(m => m.RecipientName == SelectedRecipient.Name).ToList()
                     : _allIntakes.ToList();
 
+                Debug.WriteLine($"После фильтрации: {filteredData.Count} записей");
+
                 // Группируем по дате
                 var grouped = filteredData
                     .GroupBy(m => m.Date)
                     .Select(g => new GroupedHistory(
-                        g.Key ?? string.Empty, // Добавлена проверка на null
-                        g.OrderByDescending(m => m.Time)  // Внутри даты сортируем по времени
+                        g.Key ?? string.Empty,
+                        g.OrderByDescending(m => m.Time)
                     ))
-                    .OrderByDescending(g => g.Date)  // Даты сортируем по убыванию
+                    .OrderByDescending(g => g.Date)
                     .ToList();
 
-                // Обновляем отображаемые данные
-                FilteredIntakes.Clear();
+                Debug.WriteLine($"Сформировано групп: {grouped.Count}");
 
+                FilteredIntakes.Clear();
                 foreach (var group in grouped)
                 {
                     FilteredIntakes.Add(group);
+                    Debug.WriteLine($"  - Группа {group.Date}: {group.Medicines.Count} записей");
                 }
 
-                // Обновляем статус наличия данных
                 HasData = FilteredIntakes.Any() && FilteredIntakes.Any(g => g.Medicines.Any());
+                Debug.WriteLine($"HasData: {HasData}");
 
-                // Обновляем сообщение при отсутствии данных
                 if (!HasData)
                 {
                     EmptyMessage = SelectedRecipient != null
@@ -143,26 +154,40 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
             }
         }
 
-        private void UpdateRecipientsList(List<HistoryDto> intakes)
+        // Упрощенный метод - получает список напрямую из репозитория
+        private void UpdateRecipientsList(IEnumerable<RecipientModel> recipients)
         {
-            // Получаем уникальных получателей из данных
-            var uniqueRecipients = intakes
-                .Select(m => m.RecipientName)
-                .Where(name => !string.IsNullOrEmpty(name)) // Фильтрация null/пустых значений
-                .Distinct()
-                .OrderBy(name => name)
-                .Select(name => new RecipientFilter(name))
+            Debug.WriteLine("Обновляем список получателей из БД");
+
+            var recipientFilters = recipients
+                .OrderBy(r => r.Name)
+                .Select(r => new RecipientFilter(r.Name))
                 .ToList();
+
+            Debug.WriteLine($"Получателей в БД: {recipientFilters.Count}");
+
+            // Сохраняем текущий выбор
+            var currentSelection = SelectedRecipient?.Name;
 
             // Обновляем ObservableCollection
             Recipients.Clear();
-            foreach (var recipient in uniqueRecipients)
+            foreach (var recipient in recipientFilters)
             {
                 Recipients.Add(recipient);
+                Debug.WriteLine($"  - Добавлен: {recipient.Name}");
             }
 
-            // Сбрасываем выбор (показываем всех)
-            SelectedRecipient = default!;
+            // Восстанавливаем выбор, если получатель все еще существует в списке
+            if (!string.IsNullOrEmpty(currentSelection))
+            {
+                SelectedRecipient = Recipients.FirstOrDefault(r => r.Name == currentSelection);
+                Debug.WriteLine($"Восстановлен выбор: {SelectedRecipient?.Name}");
+            }
+            else
+            {
+                SelectedRecipient = null;
+                Debug.WriteLine("Выбор сброшен");
+            }
         }
     }
 }

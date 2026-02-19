@@ -51,6 +51,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 var parameters = new Dictionary<string, object>
                 {
                     { "idMedicine", medicine.IdMedicine },
+                    { "medicineName", medicine.MedicineName ?? string.Empty},
                     { "idStock", medicine.IdStock },
                     { "unitName", medicine.UnitName ?? string.Empty},
                     { "idSchedule", medicine.IdSchedule }

@@ -2,6 +2,11 @@
 using Android.Content;
 using Android.OS;
 using AndroidX.Core.App;
+using System;
+using System.Threading.Tasks;
+using Android.Views;
+using Android.Media;
+// Убираем using Android.Graphics;
 
 namespace MedicinesTracker.Platforms.Android
 {
@@ -9,161 +14,210 @@ namespace MedicinesTracker.Platforms.Android
         Name = "com.medicinestracker.NotificationPublisher",
         Enabled = true,
         Exported = false)]
-    [IntentFilter(new[]
-    {
-        Intent.ActionBootCompleted,
-        "ACTION_SHOW_NOTIFICATION"
-    })]
+    [IntentFilter(new[] { Intent.ActionBootCompleted, "ACTION_SHOW_NOTIFICATION" })]
     public class NotificationPublisher : BroadcastReceiver
     {
+        private PowerManager.WakeLock _wakeLock;
         private const string CHANNEL_ID = "medication_reminders";
-        private const string CHANNEL_NAME = "Напоминания о приеме лекарств";
+        private const string CHANNEL_NAME = "Напоминания о лекарствах";
+        private const string CHANNEL_DESC = "Уведомления о времени приема лекарств";
 
-        public override void OnReceive(Context? context, Intent? intent)
+        public override async void OnReceive(Context? context, Intent? intent)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"=== NotificationPublisher.OnReceive ===");
+                if (context == null || intent == null) return;
 
-                if (context == null || intent == null)
+                if (intent.Action == Intent.ActionBootCompleted)
                 {
-                    System.Diagnostics.Debug.WriteLine("❌ Context или Intent равен null");
+                    await RescheduleAllNotifications(context);
                     return;
                 }
 
-                // Если это команда на показ уведомления
                 if (intent.Action == "ACTION_SHOW_NOTIFICATION")
                 {
+                    // Получаем wake lock для включения экрана
+                    AcquireWakeLock(context);
+
+                    // Небольшая задержка для гарантии включения экрана
+                    await Task.Delay(100);
+
                     ShowNotification(context, intent);
-                }
-                else if (intent.Action == Intent.ActionBootCompleted)
-                {
-                    System.Diagnostics.Debug.WriteLine("✅ Перезагрузка устройства, служба будет запущена");
-                    // Служба запустится при первом открытии приложения
+
+                    // Освобождаем wake lock через некоторое время
+                    ReleaseWakeLock(3000);
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка в NotificationPublisher: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
+            }
+        }
+
+        private void AcquireWakeLock(Context context)
+        {
+            try
+            {
+                var powerManager = (PowerManager)context.GetSystemService(Context.PowerService);
+                if (powerManager != null)
+                {
+                    _wakeLock = powerManager.NewWakeLock(
+                        WakeLockFlags.ScreenBright | WakeLockFlags.Full | WakeLockFlags.AcquireCausesWakeup,
+                        "MedicinesTracker:NotificationWakeLock");
+
+                    _wakeLock.Acquire(5000); // Удерживаем максимум 5 секунд
+
+                    System.Diagnostics.Debug.WriteLine("🔆 WakeLock acquired - screen should turn on");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ WakeLock error: {ex.Message}");
+            }
+        }
+
+        private void ReleaseWakeLock(int delayMs)
+        {
+            Task.Delay(delayMs).ContinueWith(_ =>
+            {
+                try
+                {
+                    _wakeLock?.Release();
+                    System.Diagnostics.Debug.WriteLine("🔆 WakeLock released");
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ WakeLock release error: {ex.Message}");
+                }
+            });
+        }
+
+        private async Task RescheduleAllNotifications(Context context)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("🔄 Перезагрузка устройства - перепланируем уведомления");
+
+                var startIntent = new Intent(context, typeof(MainActivity));
+                startIntent.SetFlags(ActivityFlags.NewTask);
+                startIntent.PutExtra("reschedule_notifications", true);
+                context.StartActivity(startIntent);
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Ошибка перепланировки: {ex.Message}");
             }
         }
 
         private void ShowNotification(Context context, Intent intent)
         {
-            try
+            var medicineName = intent.GetStringExtra("medicine_name") ?? "Лекарство";
+            var dosage = intent.GetIntExtra("dosage", 1);
+            var recipientName = intent.GetStringExtra("recipient_name") ?? "Пациент";
+            var unitName = intent.GetStringExtra("unit_name") ?? "таб.";
+            var scheduledTime = intent.GetStringExtra("scheduled_time") ?? "";
+
+            // Явно указываем System.Math чтобы избежать конфликта с Java.Lang.Math
+            var notificationId = System.Math.Abs((medicineName + scheduledTime).GetHashCode());
+
+            CreateChannel(context);
+
+            var openIntent = new Intent(context, typeof(MainActivity));
+            openIntent.SetFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop);
+
+            var pendingIntent = PendingIntent.GetActivity(
+                context,
+                0,
+                openIntent,
+                PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
+
+            // Используем системную иконку
+            int iconId = global::Android.Resource.Drawable.StatNotifySync;
+
+            // Создаем уведомление с расширенными настройками
+            var notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .SetContentTitle($"💊 Пора принять {medicineName}")
+                .SetContentText($"{dosage} {unitName} для {recipientName}")
+                .SetSmallIcon(iconId)
+                .SetPriority(NotificationCompat.PriorityHigh)
+                .SetCategory(NotificationCompat.CategoryAlarm)
+                .SetVisibility(NotificationCompat.VisibilityPublic)
+                .SetAutoCancel(true)
+                .SetContentIntent(pendingIntent)
+                .SetDefaults(NotificationCompat.DefaultAll); // Включает звук, вибрацию и светодиод по умолчанию
+
+            // Для Android 8+ добавляем полноэкранный интент для гарантии пробуждения
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var medicineName = intent.GetStringExtra("medicine_name") ?? "Лекарство";
-                var dosage = intent.GetIntExtra("dosage", 1);
-                var recipientName = intent.GetStringExtra("recipient_name") ?? "Пациент";
-                var medicineId = intent.GetIntExtra("medicine_id", 0);
-                var intakeId = intent.GetIntExtra("intake_id", 0);
-                var unitName = intent.GetStringExtra("unit_name") ?? "таблетка(и)"; // Добавляем единицу измерения
-                var scheduledTime = intent.GetStringExtra("scheduled_time") ?? DateTime.Now.ToString("HH:mm");
+                var fullScreenIntent = new Intent(context, typeof(MainActivity));
+                fullScreenIntent.SetFlags(ActivityFlags.NewTask | ActivityFlags.ClearTop);
+                fullScreenIntent.PutExtra("from_notification", true);
 
-                System.Diagnostics.Debug.WriteLine($"Показываю уведомление: {medicineName} в {scheduledTime}");
-
-                // Создаем канал уведомлений
-                CreateNotificationChannel(context);
-
-                // Intent для открытия приложения при нажатии на уведомление
-                var openIntent = new Intent(context, typeof(MainActivity));
-                openIntent.PutExtra("notification_clicked", true);
-                openIntent.PutExtra("medicine_id", medicineId);
-                openIntent.PutExtra("intake_id", intakeId);
-                openIntent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
-
-                var pendingIntent = PendingIntent.GetActivity(
+                var fullScreenPendingIntent = PendingIntent.GetActivity(
                     context,
-                    GenerateNotificationId(medicineId, DateTime.Now),
-                    openIntent,
+                    0,
+                    fullScreenIntent,
                     PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
-                // Иконка для уведомления
-                int notificationIcon = global::Android.Resource.Drawable.StatNotifyChat;
-
-                // ✅ ИСПРАВЛЕННЫЙ ТЕКСТ: вместо времени показываем единицу измерения
-                var notificationText = $"{medicineName} - {dosage} {unitName} для {recipientName}";
-
-                // Создаем уведомление
-                var notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .SetContentTitle("💊 Примите лекарство!")
-                    .SetContentText(notificationText)
-                    .SetStyle(new NotificationCompat.BigTextStyle()
-                        .BigText(notificationText)
-                        .SetBigContentTitle("💊 Примите лекарство!")
-                        .SetSummaryText($"Запланировано на {scheduledTime}"))
-                    .SetSmallIcon(notificationIcon)
-                    .SetPriority(NotificationCompat.PriorityHigh)
-                    .SetAutoCancel(true)
-                    .SetContentIntent(pendingIntent)
-                    .SetDefaults(NotificationCompat.DefaultAll);
-
-                // ✅ ИСПРАВЛЕННЫЙ ПОДЗАГОЛОВОК: показываем время здесь
-                notificationBuilder.SetSubText($"Время приёма: {scheduledTime}");
-
-                var notification = notificationBuilder.Build();
-
-                // Показываем уведомление
-                var notificationManager = NotificationManagerCompat.From(context);
-                var notificationId = GenerateNotificationId(medicineId, DateTime.Now);
-
-                notificationManager.Notify(notificationId, notification);
-
-                System.Diagnostics.Debug.WriteLine($"✅ Уведомление показано: {medicineName} в {scheduledTime}");
-
-                // Отмечаем уведомление как показанное
-                MarkNotificationAsShown(context, intakeId);
+                notificationBuilder.SetFullScreenIntent(fullScreenPendingIntent, true);
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка показа уведомления: {ex.Message}");
-            }
+
+            // Добавляем действия для уведомления
+            var acceptIntent = new Intent(context, typeof(NotificationPublisher));
+            acceptIntent.SetAction("ACTION_ACCEPT_MEDICINE");
+            acceptIntent.PutExtra("medicine_name", medicineName);
+            acceptIntent.PutExtra("scheduled_time", scheduledTime);
+
+            var acceptPendingIntent = PendingIntent.GetBroadcast(
+                context,
+                notificationId + 1,
+                acceptIntent,
+                PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
+
+            // Используем системные иконки для действий
+            notificationBuilder.AddAction(
+                new NotificationCompat.Action(
+                    global::Android.Resource.Drawable.IcDialogDialer,
+                    "Принял(а)",
+                    acceptPendingIntent));
+
+            var notification = notificationBuilder.Build();
+
+            var notificationManager = NotificationManagerCompat.From(context);
+
+            notificationManager.Notify(notificationId, notification);
+            System.Diagnostics.Debug.WriteLine($"✅ Уведомление показано: {medicineName} в {scheduledTime}");
         }
 
-        private void MarkNotificationAsShown(Context context, int intakeId)
-        {
-            try
-            {
-                var prefs = context.GetSharedPreferences("notifications", FileCreationMode.Private);
-                using var editor = prefs.Edit();
-                editor.PutBoolean($"shown_{intakeId}", true);
-                editor.Commit();
-            }
-            catch { }
-        }
-
-        private void CreateNotificationChannel(Context context)
+        private void CreateChannel(Context context)
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                try
-                {
-                    var channel = new NotificationChannel(
-                        CHANNEL_ID,
-                        CHANNEL_NAME,
-                        NotificationImportance.High);
+                var channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationImportance.High);
 
-                    channel.Description = "Уведомления о времени приема лекарств";
+                // Устанавливаем описание
+                channel.Description = CHANNEL_DESC;
 
-                    // Устанавливаем вибрацию
-                    channel.EnableVibration(true);
-                    channel.SetVibrationPattern(new long[] { 0, 500, 200, 500 });
+                channel.EnableVibration(true);
 
-                    var notificationManager = (NotificationManager)context.GetSystemService(Context.NotificationService);
-                    notificationManager?.CreateNotificationChannel(channel);
+                // Устанавливаем паттерн вибрации
+                long[] vibrationPattern = new long[] { 0, 500, 200, 500 };
+                channel.SetVibrationPattern(vibrationPattern);
 
-                    System.Diagnostics.Debug.WriteLine("✅ Канал уведомлений создан");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"❌ Ошибка создания канала: {ex.Message}");
-                }
+                // Устанавливаем звук для канала
+                var audioAttributes = new AudioAttributes.Builder()
+                    .SetUsage(AudioUsageKind.Notification)
+                    .SetContentType(AudioContentType.Sonification)
+                    .Build();
+
+                var defaultSoundUri = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
+                channel.SetSound(defaultSoundUri, audioAttributes);
+
+                var manager = (NotificationManager)context.GetSystemService(Context.NotificationService);
+                manager?.CreateNotificationChannel(channel);
+
+                System.Diagnostics.Debug.WriteLine($"✅ Канал уведомлений создан: {CHANNEL_ID}");
             }
-        }
-
-        private int GenerateNotificationId(int medicineId, DateTime time)
-        {
-            return Math.Abs($"{medicineId}{time:yyyyMMddHHmm}".GetHashCode());
         }
     }
 }

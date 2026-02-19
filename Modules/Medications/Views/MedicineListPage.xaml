@@ -13,7 +13,7 @@
 
         <!-- CollectionView -->
         <CollectionView Grid.Row="1" 
-                       ItemsSource="{Binding MedicineDetails}">
+                        ItemsSource="{Binding MedicineDetails}">
             <!-- Шаблон элемента -->
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:MedicineDetailDto">
@@ -35,7 +35,7 @@
                                     </Grid.ColumnDefinitions>
                                     <!-- Получатель -->
                                     <Label Text="{Binding RecipientName}"
-                                           Style="{StaticResource CardDescriptionStyle}"
+                                           Style="{StaticResource CardDescriptionOpacityStyle}"
                                            Grid.Column="0"
                                            VerticalOptions="Center"/>
                                     <!-- Остаток на складе -->
@@ -55,7 +55,7 @@
                                         <Image Source="pill.png"
                                            Style="{StaticResource MedicineIconStyle}"/>
                                     </Border>
-                                    
+
                                     <Label Text="{Binding MedicineName}"
                                            Style="{StaticResource CardTitleStyle}"/>
                                 </HorizontalStackLayout>
@@ -71,6 +71,23 @@
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <!-- Отображение когда список пуст - центрировано -->
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Margin="0,50,0,0"
+                         Spacing="10">
+                    <!-- Основной текст -->
+                    <Label Text="Список лекарств пуст"
+               Style="{StaticResource MainTitleStyle}"
+               HorizontalTextAlignment="Center"/>
+
+                    <!-- Дополнительный текст -->
+                    <Label Text="Вы можете добавить новое лекарство при помощи кнопки ниже."
+               Style="{StaticResource MainDescriptionStyle}"
+               HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
         </CollectionView>
 
         <!-- Кнопка "Добавить" -->

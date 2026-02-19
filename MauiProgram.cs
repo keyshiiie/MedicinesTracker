@@ -3,13 +3,16 @@ using Microsoft.Extensions.Logging;
 using Syncfusion.Maui.Toolkit.Hosting;
 using Microsoft.Extensions.Configuration;
 using MedicinesTracker.Repository;
-using MedicinesTracker.ViewModels;
 using MedicinesTracker.Modules.Medications.ViewModels;
 using MedicinesTracker.Modules.Notifications.ViewModels;
 using MedicinesTracker.Modules.Settings.ViewModels;
-using MedicinesTracker.Services;
 using MedicinesTracker.Modules.HistoryIntake.ViewModels;
+using MedicinesTracker.Services;
 using Plugin.LocalNotification;
+#if ANDROID
+using Android.App; 
+using Android.Content;
+#endif
 
 namespace MedicinesTracker
 {
@@ -22,7 +25,7 @@ namespace MedicinesTracker
                 .UseMauiApp<App>()
 #if ANDROID
                 .UseLocalNotification()
-#endif 
+#endif
                 .UseMauiCommunityToolkit()
                 .ConfigureSyncfusionToolkit()
                 .ConfigureMauiHandlers(handlers =>
@@ -61,16 +64,23 @@ namespace MedicinesTracker
             builder.Services.AddSingleton<IValidatorService, ValidatorService>();
             builder.Services.AddSingleton<IScheduleTimeRepository, ScheduleTimeRepository>();
             builder.Services.AddSingleton<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
-            builder.Services.AddSingleton<IIntakeSchedulerService, IntakeSchedulerService>();
+            builder.Services.AddSingleton<IIntakeGeneratorService, IntakeGeneratorService>();
             builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
             builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
             builder.Services.AddScoped<IMedicineBuilder, MedicineBuilder>();
+            builder.Services.AddSingleton<IScheduleEvaluator, ScheduleEvaluator>();
 
-            // В MauiProgram.cs, в секцию "4. Регистрируем сервисы" добавьте:
-            builder.Services.AddSingleton<INotificationSchedulerService, NotificationSchedulerService>();
+#if ANDROID
+            builder.Services.AddSingleton<IAlarmScheduler>(sp =>
+            {
+                var context = Android.App.Application.Context;
+                var alarmManager = context.GetSystemService(Android.Content.Context.AlarmService) as AlarmManager;
+                return new MedicinesTracker.Platforms.Android.Services.AlarmScheduler(alarmManager, context);
+            });
+#endif
+            builder.Services.AddSingleton<INotificationPlannerService, NotificationPlannerService>();
 
             // 5. Регистрируем ViewModels
-            builder.Services.AddSingleton<AppShellVM>();
             builder.Services.AddTransient<MedicineListVM>();
             builder.Services.AddTransient<TodayMedicineVM>();
             builder.Services.AddTransient<MedicineDetailVM>();

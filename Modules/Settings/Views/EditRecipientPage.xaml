@@ -9,7 +9,7 @@
     <Grid RowDefinitions="*,Auto,Auto">
         <VerticalStackLayout Spacing="5">
             <Label Text="Имя получателя" 
-                   Style="{StaticResource CardDescriptionStyle}"/>
+                   Style="{StaticResource FieldDescriptionStyle}"/>
             <Border Style="{StaticResource EditFielsBorderStyle}">
                 <Entry Text="{Binding Recipient.Name}"
                        Style="{StaticResource EditFieldStyle}"

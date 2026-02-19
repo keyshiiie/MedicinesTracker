@@ -12,9 +12,13 @@
             <converters:StringToDateConverter x:Key="StringToDateConverter"/>
             <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
             <converters:IsTimePassedConverter x:Key="IsTimePassedConverter"/>
+            <converters:IsGreaterThanZeroConverter x:Key="IsGreaterThanZeroConverter"/>
+            <converters:IsLessThanOneConverter x:Key="IsLessThanOneConverter"/>
+            <converters:NumericEntryBehavior x:Key="NumericEntryBehavior"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <ResourceDictionary Source="Resources/Styles/BaseStyles.xaml" />
                 <ResourceDictionary Source="Resources/Styles/ControlStyles.xaml" />
                 <ResourceDictionary Source="Resources/Styles/ButtonStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>

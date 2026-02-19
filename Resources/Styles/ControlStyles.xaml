@@ -1,81 +1,113 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="MedicinesTracker.Resources.Styles.ControlStyles"
-             xmlns:converters="clr-namespace:MedicinesTracker.Converters">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    xmlns:converters="clr-namespace:MedicinesTracker.Converters"
+                    x:Class="MedicinesTracker.Resources.Styles.ControlStyles">
 
     <converters:IsTimePassedConverter x:Key="IsTimePassedConverter" />
 
-    <!-- стиль приветсвенного тайтла -->
-    <Style TargetType="Label" x:Key="AcquaintanceTitleStyle">
-        <Setter Property="FontSize" Value="24"/>
+    <!-- Стили на основе BasePrimaryTextStyle -->
+    <Style TargetType="Label" x:Key="MainTitleStyle" BasedOn="{StaticResource BasePrimaryTextStyle}">
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="HorizontalTextAlignment" Value="Center"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-    </Style>
-
-    <Style TargetType="Label" x:Key="AcquaintanceDescriptionStyle">
-        <Setter Property="FontSize" Value="16"/>
-        <Setter Property="VerticalOptions" Value="Center"/>
-        <Setter Property="HorizontalTextAlignment" Value="Center"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-        <Setter Property="FontFamily" Value="OpenSansLight"/>
-    </Style>
-
-    <Style TargetType="Label" x:Key="MedicineNameStyle">
-        <Setter Property="FontSize" Value="16"/>
-        <Setter Property="VerticalOptions" Value="Center"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-    </Style>
-
-    <!-- Стиль заголовка timepicker -->
-    <Style TargetType="TimePicker" x:Key="TimePickerStyle">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Background" Value="{StaticResource Secondary}"/>
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-    </Style>
-
-    <!-- Стиль заголовка карточки -->
-    <Style TargetType="Label" x:Key="CardTitleStyle">
-        <Setter Property="FontSize" Value="16"/>
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-        <Setter Property="VerticalOptions" Value="Center"/>
-    </Style>
-
-    <!-- Стиль текста в полях -->
-    <Style TargetType="Label" x:Key="FieldTitleStyle">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-        <Setter Property="VerticalOptions" Value="Center"/>
-    </Style>
-
-    <!-- Стиль текста в полях -->
-    <Style TargetType="Entry" x:Key="EditFieldStyle">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
-        <Setter Property="VerticalOptions" Value="Center"/>
-        <Setter Property="Background" Value="{StaticResource Secondary}"/>
-    </Style>
-
-    <!-- Стиль описания карточки с прозрачностью 0.8 -->
-    <Style TargetType="Label" x:Key="CardDescriptionStyle">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="VerticalTextAlignment" Value="Center"/>
         <Setter Property="Opacity" Value="0.8"/>
     </Style>
 
-    <!-- Стиль для иконки лекарства -->
-    <Style TargetType="Image" x:Key="MedicineIconStyle">
-        <Setter Property="WidthRequest" Value="23"/>
-        <Setter Property="HeightRequest" Value="23"/>
+    <Style TargetType="Label" x:Key="PageTitleStyle" BasedOn="{StaticResource BasePrimaryTextStyle}">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="Opacity" Value="0.8"/>
     </Style>
 
-    <Style x:Key="ImageBorderCardStyle" TargetType="Border">
+    <Style TargetType="Label" x:Key="MainDescriptionStyle" BasedOn="{StaticResource BasePrimaryTextStyle}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        <Setter Property="VerticalTextAlignment" Value="Center"/>
+        <Setter Property="Opacity" Value="0.4"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="AcquaintanceTitleStyle" BasedOn="{StaticResource BasePrimaryTextStyle}">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="AcquaintanceDescriptionStyle" BasedOn="{StaticResource BaseLightLabelStyle}">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource Secondary}}"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="MedicineNameStyle" BasedOn="{StaticResource BaseSemiboldLabelStyle}">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="CardTitleStyle" BasedOn="{StaticResource BaseSemiboldLabelStyle}">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="FieldTitleStyle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="0,0"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="FieldDescriptionStyle" BasedOn="{StaticResource BaseLabelStyle}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Opacity" Value="0.8"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource Secondary}}"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="CardDescriptionStyle" BasedOn="{StaticResource BaseLabelStyle}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="CardDescriptionOpacityStyle" BasedOn="{StaticResource BaseLabelStyle}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+
+    <Style TargetType="Label" x:Key="DetailLinkStyle" BasedOn="{StaticResource BaseSemiboldLabelStyle}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDark}"/>
+        <Setter Property="HorizontalOptions" Value="Start"/>
+    </Style>
+
+    <!-- Entry стили -->
+    <Style TargetType="TimePicker" x:Key="TimePickerStyle" BasedOn="{StaticResource BaseInputStyle}">
+        <Setter Property="Background" Value="{StaticResource Secondary}"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+    </Style>
+
+    <Style TargetType="Entry" x:Key="EditFieldStyle" BasedOn="{StaticResource BaseEntryStyle}"/>
+
+    <Style TargetType="Picker" x:Key="PrimaryPickerStyle" BasedOn="{StaticResource BaseInputStyle}">
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"/>
+        <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource Gray400}}"/>
+    </Style>
+
+    <Style TargetType="DatePicker" x:Key="PrimaryDatePickerStyle" BasedOn="{StaticResource BaseInputStyle}">
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource Secondary}"/>
+    </Style>
+
+    <!-- Border стили -->
+    <Style TargetType="Border" x:Key="MedicineCardBorderStyle" BasedOn="{StaticResource BaseCardBorderStyle}">
+        <Setter Property="Margin" Value="0,0,0,10"/>
+        <Setter Property="Padding" Value="10"/>
+    </Style>
+
+    <Style TargetType="Border" x:Key="ImageBorderCardStyle" BasedOn="{StaticResource BaseCardBorderStyle}">
         <Setter Property="Padding" Value="5"/>
         <Setter Property="StrokeShape">
             <RoundRectangle CornerRadius="50"/>
@@ -83,149 +115,68 @@
         <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}"/>
     </Style>
 
-    <!-- Стиль для стрелочки "Подробнее" -->
-    <Style TargetType="Image" x:Key="DetailLinkIconStyle">
-        <Setter Property="WidthRequest" Value="15"/>
-        <Setter Property="Margin" Value="0,2,0,0"/>
-    </Style>
-    
-    
-
-    <!-- Стиль для кнопки "Подробнее" -->
-    <Style TargetType="Label" x:Key="DetailLinkStyle">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDark}"/>
-        <Setter Property="HorizontalOptions" Value="Start"/>
-    </Style>
-
-    
-    <!-- Cтиль для границы карточки -->
-    <Style TargetType="Border" x:Key="MedicineCardBorderStyle">
-        <Setter Property="Margin" Value="0,0,0,10"/>
-        <Setter Property="BackgroundColor" Value="{StaticResource Secondary}"/>
-        <Setter Property="Padding" Value="10"/>
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="5"/>
-        </Setter>
-        <Setter Property="StrokeThickness" Value="0"/>
-    </Style>
-
-    <!-- Cтиль для редактируемого поля -->
-    <Style TargetType="Border" x:Key="EditFielsBorderStyle">
-        <Setter Property="HorizontalOptions" Value="Fill"/>
-        <Setter Property="Padding" Value="5,0"/>
-    </Style>
-
-    <!-- Текст для карточки запаса текущего -->
-    <Style TargetType="Label" x:Key="CardHintTextStyle">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
-    </Style>
-    
-    <!-- Cтиль для карточки запаса текущего -->
-    <Style TargetType="Border" x:Key="CardHintBorderStyle">
+    <Style TargetType="Border" x:Key="CardHintBorderStyle" BasedOn="{StaticResource BaseCardBorderStyle}">
         <Setter Property="BackgroundColor" Value="{StaticResource Primary}"/>
         <Setter Property="Padding" Value="10,5"/>
         <Setter Property="StrokeShape">
             <RoundRectangle CornerRadius="10"/>
         </Setter>
-        <Setter Property="StrokeThickness" Value="0"/>
     </Style>
 
-    <!-- Основной стиль Picker -->
-    <Style x:Key="PrimaryPickerStyle" TargetType="Picker">
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="Background" Value="{StaticResource Secondary}"/>
-        <Setter Property="VerticalOptions" Value="Center"/>
-        <Setter Property="TitleColor" Value="{StaticResource PrimaryDarkText}" />
+    <!-- Image стили -->
+    <Style TargetType="Image" x:Key="MedicineIconStyle">
+        <Setter Property="WidthRequest" Value="23"/>
+        <Setter Property="HeightRequest" Value="23"/>
     </Style>
 
-    <!-- Основной стиль DatePicker -->
-    <Style  x:Key="PrimaryDatePickerStyle" TargetType="DatePicker">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}" />
-        <Setter Property="BackgroundColor" Value="{StaticResource Secondary}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
+    <Style TargetType="Image" x:Key="DetailLinkIconStyle">
+        <Setter Property="WidthRequest" Value="15"/>
+        <Setter Property="Margin" Value="0,2,0,0"/>
     </Style>
 
-    <!-- Стиль для текста, если приём лекарства пропущен -->
-    <Style x:Key="MissedFieldTitleStyle" TargetType="Label" 
-       BasedOn="{StaticResource FieldTitleStyle}">
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+    <!-- Стили с триггерами -->
+    <Style x:Key="MissedFieldTitleStyle" TargetType="Label" BasedOn="{StaticResource FieldTitleStyle}">
         <Style.Triggers>
-            <DataTrigger TargetType="Label"
-                     Binding="{Binding IsCompleted}"
-                     Value="False">
-                <!-- Обратите внимание на заглавную F -->
+            <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="False">
                 <Setter Property="TextColor" Value="Red" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
 
-
-
-
-    <Style x:Key="TimeAwareFieldTitleStyle" TargetType="Label" 
-           BasedOn="{StaticResource FieldTitleStyle}">
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+    <Style x:Key="TimeAwareFieldTitleStyle" TargetType="Label" BasedOn="{StaticResource FieldTitleStyle}">
+        <Setter Property="FontFamily" Value="OpenSansSemibold"/>
+        <Setter Property="Padding" Value="0"/>
         <Style.Triggers>
-            <DataTrigger TargetType="Label"
-                         Binding="{Binding Time, Converter={StaticResource IsTimePassedConverter}}"
-                         Value="True">
+            <DataTrigger TargetType="Label" Binding="{Binding Time, Converter={StaticResource IsTimePassedConverter}}" Value="True">
                 <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
 
-    <Style x:Key="TimeAwareCardDescriptionStyle" TargetType="Label" 
-           BasedOn="{StaticResource CardDescriptionStyle}">
-        <Setter Property="TextColor" Value="{StaticResource PrimaryDarkText}" />
+    <Style x:Key="TimeAwareCardDescriptionStyle" TargetType="Label" BasedOn="{StaticResource CardDescriptionStyle}">
         <Setter Property="Opacity" Value="0.7" />
         <Style.Triggers>
-            <DataTrigger TargetType="Label"
-                         Binding="{Binding Time, Converter={StaticResource IsTimePassedConverter}}"
-                         Value="True">
+            <DataTrigger TargetType="Label" Binding="{Binding Time, Converter={StaticResource IsTimePassedConverter}}" Value="True">
                 <Setter Property="TextColor" Value="{StaticResource PrimaryDark}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
 
+    <!-- Остальные стили -->
     <Style x:Key="FilterLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="TextColor" Value="{StaticResource Primary}"/>
     </Style>
 
-    <Style x:Key="OutlineButtonStyle" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent"/>
-        <Setter Property="TextColor" Value="{StaticResource Primary}"/>
-        <Setter Property="BorderColor" Value="{StaticResource Primary}"/>
-        <Setter Property="BorderWidth" Value="1"/>
-        <Setter Property="CornerRadius" Value="5"/>
-        <Setter Property="Padding" Value="10,5"/>
-    </Style>
-
-    
-
     <Style x:Key="EmptyViewLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="16"/>
         <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
         <Setter Property="HorizontalTextAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="CardHintTextStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
     </Style>
 </ResourceDictionary>

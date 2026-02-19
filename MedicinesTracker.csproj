@@ -45,6 +45,12 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
@@ -59,11 +65,6 @@
 
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
-		<AndroidResource Remove="ViewModels\Controls\**" />
-		<Compile Remove="ViewModels\Controls\**" />
-		<EmbeddedResource Remove="ViewModels\Controls\**" />
-		<MauiCss Remove="ViewModels\Controls\**" />
-		<MauiXaml Remove="ViewModels\Controls\**" />
 
 		<!-- Raw Assets - УДАЛИТЕ ЭТУ СТРОКУ или ЗАКОММЕНТИРУЙТЕ если не используете -->
 		<!--
@@ -72,7 +73,6 @@
 
 		<!-- Вместо этого определите конкретные файлы для включения -->
 		<None Remove="Resources\**" />
-		<None Remove="ViewModels\Controls\**" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -117,6 +117,9 @@
 		<MauiXaml Update="Modules\HistoryIntake\View\HistoryPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Modules\Medications\Views\Controls\CreationProgressBar.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\ScheduleDetailsPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -138,6 +141,9 @@
 		<MauiXaml Update="Modules\Settings\Views\EditRecipientPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Resources\Styles\BaseStyles.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Resources\Styles\ButtonStyles.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -157,9 +163,6 @@
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\MedicineListPage.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
-		<MauiXaml Update="Modules\Medications\Views\MedicineSchedulePage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Notifications\Views\NotificationListPage.xaml">
@@ -199,9 +202,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Modules\Medications\Views\MedicineSchedulePage.xaml.cs">
-			<DependentUpon>MedicineSchedulePage.xaml</DependentUpon>
-		</Compile>
 		<Compile Update="Modules\Notifications\Views\AboutAppPage.xaml.cs">
 		  <DependentUpon>AboutAppPage.xaml</DependentUpon>
 		</Compile>

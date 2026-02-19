@@ -13,23 +13,23 @@ namespace MedicinesTracker.Repository
 {
     public interface IIntakeRepository
     {
+        // CRUD
         Task<IEnumerable<HistoryDto>> GetAllIntakeAsync();
         Task<int> AddIntakeAsync(IntakeModel intakeModel);
         Task<int> UpdateIntakeAsync(IntakeModel intakeModel);
-        Task<IEnumerable<TodayMedicineDto>> GetTodayMedicineAsync();
-        Task<IntakeModel?> GetIntakeByMedicineAndDateAsync(int medicineId, string date);
+        Task<IntakeModel?> GetIntakeByIdAsync(int intakeId);
+
+        // Поиск
         Task<IEnumerable<IntakeModel>> GetIntakesByDateAsync(string date);
-        Task<int> DeleteFutureIntakesAsync(DateTime fromDate);
-        Task<bool> HasIntakesForDateAsync(string date);
-        // Добавьте этот метод:
         Task<IEnumerable<IntakeModel>> GetIntakesByMedicineAndDateAsync(int medicineId, string date);
-
-        // Или если нужно получить по времени:
         Task<IntakeModel?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time);
-        Task<bool> HasIntakeAtTimeAsync(int medicineId, string date, string time);
-        Task<int> EnsureIntakeExistsAsync(IntakeModel intakeModel);
+        Task<IEnumerable<TodayMedicineDto>> GetTodayMedicineAsync();
 
+        // Проверка
         Task<bool> IntakeExistsAsync(int medicineId, string date, string time);
+
+        // Удаление
+        Task<int> DeleteFutureIntakesAsync(DateTime fromDate);
         Task<int> DeleteFutureIntakesForMedicineAsync(int medicineId, DateTime fromDate);
         Task<int> DeleteOldIntakesAsync(DateTime cutoffDate);
     }
@@ -39,6 +39,25 @@ namespace MedicinesTracker.Repository
         public IntakeRepository(IDBHandler bHandler)
         {
             _dbHandler = bHandler;
+        }
+
+        public async Task<IntakeModel?> GetIntakeByIdAsync(int intakeId)
+        {
+            var query = @"
+        SELECT 
+            i.IdIntake,
+            i.IdMedicine,
+            i.IsCompleted,
+            i.IdSchedule,
+            i.IdScheduleTime,
+            i.Date,
+            i.Time,
+            i.TakenDateTime,
+            i.ActualDosage
+        FROM Intake i
+        WHERE i.IdIntake = @IntakeId";
+
+            return await _dbHandler.QueryFirstOrDefaultAsync<IntakeModel>(query, new { IntakeId = intakeId });
         }
 
         public async Task<IEnumerable<HistoryDto>> GetAllIntakeAsync()
@@ -94,20 +113,17 @@ namespace MedicinesTracker.Repository
         public async Task<int> UpdateIntakeAsync(IntakeModel intakeModel)
         {
             var query = @"UPDATE Intake 
-            SET IsCompleted = @IsCompleted,
-                Time = @Time,
-                TakenDateTime = @TakenDateTime,
-                ActualDosage = @ActualDosage  
-            WHERE IdIntake = @IdIntake";
+                  SET IsCompleted = @IsCompleted,
+                      TakenDateTime = @TakenDateTime
+                  WHERE IdIntake = @IdIntake";
 
             var parameters = new
             {
                 intakeModel.IdIntake,
                 intakeModel.IsCompleted,
-                Time = intakeModel.Time,
-                TakenDateTime = intakeModel.TakenDateTime,
-                ActualDosage = intakeModel.ActualDosage  // Добавьте если есть
+                intakeModel.TakenDateTime
             };
+
             return await _dbHandler.ExecuteAsync(query, parameters);
         }
 
@@ -115,147 +131,35 @@ namespace MedicinesTracker.Repository
         {
             var today = DateTime.Now.Date.ToString("yyyy-MM-dd");
 
-            // Запрос для получения лекарств на сегодня, которые ЕЩЕ НЕ ПРИНЯТЫ
+            // Показываем ВСЕ записи на сегодня (и принятые, и нет)
+            // Но на странице "Сегодня" обычно показывают только не принятые
             var query = @"
-            WITH today_date AS (SELECT date('now') AS today),
-                 current_weekday AS (
-                     SELECT CASE 
-                                WHEN strftime('%w', date('now')) = '0' THEN 7
-                                ELSE CAST(strftime('%w', date('now')) AS INTEGER)
-                            END AS weekday_number
-                 )
-            -- Одноразовые расписания (НЕ ПРИНЯТЫЕ)
-            SELECT 
-                m.IdMedicine,
-                s.IdStock,
-                s.CurrentQuantity,
-                r.Name AS RecipientName,
-                m.Name as MedicineName,
-                ms.Dosage,
-                st.Time,
-                st.OrderInDay,
-                u.Name as UnitName,
-                'ONETIME' as ScheduleType,
-                ms.IdSchedule,
-                st.IdTime as IdScheduleTime,
-                -- Проверяем, есть ли уже запись в Intake
-                COALESCE(i.IdIntake, 0) as IdIntake,
-                -- Извлекаем статус приема
-                COALESCE(i.IsCompleted, 0) as IsCompleted,
-                -- Извлекаем фактическую дозировку если есть
-                COALESCE(i.ActualDosage, ms.Dosage) as ActualDosage
-            FROM MedicationSchedule ms
-            JOIN Medicine m ON ms.IdMedicine = m.IdMedicine
-            JOIN ScheduleTime st ON ms.IdSchedule = st.IdSchedule
-            JOIN Unit u ON m.IdUnit = u.IdUnit
-            JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-            JOIN Stock s ON m.IdMedicine = s.IdMedicine
-            LEFT JOIN Intake i ON i.IdMedicine = m.IdMedicine 
-                AND i.IdSchedule = ms.IdSchedule
-                AND i.IdScheduleTime = st.IdTime
-                AND i.Date = date('now')
-            WHERE ms.IsActive = 1
-              AND st.IsActive = 1
-              AND ms.IdScheduleType = (SELECT IdType FROM ScheduleType WHERE Code = 'ONETIME')
-              AND ms.OneTimeDate = date('now')
-              -- Фильтр: только не принятые лекарства
-              AND (i.IdIntake IS NULL OR i.IsCompleted = 0)
+        SELECT 
+            m.IdMedicine,
+            s.IdStock,
+            s.CurrentQuantity,
+            r.Name AS RecipientName,
+            m.Name as MedicineName,
+            ms.Dosage,
+            st.Time,
+            st.OrderInDay,
+            u.Name as UnitName,
+            ms.IdSchedule,
+            st.IdTime as IdScheduleTime,
+            i.IdIntake,
+            i.IsCompleted
+        FROM Intake i
+        JOIN Medicine m ON i.IdMedicine = m.IdMedicine
+        JOIN MedicationSchedule ms ON i.IdSchedule = ms.IdSchedule
+        JOIN ScheduleTime st ON i.IdScheduleTime = st.IdTime
+        JOIN Unit u ON m.IdUnit = u.IdUnit
+        JOIN Recipient r ON m.IdRecipient = r.IdRecipient
+        JOIN Stock s ON m.IdMedicine = s.IdMedicine
+        WHERE i.Date = @Today
+          AND i.IsCompleted = 0  -- Только не принятые!
+        ORDER BY r.Name, st.OrderInDay";
 
-            UNION ALL
-
-            -- Интервальные расписания (НЕ ПРИНЯТЫЕ)
-            SELECT 
-                m.IdMedicine,
-                s.IdStock,
-                s.CurrentQuantity,
-                r.Name as RecipientName,
-                m.Name as MedicineName,
-                ms.Dosage,
-                st.Time,
-                st.OrderInDay,
-                u.Name as UnitName,
-                'INTERVAL' as ScheduleType,
-                ms.IdSchedule,
-                st.IdTime as IdScheduleTime,
-                COALESCE(i.IdIntake, 0) as IdIntake,
-                COALESCE(i.IsCompleted, 0) as IsCompleted,
-                COALESCE(i.ActualDosage, ms.Dosage) as ActualDosage
-            FROM MedicationSchedule ms
-            JOIN Medicine m ON ms.IdMedicine = m.IdMedicine
-            JOIN ScheduleTime st ON ms.IdSchedule = st.IdSchedule
-            JOIN RecurrencePattern rp ON ms.IdRecurrencePattern = rp.IdPattern
-            JOIN Unit u ON m.IdUnit = u.IdUnit
-            JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-            JOIN Stock s ON m.IdMedicine = s.IdMedicine
-            LEFT JOIN Intake i ON i.IdMedicine = m.IdMedicine 
-                AND i.IdSchedule = ms.IdSchedule
-                AND i.IdScheduleTime = st.IdTime
-                AND i.Date = date('now')
-            WHERE ms.IsActive = 1
-              AND st.IsActive = 1
-              AND ms.IdScheduleType = (SELECT IdType FROM ScheduleType WHERE Code = 'RECURRING')
-              AND ms.IdScheduleMode = (SELECT IdMode FROM ScheduleMode WHERE Code = 'INTERVAL')
-              AND (ms.DateStart IS NULL OR ms.DateStart <= date('now'))
-              AND (ms.DateEnd IS NULL OR ms.DateEnd >= date('now'))
-              AND (
-                  (ms.DateStart IS NOT NULL AND 
-                   (julianday(date('now')) - julianday(ms.DateStart)) % rp.DaysInterval = 0)
-                  OR
-                  (ms.OneTimeDate IS NOT NULL AND 
-                   (julianday(date('now')) - julianday(ms.OneTimeDate)) % rp.DaysInterval = 0)
-              )
-              -- Фильтр: только не принятые лекарства
-              AND (i.IdIntake IS NULL OR i.IsCompleted = 0)
-
-            UNION ALL
-
-            -- Расписания по дням недели (НЕ ПРИНЯТЫЕ)
-            SELECT 
-                m.IdMedicine,
-                s.IdStock,
-                s.CurrentQuantity,
-                r.Name as RecipientName,
-                m.Name as MedicineName,
-                ms.Dosage,
-                st.Time,
-                st.OrderInDay,
-                u.Name as UnitName,
-                'WEEKDAYS' as ScheduleType,
-                ms.IdSchedule,
-                st.IdTime as IdScheduleTime,
-                COALESCE(i.IdIntake, 0) as IdIntake,
-                COALESCE(i.IsCompleted, 0) as IsCompleted,
-                COALESCE(i.ActualDosage, ms.Dosage) as ActualDosage
-            FROM MedicationSchedule ms
-            JOIN Medicine m ON ms.IdMedicine = m.IdMedicine
-            JOIN ScheduleTime st ON ms.IdSchedule = st.IdSchedule
-            JOIN ScheduleWeekDays swd ON ms.IdSchedule = swd.IdSchedule
-            JOIN Unit u ON m.IdUnit = u.IdUnit
-            JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-            JOIN Stock s ON m.IdMedicine = s.IdMedicine
-            LEFT JOIN Intake i ON i.IdMedicine = m.IdMedicine 
-                AND i.IdSchedule = ms.IdSchedule
-                AND i.IdScheduleTime = st.IdTime
-                AND i.Date = date('now')
-            WHERE ms.IsActive = 1
-              AND st.IsActive = 1
-              AND ms.IdScheduleType = (SELECT IdType FROM ScheduleType WHERE Code = 'RECURRING')
-              AND ms.IdScheduleMode = (SELECT IdMode FROM ScheduleMode WHERE Code = 'WEEKDAYS')
-              AND (ms.DateStart IS NULL OR ms.DateStart <= date('now'))
-              AND (ms.DateEnd IS NULL OR ms.DateEnd >= date('now'))
-              AND swd.IdDay = (
-                  SELECT CASE 
-                             WHEN strftime('%w', date('now')) = '0' THEN 7
-                             ELSE CAST(strftime('%w', date('now')) AS INTEGER)
-                         END
-              )
-              -- Фильтр: только не принятые лекарства
-              AND (i.IdIntake IS NULL OR i.IsCompleted = 0)
-
-            ORDER BY 6, 5, 2;";
-
-            var todayMedicines = await _dbHandler.QueryAsync<TodayMedicineDto>(query);
-            return todayMedicines;
+            return await _dbHandler.QueryAsync<TodayMedicineDto>(query, new { Today = today });
         }
 
         public async Task<IntakeModel?> GetIntakeByMedicineAndDateAsync(int medicineId, string date)
@@ -299,14 +203,6 @@ namespace MedicinesTracker.Repository
 
             var parameters = new { Date = date };
             return await _dbHandler.QueryAsync<IntakeModel>(query, parameters);
-        }
-
-        public async Task<bool> HasIntakesForDateAsync(string date)
-        {
-            var query = "SELECT COUNT(*) FROM Intake WHERE Date = @Date";
-            var parameters = new { Date = date };
-            var count = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
-            return count > 0;
         }
 
         public async Task<int> DeleteFutureIntakesAsync(DateTime fromDate)
@@ -368,62 +264,6 @@ namespace MedicinesTracker.Repository
                 Time = time // Теперь точно по времени
             };
             return await _dbHandler.QueryFirstOrDefaultAsync<IntakeModel>(query, parameters);
-        }
-
-        public async Task<bool> HasIntakeAtTimeAsync(int medicineId, string date, string time)
-        {
-            var query = @"
-            SELECT COUNT(*) 
-            FROM Intake 
-            WHERE IdMedicine = @MedicineId 
-            AND Date = @Date
-            AND Time = @Time";
-
-            var parameters = new
-            {
-                MedicineId = medicineId,
-                Date = date,
-                Time = time
-            };
-
-            var count = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
-            return count > 0;
-        }
-
-        public async Task<int> EnsureIntakeExistsAsync(IntakeModel intakeModel)
-        {
-            // Проверяем по всем ключевым полям
-            var existing = await GetIntakeByMedicineAndDateTimeAsync(
-                intakeModel.IdMedicine,
-                intakeModel.Date,
-                intakeModel.Time);
-
-            if (existing != null)
-            {
-                // ОБНОВЛЯЕМ существующую запись, а не возвращаем ID
-                var updateQuery = @"
-            UPDATE Intake 
-            SET IdSchedule = @IdSchedule,
-                IdScheduleTime = @IdScheduleTime,
-                ActualDosage = @ActualDosage,
-                IsCompleted = @IsCompleted
-            WHERE IdIntake = @IdIntake";
-
-                var updateParameters = new
-                {
-                    existing.IdIntake,
-                    intakeModel.IdSchedule,
-                    intakeModel.IdScheduleTime,
-                    intakeModel.ActualDosage,
-                    intakeModel.IsCompleted
-                };
-
-                await _dbHandler.ExecuteAsync(updateQuery, updateParameters);
-                return existing.IdIntake;
-            }
-
-            // Только если записи нет - создаем новую
-            return await AddIntakeAsync(intakeModel);
         }
 
         public async Task<bool> IntakeExistsAsync(int medicineId, string date, string time)

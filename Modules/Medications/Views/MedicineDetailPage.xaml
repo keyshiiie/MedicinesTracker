@@ -32,6 +32,8 @@
 
                     <VerticalStackLayout Grid.Column="1" Spacing="5">
                         <StackLayout Spacing="5">
+                            <Label Text="{Binding MedicineName}"
+                                   Style="{StaticResource FieldTitleStyle}"/>
                             <Label Text="Основная информация"
                                    Style="{StaticResource CardTitleStyle}"/>
                         </StackLayout>

@@ -6,34 +6,31 @@
              x:DataType="viewModels:ScheduleModeSelectionVM"
              Title="Способ задания">
 
-    <VerticalStackLayout Spacing="15"
+    <VerticalStackLayout Spacing="30"
                          VerticalOptions="Center">
-
+        <Label Text="Выберите способ задания расписания"
+               Style="{StaticResource PageTitleStyle}"/>
         <!-- Заголовок -->
-        <VerticalStackLayout Spacing="5">
-            <Label Text="Выберите способ задания расписания"
-                   Style="{StaticResource PageDescriptionStyle}"/>
+        <VerticalStackLayout Spacing="15">
+            <!-- Выбор способа с помощью Picker -->
+            <VerticalStackLayout Spacing="10">
+                <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Picker ItemsSource="{Binding ScheduleModes}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedScheduleMode, Mode=TwoWay}"
+                            Style="{StaticResource PrimaryPickerStyle}"
+                            Title="Выберите способ задания расписания"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Кнопки -->
+            <Grid ColumnDefinitions="*,Auto">
+                <Button Text="Далее"
+                        Command="{Binding ContinueCommand}"
+                        IsEnabled="{Binding IsValid}"
+                        Style="{StaticResource SaveMedicineButtonStyle}"
+                        Grid.Column="1"/>
+            </Grid>
         </VerticalStackLayout>
-
-        <!-- Выбор способа с помощью Picker -->
-        <VerticalStackLayout Spacing="10">
-            <Border Style="{StaticResource EditFielsBorderStyle}">
-                <Picker ItemsSource="{Binding ScheduleModes}"
-                        ItemDisplayBinding="{Binding Name}"
-                        SelectedItem="{Binding SelectedScheduleMode, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}"
-                        Title="Выберите способ задания расписания"/>
-            </Border>
-        </VerticalStackLayout>
-
-        <!-- Кнопки -->
-        <Grid ColumnDefinitions="*,Auto">
-            <Button Text="Далее"
-                Command="{Binding ContinueCommand}"
-                IsEnabled="{Binding IsValid}"
-                Style="{StaticResource SaveMedicineButtonStyle}"
-                Grid.Column="1"/>
-        </Grid>
-
     </VerticalStackLayout>
 </ContentPage>

@@ -11,34 +11,36 @@ namespace MedicinesTracker.Services
                                    List<WeekDayModel> selectedDays,
                                    List<TimeSpan> selectedTimes);
         Task<MedicineScheduleDto?> GetScheduleByIdAsync(int scheduleId);
-        Task ScheduleNotificationsForMedicineAsync(int medicineId); 
+        Task ScheduleNotificationsForMedicineAsync(int medicineId);
     }
+
     public class ScheduleService : IScheduleService
     {
         private readonly IMedicineScheduleRepository _scheduleRepository;
         private readonly IScheduleTimeRepository _timeRepository;
         private readonly IScheduleWeekDaysRepository _weekDaysRepository;
-        private readonly INotificationSchedulerService _notificationService;
-        private readonly IIntakeSchedulerService _intakeSchedulerService;
+        private readonly INotificationPlannerService _notificationPlanner; // переименовано
+        private readonly IIntakeGeneratorService _intakeGenerator; // переименовано
 
         public ScheduleService(
             IMedicineScheduleRepository scheduleRepository,
             IScheduleTimeRepository timeRepository,
             IScheduleWeekDaysRepository weekDaysRepository,
-            INotificationSchedulerService notificationService,
-            IIntakeSchedulerService intakeSchedulerService)
+            INotificationPlannerService notificationPlanner, // переименовано
+            IIntakeGeneratorService intakeGenerator) // переименовано
         {
             _scheduleRepository = scheduleRepository;
             _timeRepository = timeRepository;
             _weekDaysRepository = weekDaysRepository;
-            _notificationService = notificationService;
-            _intakeSchedulerService = intakeSchedulerService; 
+            _notificationPlanner = notificationPlanner;
+            _intakeGenerator = intakeGenerator;
         }
 
         public async Task<MedicineScheduleDto?> GetScheduleByIdAsync(int scheduleId)
         {
             return await _scheduleRepository.GetMedicineScheduleById(scheduleId);
         }
+
         public async Task<int> SaveScheduleAsync(
             MedicineScheduleDto scheduleDto,
             List<WeekDayModel> selectedDays,
@@ -47,92 +49,55 @@ namespace MedicinesTracker.Services
             int scheduleId;
             bool isUpdate = scheduleDto.IdSchedule > 0;
 
-            // 1. Конвертируем DTO в модель
             var scheduleModel = ConvertToScheduleModel(scheduleDto);
 
             if (isUpdate)
             {
-                // 2. Обновляем расписание
                 await _scheduleRepository.UpdateMedicineScheduleAsync(scheduleModel);
                 scheduleId = scheduleDto.IdSchedule;
-
-                // 3. Удаляем старые данные
                 await _timeRepository.DeleteScheduleTimesAsync(scheduleId);
                 await _weekDaysRepository.DeleteScheduleWeekDaysAsync(scheduleId);
             }
             else
             {
-                // 2. Добавляем расписание
                 scheduleId = await _scheduleRepository.AddMedicineShedule(scheduleModel);
             }
 
-            // 4. Сохраняем время
             if (selectedTimes.Any())
             {
                 await SaveScheduleTimes(scheduleId, selectedTimes);
             }
 
-            // 5. Сохраняем дни
             if (selectedDays.Any() && scheduleDto.ScheduleModeCode == "WEEKDAYS")
             {
                 await SaveScheduleWeekDays(scheduleId, selectedDays);
             }
 
-            // 6. ВАЖНО: Перегенерируем записи приема для этого лекарства
-            // Делаем в фоне, чтобы не блокировать UI
             _ = Task.Run(async () =>
             {
                 try
                 {
                     Debug.WriteLine($"=== Сохранение расписания для лекарства ID: {scheduleDto.IdMedicine} ===");
 
-                    // 1. Перегенерируем записи приема
-                    await _intakeSchedulerService.RegenerateIntakesForMedicineAsync(scheduleDto.IdMedicine);
+                    await _intakeGenerator.RegenerateIntakesForMedicineAsync(scheduleDto.IdMedicine);
                     Debug.WriteLine($"✅ Записи приема перегенерированы для лекарства ID: {scheduleDto.IdMedicine}");
 
-                    // 2. Даем время на сохранение записей в БД
                     await Task.Delay(500);
 
-                    // 3. Планируем уведомления
-                    if (_notificationService != null)
+                    if (_notificationPlanner != null)
                     {
-                        // Отменяем старые уведомления
-                        await CancelNotificationsForMedicineAsync(scheduleDto.IdMedicine);
-
-                        // Планируем новые уведомления на сегодня
-                        await _notificationService.ScheduleNotificationsForTodayAsync();
-
+                        _notificationPlanner.CancelAll();
+                        await _notificationPlanner.PlanForTodayAsync();
                         Debug.WriteLine($"✅ Уведомления запланированы для лекарства ID: {scheduleDto.IdMedicine}");
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"❌ NotificationService не доступен");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"❌ Ошибка при перегенерации записей/уведомлений: {ex.Message}");
+                    Debug.WriteLine($"❌ Ошибка: {ex.Message}");
                 }
             });
 
             return scheduleId;
-        }
-
-        private async Task CancelNotificationsForMedicineAsync(int medicineId)
-        {
-            try
-            {
-                if (_notificationService != null)
-                {
-                    // Используем новый метод, который вы добавили
-                    await _notificationService.CancelNotificationsForMedicineAsync(medicineId);
-                    Debug.WriteLine($"✅ Старые уведомления отменены для лекарства ID: {medicineId}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Ошибка отмены уведомлений: {ex.Message}");
-            }
         }
 
         public async Task ScheduleNotificationsForMedicineAsync(int medicineId)
@@ -141,14 +106,11 @@ namespace MedicinesTracker.Services
             {
                 Debug.WriteLine($"Планируем уведомления для лекарства ID: {medicineId}");
 
-                if (_notificationService != null)
+                if (_notificationPlanner != null)
                 {
-                    await _notificationService.ScheduleAllNotificationsAsync();
+                    _notificationPlanner.CancelAll();
+                    await _notificationPlanner.PlanForTodayAsync();
                     Debug.WriteLine($"✅ Уведомления запланированы для лекарства ID: {medicineId}");
-                }
-                else
-                {
-                    Debug.WriteLine($"❌ NotificationService не инициализирован");
                 }
             }
             catch (Exception ex)
@@ -202,12 +164,6 @@ namespace MedicinesTracker.Services
                 DateEnd = scheduleDto.DateEnd,
                 IsActive = scheduleDto.ScheduleIsActive
             };
-        }
-
-        private async Task DeleteExistingScheduleData(int scheduleId)
-        {
-            await _timeRepository.DeleteScheduleTimesAsync(scheduleId);
-            await _weekDaysRepository.DeleteScheduleWeekDaysAsync(scheduleId);
         }
     }
 }

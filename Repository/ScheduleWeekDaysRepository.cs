@@ -21,7 +21,7 @@ namespace MedicinesTracker.Repository
         public async Task<int> AddScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel)
         {
             var query = @"
-            INSERT INTO ScheduleWeekDays (@IdSchedule,@IdDay)
+            INSERT INTO ScheduleWeekDays (IdSchedule, IdDay)
             VALUES (@IdSchedule,@IdDay);
             SELECT LAST_INSERT_ROWID();";
             var parameters = new

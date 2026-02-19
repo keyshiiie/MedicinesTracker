@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="1.0">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="alpha">
 	<!-- Разрешения -->
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-permission android:name="android.permission.VIBRATE" />
@@ -7,17 +7,12 @@
 	<uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
-	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-	<application android:icon="@mipmap/icons_medicines" android:label="Трекер Лекарств">
-		<!-- Сервис переднего плана -->
-		<service android:name=".Platforms.Android.Services.ForegroundNotificationService" android:enabled="true" android:exported="false" android:foregroundServiceType="dataSync" />
-		<!-- BroadcastReceiver -->
+	<application android:icon="@mipmap/icons_medicines" android:label="Medicine Tracker">
+		<!-- Только BroadcastReceiver, никакого ForegroundService -->
 		<receiver android:name=".Platforms.Android.NotificationPublisher" android:enabled="true" android:exported="false">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
 				<action android:name="ACTION_SHOW_NOTIFICATION" />
-				<action android:name="PERIODIC_CHECK" />
 			</intent-filter>
 		</receiver>
 	</application>

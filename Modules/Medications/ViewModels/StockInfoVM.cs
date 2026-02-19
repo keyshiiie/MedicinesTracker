@@ -32,12 +32,27 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private bool _isEditingExisting;
 
-        private bool _isInitialized = false;
         [ObservableProperty]
         private bool _isBusy;
 
         [ObservableProperty]
         private ButtonUiState _saveButtonState = new();
+
+        // Свойства для валидации
+        [ObservableProperty]
+        private string _currentQuantityError = string.Empty;
+
+        [ObservableProperty]
+        private string _thresholdError = string.Empty;
+
+        [ObservableProperty]
+        private bool _hasCurrentQuantityError;
+
+        [ObservableProperty]
+        private bool _hasThresholdError;
+
+        private bool _isInitialized = false;
+
         public StockInfoVM(
             IStockRepository stockRepository,
             IValidatorService validatorService,
@@ -105,8 +120,96 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private void ResetForm()
         {
-            Stock = new StockModel();
+            Stock = new StockModel
+            {
+                CurrentQuantity = null, // Явно устанавливаем null
+                Threshold = null         // Явно устанавливаем null
+            };
             OnPropertyChanged(nameof(Stock));
+        }
+
+        // Команда для валидации текущего количества
+        [RelayCommand]
+        private void ValidateCurrentQuantity(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                CurrentQuantityError = "Введите количество";
+                HasCurrentQuantityError = true;
+                Stock.CurrentQuantity = null; // Устанавливаем null при пустом поле
+                return;
+            }
+
+            if (!int.TryParse(text, out int value))
+            {
+                CurrentQuantityError = "Введите целое число";
+                HasCurrentQuantityError = true;
+                Stock.CurrentQuantity = null;
+                return;
+            }
+
+            if (value < 0)
+            {
+                CurrentQuantityError = "Количество не может быть отрицательным";
+                HasCurrentQuantityError = true;
+                Stock.CurrentQuantity = null;
+                return;
+            }
+
+            if (value > 1000)
+            {
+                CurrentQuantityError = "Количество не может быть больше 1000";
+                HasCurrentQuantityError = true;
+                Stock.CurrentQuantity = null;
+                return;
+            }
+
+            // Если все проверки пройдены
+            CurrentQuantityError = string.Empty;
+            HasCurrentQuantityError = false;
+            Stock.CurrentQuantity = value;
+        }
+
+        // Команда для валидации порога
+        [RelayCommand]
+        private void ValidateThreshold(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                ThresholdError = "Введите порог";
+                HasThresholdError = true;
+                Stock.Threshold = null; // Устанавливаем null при пустом поле
+                return;
+            }
+
+            if (!int.TryParse(text, out int value))
+            {
+                ThresholdError = "Введите целое число";
+                HasThresholdError = true;
+                Stock.Threshold = null;
+                return;
+            }
+
+            if (value < 0)
+            {
+                ThresholdError = "Порог не может быть отрицательным";
+                HasThresholdError = true;
+                Stock.Threshold = null;
+                return;
+            }
+
+            if (value > 1000)
+            {
+                ThresholdError = "Порог не может быть больше 1000";
+                HasThresholdError = true;
+                Stock.Threshold = null;
+                return;
+            }
+
+            // Если все проверки пройдены
+            ThresholdError = string.Empty;
+            HasThresholdError = false;
+            Stock.Threshold = value;
         }
 
         [RelayCommand]
@@ -114,6 +217,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
+                if (HasCurrentQuantityError || HasThresholdError)
+                {
+                    await Shell.Current.DisplayAlertAsync("Ошибка",
+                        "Исправьте ошибки в полях перед сохранением", "OK");
+                    return;
+                }
+
                 var errors = _validatorService.GetStockValidationErrors(Stock);
                 if (errors.Any())
                 {
@@ -121,14 +231,22 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     return;
                 }
 
-                // РАЗДЕЛЕНИЕ ЛОГИКИ: РЕДАКТИРОВАНИЕ vs ДОБАВЛЕНИЕ
                 if (IsEditingExisting && StockId > 0)
                 {
-                    // РЕДАКТИРОВАНИЕ - старая логика
                     Debug.WriteLine("Режим: Редактирование существующего запаса");
                     IsBusy = true;
 
-                    var rowsAffected = await _stockRepository.UpdateStockAsync(Stock);
+                    // Создаем копию с non-null значениями для репозитория
+                    var stockToSave = new StockModel
+                    {
+                        IdStock = Stock.IdStock,
+                        IdMedicine = Stock.IdMedicine,
+                        CurrentQuantity = Stock.CurrentQuantity!.Value, 
+                        Threshold = Stock.Threshold!.Value,
+                        ReminderEnabled = Stock.ReminderEnabled
+                    };
+
+                    var rowsAffected = await _stockRepository.UpdateStockAsync(stockToSave);
                     if (rowsAffected > 0)
                     {
                         await Shell.Current.DisplayAlertAsync("Успех", "Запас обновлен", "OK");
@@ -137,10 +255,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
                 else if (!IsEditingExisting)
                 {
-                    // ДОБАВЛЕНИЕ - через Builder
                     Debug.WriteLine("Режим: Добавление запаса через Builder");
 
-                    // Проверяем, есть ли базовая информация в Builder
                     var state = _medicineBuilder.GetState();
                     if (state.Medicine == null)
                     {
@@ -149,12 +265,17 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                         return;
                     }
 
-                    // Добавляем запас в Builder
-                    _medicineBuilder.WithStockInfo(Stock);
+                    var stockForBuilder = new StockModel
+                    {
+                        CurrentQuantity = Stock.CurrentQuantity!.Value,
+                        Threshold = Stock.Threshold!.Value,
+                        ReminderEnabled = Stock.ReminderEnabled
+                    };
+
+                    _medicineBuilder.WithStockInfo(stockForBuilder);
 
                     Debug.WriteLine($"StockInfo добавлен в Builder. Статус: {_medicineBuilder.IsComplete}");
 
-                    // Переходим к созданию расписания
                     await OpenMedicineSchedulePage();
                 }
                 else
@@ -223,6 +344,17 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 if (stock != null)
                 {
                     Stock = stock;
+
+                    // Валидируем загруженные значения
+                    if (stock.CurrentQuantity.HasValue)
+                    {
+                        ValidateCurrentQuantity(stock.CurrentQuantity.Value.ToString());
+                    }
+
+                    if (stock.Threshold.HasValue)
+                    {
+                        ValidateThreshold(stock.Threshold.Value.ToString());
+                    }
                 }
                 else
                 {

@@ -17,7 +17,9 @@ namespace MedicinesTracker.Services
             bool isIntervalMode,
             bool isWeekDaysMode,
             string? dateStart,
+            string? dateEnd,
             string? oneTimeDate,
+            int dosage,
             ScheduleTypeModel? selectedType,
             ScheduleModeModel? selectedMode,
             RecurrencePatternModel? selectedPattern,
@@ -26,6 +28,7 @@ namespace MedicinesTracker.Services
         List<string> GetStockValidationErrors(StockModel stock);
         List<string> GetRecipientValidationErrors(RecipientModel recipient);
     }
+
     public class ValidatorService : IValidatorService
     {
         public List<string> GetBaseInfoValidationErrors(
@@ -84,19 +87,58 @@ namespace MedicinesTracker.Services
         public List<string> GetStockValidationErrors(StockModel stock)
         {
             var errors = new List<string>();
-            if(stock == null)
+
+            if (stock == null)
             {
                 errors.Add("Для добавления запаса лекарства заполните все поля.");
                 return errors;
             }
-            if (stock.CurrentQuantity <= 0)
+
+            // Валидация текущего количества (целое число от 0 до 1000)
+            if (!stock.CurrentQuantity.HasValue)
+            {
+                errors.Add("Укажите текущее количество лекарства.");
+            }
+            else if (stock.CurrentQuantity.Value < 0)
+            {
+                errors.Add("Текущее количество лекарства не может быть отрицательным.");
+            }
+            else if (stock.CurrentQuantity.Value == 0)
+            {
                 errors.Add("Текущее количество лекарства должно быть больше нуля.");
-            if (stock.CurrentQuantity >= 1000)
+            }
+            else if (stock.CurrentQuantity.Value > 1000)
+            {
                 errors.Add("Текущее количество не может быть больше 1000.");
-            if (stock.Threshold <= 0)
+            }
+
+            // Валидация порога напоминания (целое число от 0 до 1000)
+            if (!stock.Threshold.HasValue)
+            {
+                errors.Add("Укажите порог напоминания.");
+            }
+            else if (stock.Threshold.Value < 0)
+            {
+                errors.Add("Порог напоминания не может быть отрицательным.");
+            }
+            else if (stock.Threshold.Value == 0)
+            {
                 errors.Add("Порог напоминания должен быть больше нуля.");
-            if (stock.Threshold >= 1000)
+            }
+            else if (stock.Threshold.Value > 1000)
+            {
                 errors.Add("Порог напоминания не может быть больше 1000.");
+            }
+
+            // Дополнительная проверка: порог не должен быть больше текущего количества?
+            if (stock.CurrentQuantity.HasValue && stock.Threshold.HasValue)
+            {
+                if (stock.Threshold.Value > stock.CurrentQuantity.Value)
+                {
+                    errors.Add("Порог напоминания не может быть больше текущего количества.");
+                }
+            }
+
             return errors;
         }
 
@@ -105,7 +147,9 @@ namespace MedicinesTracker.Services
     bool isIntervalMode,
     bool isWeekDaysMode,
     string? dateStart,
+    string? dateEnd,
     string? oneTimeDate,
+    int dosage,
     ScheduleTypeModel? selectedType,
     ScheduleModeModel? selectedMode,
     RecurrencePatternModel? selectedPattern,
@@ -114,23 +158,45 @@ namespace MedicinesTracker.Services
         {
             var errors = new List<string>();
 
+            // ВАЛИДАЦИЯ ДОЗИРОВКИ (для всех типов расписаний)
+            if (dosage < 1)
+                errors.Add("Дозировка должна быть больше нуля");
+            else if (dosage > 100)
+                errors.Add("Дозировка не может быть больше 100");
+            // Дополнительно можно проверить, что это целое число, но dosage уже int
+
             // Проверяем, если тип не передан явно, но мы знаем isRecurring
             if (selectedType == null)
             {
                 // Если мы знаем isRecurring, значит тип уже выбран
                 // Проверяем только даты в зависимости от типа
-                if (isRecurring && string.IsNullOrEmpty(dateStart))
-                    errors.Add("Укажите дату начала приёма");
+                if (isRecurring)
+                {
+                    if (string.IsNullOrEmpty(dateStart))
+                        errors.Add("Укажите дату начала приёма");
+
+                    // Проверка, что дата окончания не раньше даты начала
+                    if (!string.IsNullOrEmpty(dateStart) && !string.IsNullOrEmpty(dateEnd))
+                    {
+                        if (DateTime.TryParse(dateStart, out var startDate) &&
+                            DateTime.TryParse(dateEnd, out var endDate))
+                        {
+                            if (endDate < startDate)
+                                errors.Add("Дата окончания приёма не может быть раньше даты начала");
+                        }
+                    }
+                }
                 else if (!isRecurring && string.IsNullOrEmpty(oneTimeDate))
+                {
                     errors.Add("Укажите дату приёма");
+                }
             }
 
             if (isRecurring)
             {
-                // Для повторяющихся расписаний проверяем режим ТОЛЬКО если он не был передан
+                // Для повторяющихся расписаний проверяем режим
                 if (selectedMode == null)
                 {
-                    // Режим не выбран - это ошибка
                     errors.Add("Выберите способ задания расписания");
                 }
                 else
@@ -145,6 +211,17 @@ namespace MedicinesTracker.Services
 
                 if (string.IsNullOrEmpty(dateStart))
                     errors.Add("Укажите дату начала приёма");
+
+                // Дополнительная проверка даты окончания для повторяющихся расписаний
+                if (!string.IsNullOrEmpty(dateStart) && !string.IsNullOrEmpty(dateEnd))
+                {
+                    if (DateTime.TryParse(dateStart, out var startDate) &&
+                        DateTime.TryParse(dateEnd, out var endDate))
+                    {
+                        if (endDate < startDate)
+                            errors.Add("Дата окончания приёма не может быть раньше даты начала");
+                    }
+                }
             }
             else // Одноразовые
             {
@@ -158,18 +235,22 @@ namespace MedicinesTracker.Services
 
             return errors;
         }
+
         public List<string> GetRecipientValidationErrors(RecipientModel recipient)
         {
             var errors = new List<string>();
-            if(recipient == null)
+
+            if (recipient == null)
             {
                 errors.Add("Для добавления получателя заполните все поля.");
                 return errors;
             }
+
             if (string.IsNullOrWhiteSpace(recipient.Name))
                 errors.Add("Укажите имя получателя.");
             else if (recipient.Name.Length > 255)
                 errors.Add("Имя получателя слишком длинное. Максимум - 255 символов");
+
             return errors;
         }
     }

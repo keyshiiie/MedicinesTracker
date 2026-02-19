@@ -1,51 +1,48 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.OS;
+using MedicinesTracker.Services;
+using System;
 
 namespace MedicinesTracker.Platforms.Android.Services
 {
-    public interface IAlarmScheduler
-    {
-        void ScheduleExactAlarm(long triggerTime, PendingIntent pendingIntent);
-        void CancelAlarm(PendingIntent pendingIntent);
-        bool CanScheduleExactAlarms();
-    }
-
     public class AlarmScheduler : IAlarmScheduler
     {
-        private readonly Context _context;
         private readonly AlarmManager _alarmManager;
+        private readonly Context _context;
 
-        public AlarmScheduler(Context context, AlarmManager alarmManager)
+        public AlarmScheduler(AlarmManager alarmManager, Context context)
         {
-            _context = context;
             _alarmManager = alarmManager;
+            _context = context;
         }
 
-        public bool CanScheduleExactAlarms()
-        {
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
-            {
-                return _alarmManager.CanScheduleExactAlarms();
-            }
-            return true;
-        }
-
-        public void ScheduleExactAlarm(long triggerTime, PendingIntent pendingIntent)
+        public void ScheduleNotification(long triggerTime, object pendingIntentObj)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"Планируем точное уведомление на время: {triggerTime}");
+                var pendingIntent = pendingIntentObj as PendingIntent;
+                if (pendingIntent == null) return;
 
-                // Используем самый точный метод для Android 6.0+
+                // Проверяем, можем ли мы использовать точные будильники
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
+                {
+                    if (!_alarmManager.CanScheduleExactAlarms())
+                    {
+                        System.Diagnostics.Debug.WriteLine("⚠️ Нет разрешения на точные будильники");
+                        // Используем неточный будильник как запасной вариант
+                        _alarmManager.Set(AlarmType.RtcWakeup, triggerTime, pendingIntent);
+                        return;
+                    }
+                }
+
+                // Пробуем использовать точные будильники
                 if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
                 {
                     _alarmManager.SetExactAndAllowWhileIdle(
                         AlarmType.RtcWakeup,
                         triggerTime,
                         pendingIntent);
-
-                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExactAndAllowWhileIdle");
                 }
                 else if (Build.VERSION.SdkInt >= BuildVersionCodes.Kitkat)
                 {
@@ -53,8 +50,6 @@ namespace MedicinesTracker.Platforms.Android.Services
                         AlarmType.RtcWakeup,
                         triggerTime,
                         pendingIntent);
-
-                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с setExact");
                 }
                 else
                 {
@@ -62,23 +57,46 @@ namespace MedicinesTracker.Platforms.Android.Services
                         AlarmType.RtcWakeup,
                         triggerTime,
                         pendingIntent);
-
-                    System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано с set");
                 }
+
+                System.Diagnostics.Debug.WriteLine($"✅ Уведомление запланировано на {DateTimeOffset.FromUnixTimeMilliseconds(triggerTime).LocalDateTime:HH:mm}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Ошибка планирования: {ex.Message}");
-                throw;
+                // Пробуем запасной вариант
+                try
+                {
+                    var pendingIntent = pendingIntentObj as PendingIntent;
+                    _alarmManager.Set(AlarmType.RtcWakeup, triggerTime, pendingIntent);
+                }
+                catch { }
             }
         }
 
-        public void CancelAlarm(PendingIntent pendingIntent)
+        public void CancelAllNotifications()
         {
             try
             {
-                _alarmManager.Cancel(pendingIntent);
-                System.Diagnostics.Debug.WriteLine("✅ Уведомление отменено");
+                var intent = new Intent(_context, typeof(NotificationPublisher));
+                intent.SetAction("ACTION_SHOW_NOTIFICATION");
+
+                for (int i = 0; i < 10000; i++)
+                {
+                    var pendingIntent = PendingIntent.GetBroadcast(
+                        _context,
+                        i,
+                        intent,
+                        PendingIntentFlags.Immutable | PendingIntentFlags.NoCreate);
+
+                    if (pendingIntent != null)
+                    {
+                        _alarmManager.Cancel(pendingIntent);
+                        pendingIntent.Cancel();
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine("✅ Все уведомления отменены");
             }
             catch (Exception ex)
             {

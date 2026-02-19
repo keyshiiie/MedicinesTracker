@@ -10,8 +10,9 @@ namespace MedicinesTracker.Models
     {
         public int IdStock { get; set; }
         public int IdMedicine { get; set; }
-        public int Threshold { get; set; }
-        public int CurrentQuantity { get; set; }
+        public int? Threshold { get; set; }
+        public int? CurrentQuantity { get; set; }
+
         public bool ReminderEnabled { get; set; } = true;
     }
 }

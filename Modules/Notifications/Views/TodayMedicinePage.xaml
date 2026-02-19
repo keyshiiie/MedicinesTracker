@@ -7,71 +7,87 @@
              x:DataType="viewModels:TodayMedicineVM"
              Title="Сегодня">
 
-    <RefreshView IsRefreshing="{Binding IsRefreshing}"
-                 Command="{Binding RefreshCommand}">
-        <ScrollView>
-            <VerticalStackLayout>
-                <!-- Индикатор загрузки -->
-                <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                   IsVisible="{Binding IsLoading}"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"
-                                   HeightRequest="50"
-                                   WidthRequest="50"
-                                   Color="{StaticResource Primary}" />
+    <Grid RowDefinitions="*,Auto">
 
-                <!-- Используем StackLayout с BindableLayout -->
-                <StackLayout BindableLayout.ItemsSource="{Binding GroupedMedicines}"
-                             Spacing="10">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="models:GroupedTodayMedicine">
-                            <VerticalStackLayout Spacing="5">
-                                <!-- Заголовок с именем получателя -->
-                                <Label Text="{Binding RecipientName}"
-                                       Style="{StaticResource CardDescriptionStyle}"/>
-                                <!-- Лекарства получателя -->
-                                <CollectionView ItemsSource="{Binding Medicines}"
-                                                SelectionMode="None">
-                                    <CollectionView.ItemTemplate>
-                                        <DataTemplate x:DataType="models:TodayMedicineDto">
-                                            <Border Style="{StaticResource MedicineCardBorderStyle}">
-                                                <Grid ColumnDefinitions="*, Auto">
-                                                    <VerticalStackLayout VerticalOptions="Center"
-                                                                         HorizontalOptions="Fill"
-                                                                         Spacing="5">
-                                                        <HorizontalStackLayout Spacing="10">
-                                                            <Label Text="{Binding MedicineName}"
-                                                                   Style="{StaticResource TimeAwareFieldTitleStyle}"
-                                                                   VerticalOptions="Center"
-                                                                   LineBreakMode="TailTruncation"/>
-                                                            <HorizontalStackLayout VerticalOptions="Center"
-                                                                                   Spacing="2">
-                                                                <Label Text="{Binding Dosage}"
-                                                                       Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
-                                                                <Label Text="{Binding UnitName}"
-                                                                       Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
-                                                            </HorizontalStackLayout>
-                                                        </HorizontalStackLayout>
-                                                        <Label Text="{Binding Time}"
-                                                               Style="{StaticResource TimeAwareCardDescriptionStyle}"
-                                                               HorizontalOptions="Start"/>
-                                                    </VerticalStackLayout>
-                                                    <Button Grid.Column="1"
-                                                            Command="{Binding MarkIntakeCommand, 
-                                                            Source={RelativeSource AncestorType={x:Type viewModels:TodayMedicineVM}},
-                                                            x:DataType=viewModels:TodayMedicineVM}"
-                                                            CommandParameter="{Binding .}"
-                                                            Text="Отметить"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-                                </CollectionView>
-                            </VerticalStackLayout>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </StackLayout>
-            </VerticalStackLayout>
-        </ScrollView>
-    </RefreshView>
+        <!-- RefreshView с CollectionView занимает всю первую строку -->
+        <RefreshView Grid.Row="0"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshCommand}">
+
+            <CollectionView ItemsSource="{Binding Medicines}"
+                            SelectionMode="None"
+                            VerticalOptions="Fill">
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:TodayMedicineDto">
+                        <Border Style="{StaticResource MedicineCardBorderStyle}">
+                            <Grid ColumnDefinitions="*, Auto">
+
+                                <VerticalStackLayout Grid.Column="0"
+                                                     VerticalOptions="Center"
+                                                     HorizontalOptions="Fill"
+                                                     Spacing="5">
+
+                                    <!-- Имя получателя -->
+                                    <Label Text="{Binding RecipientName}"
+                                           Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Label Text="{Binding MedicineName}"
+                                               Style="{StaticResource TimeAwareFieldTitleStyle}"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="TailTruncation"/>
+
+                                        <HorizontalStackLayout VerticalOptions="Center"
+                                                               Spacing="2">
+                                            <Label Text="{Binding Dosage}"
+                                                   Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+                                            <Label Text="{Binding UnitName}"
+                                                   Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+                                        </HorizontalStackLayout>
+                                    </HorizontalStackLayout>
+
+                                    <Label Text="{Binding Time}"
+                                           Style="{StaticResource TimeAwareCardDescriptionStyle}"
+                                           HorizontalOptions="Start"/>
+                                </VerticalStackLayout>
+
+                                <Button Grid.Column="1"
+                                        Command="{Binding MarkIntakeCommand, 
+                                        Source={RelativeSource AncestorType={x:Type viewModels:TodayMedicineVM}},
+                                        x:DataType=viewModels:TodayMedicineVM}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource DefaultButtonStyle}"
+                                        Text="Отметить"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <!-- Пустое состояние - центрировано на странице -->
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         VerticalOptions="Center"
+                                         Spacing="10">
+                        <Label Text="На сегодня ничего не запланировано"
+                               Style="{StaticResource MainTitleStyle}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="Лекарства на сегодня, вероятно, уже были приняты. Возвращайтесь завтра!"
+                               Style="{StaticResource MainDescriptionStyle}"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Индикатор загрузки во второй строке, виден только когда IsLoading=true -->
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HeightRequest="50"
+                           WidthRequest="50"
+                           Color="{StaticResource Primary}" />
+    </Grid>
 </ContentPage>

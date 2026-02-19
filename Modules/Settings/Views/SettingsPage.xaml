@@ -10,7 +10,7 @@
     <VerticalStackLayout Spacing="5">
         <Label 
         Text="Получатели"
-        Style="{StaticResource CardDescriptionStyle}"/>
+        Style="{StaticResource FieldDescriptionStyle}"/>
 
         <!-- CollectionView -->
         <CollectionView Grid.Row="1" 
@@ -36,6 +36,22 @@
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <!-- Отображение когда список пуст - центрировано -->
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center"
+                 VerticalOptions="Center"
+                 Spacing="10">
+                    <!-- Основной текст -->
+                    <Label Text="Список получателей пуст"
+       Style="{StaticResource MainTitleStyle}"
+       HorizontalTextAlignment="Center"/>
+
+                    <!-- Дополнительный текст -->
+                    <Label Text="Вы можете добавить нового получателя при помощи кнопки ниже."
+       Style="{StaticResource MainDescriptionStyle}"
+       HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
         </CollectionView>
         <Button Style="{StaticResource AddMedicineButtonStyle}" 
                 Command="{Binding OpenEditPageCommand}" 

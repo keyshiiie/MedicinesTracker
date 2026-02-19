@@ -18,9 +18,12 @@
                        Style="{StaticResource AcquaintanceTitleStyle}"
                        HorizontalOptions="Center" />
 
-                <Entry Text="{Binding Recipient.Name}"
-                   Style="{StaticResource EditFieldStyle}"
-                   Placeholder="Введите ваше имя"/>
+                <Border>
+                    <Entry Text="{Binding Recipient.Name}"
+                       Style="{StaticResource EditFieldStyle}"
+                       Placeholder="Введите ваше имя"/>
+                </Border>
+                
 
 
             </VerticalStackLayout>

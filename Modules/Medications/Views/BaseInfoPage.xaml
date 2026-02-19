@@ -6,65 +6,69 @@
              x:DataType="viewModels:BaseInfoVM"
              Title="Информация">
 
-        <VerticalStackLayout Spacing="15"
+        <VerticalStackLayout Spacing="30"
                              VerticalOptions="Center">
             <Label Text="Заполните поля данными о принимаемом лекарстве"
-                   Style="{StaticResource CardDescriptionStyle}"/>
-        <VerticalStackLayout Spacing="5">
-                <Label 
-                    Text="Название"
-                    Style="{StaticResource CardDescriptionStyle}"/>
-                <Border Style="{StaticResource EditFielsBorderStyle}">
-                    <Entry
-                        Text="{Binding Medicine.Name}"
-                        Style="{StaticResource EditFieldStyle}"
-                        Grid.Column="0"
-                        Placeholder="Введите название лекарства"/>
-                </Border>
+                   Style="{StaticResource PageTitleStyle}"/>
+
+        <VerticalStackLayout Spacing="15">
+                <VerticalStackLayout Spacing="5">
+                    <Label 
+                                Text="Название"
+                                Style="{StaticResource FieldDescriptionStyle}"/>
+                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                        <Entry
+                                    Text="{Binding Medicine.Name}"
+                                    Style="{StaticResource EditFieldStyle}"
+                                    Grid.Column="0"
+                                    Placeholder="Введите название лекарства"/>
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="5">
+                    <Label 
+                                Text="Единица измерения"
+                                Style="{StaticResource FieldDescriptionStyle}"/>
+                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                        <Picker ItemsSource="{Binding Units}"
+                                        ItemDisplayBinding="{Binding Name}"
+                                        SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
+                                        Style="{StaticResource PrimaryPickerStyle}"
+                                        Title="Выберите единицу измерения"/>
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="5">
+                    <Label 
+                                Text="Способ приёма"
+                                Style="{StaticResource FieldDescriptionStyle}"/>
+                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                        <Picker ItemsSource="{Binding MethodAdmissions}"
+                                        ItemDisplayBinding="{Binding Name}"
+                                        SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
+                                        Style="{StaticResource PrimaryPickerStyle}"
+                                        Title="Выберите способ приёма">
+                        </Picker>
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="5">
+                    <Label 
+                                Text="Получатель"
+                                Style="{StaticResource FieldDescriptionStyle}"/>
+                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                        <Picker ItemsSource="{Binding Recipients}"
+                                        ItemDisplayBinding="{Binding Name}"
+                                        SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                                        Style="{StaticResource PrimaryPickerStyle}"
+                                        Title="Выберите получателя лекарства">
+                        </Picker>
+                    </Border>
+                </VerticalStackLayout>
+                <HorizontalStackLayout Grid.Row="1" 
+                                               HorizontalOptions="End">
+                    <Button 
+                                Command="{Binding SaveMedicineCommand}"
+                                Text="{Binding SaveButtonState.Text}"
+                                Style="{StaticResource SaveMedicineButtonStyle}"/>
+                </HorizontalStackLayout>
             </VerticalStackLayout>
-            <VerticalStackLayout Spacing="5">
-                <Label 
-                    Text="Единица измерения"
-                    Style="{StaticResource CardDescriptionStyle}"/>
-                <Border Style="{StaticResource EditFielsBorderStyle}">
-                    <Picker ItemsSource="{Binding Units}"
-                        ItemDisplayBinding="{Binding Name}"
-                        SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}"
-                        Title="Выберите единицу измерения"/>
-                </Border>
-            </VerticalStackLayout>
-            <VerticalStackLayout Spacing="5">
-                <Label 
-                    Text="Способ приёма"
-                    Style="{StaticResource CardDescriptionStyle}"/>
-                <Border Style="{StaticResource EditFielsBorderStyle}">
-                    <Picker ItemsSource="{Binding MethodAdmissions}"
-                        ItemDisplayBinding="{Binding Name}"
-                        SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}"
-                        Title="Выберите способ приёма">
-                    </Picker>
-                </Border>
-            </VerticalStackLayout>
-            <VerticalStackLayout Spacing="5">
-                <Label 
-                    Text="Получатель"
-                    Style="{StaticResource CardDescriptionStyle}"/>
-                <Border Style="{StaticResource EditFielsBorderStyle}">
-                    <Picker ItemsSource="{Binding Recipients}"
-                        ItemDisplayBinding="{Binding Name}"
-                        SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
-                        Style="{StaticResource PrimaryPickerStyle}"
-                        Title="Выберите получателя лекарства">
-                    </Picker>
-                </Border>
-            </VerticalStackLayout>
-            <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End">
-                <Button 
-                    Command="{Binding SaveMedicineCommand}"
-                    Text="{Binding SaveButtonState.Text}"
-                    Style="{StaticResource SaveMedicineButtonStyle}"/>
-            </HorizontalStackLayout>
-        </VerticalStackLayout>
+    </VerticalStackLayout>
 </ContentPage>

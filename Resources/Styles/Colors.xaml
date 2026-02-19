@@ -8,6 +8,7 @@
 
     <Color x:Key="PrimaryDarkText">#06091C</Color>
     <Color x:Key="PrimaryDark">#6B5279</Color>
+    <Color x:Key="PrimarySoftDark">#353535</Color>
     <Color x:Key="Primary">#8C6F81</Color>
     <Color x:Key="SecondaryDark">#DED7D1</Color>
     <Color x:Key="Secondary">#FEFBEA</Color>
@@ -15,6 +16,7 @@
 
     <SolidColorBrush x:Key="PrimaryDarkTextBrush" Color="{StaticResource PrimaryDarkText}"/>
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDark}"/>
+    <SolidColorBrush x:Key="PrimarySoftDarkBrush" Color="{StaticResource PrimarySoftDark}"/>
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryDarkBrush" Color="{StaticResource SecondaryDark}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
