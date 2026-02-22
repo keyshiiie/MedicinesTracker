@@ -48,7 +48,6 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
         {
             var recipients = await _recipientRepository.GetAllRecipientsAsync();
             Recipients = new ObservableCollection<RecipientModel>(recipients);
-            Debug.WriteLine($"Загружено получателей лекарств: {Recipients.Count}");
         }
 
         [RelayCommand]
@@ -56,21 +55,19 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
         {
             try
             {
-                var route = "EditRecipientPage";
                 var parameters = new Dictionary<string, object>();
 
-                // Если recipient null, создаем новый объект
                 if (recipient == null)
                 {
                     recipient = new RecipientModel();
                 }
 
                 parameters.Add("recipient", recipient);
-                await Shell.Current.GoToAsync(route, parameters);
+                await Shell.Current.GoToAsync("EditRecipientPage", parameters);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при переходе на страницу редактирования: {ex.Message}");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
             }
         }
     }

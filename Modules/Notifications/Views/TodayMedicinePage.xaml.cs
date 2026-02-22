@@ -4,20 +4,18 @@ namespace MedicinesTracker.Modules.Notifications.Views
 {
     public partial class TodayMedicinePage : ContentPage
     {
+        private TodayMedicineVM _viewModel;
         public TodayMedicinePage(TodayMedicineVM viewModel)
         {
             InitializeComponent();
+            _viewModel = viewModel;
             BindingContext = viewModel;
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-
-            if (BindingContext is TodayMedicineVM viewModel)
-            {
-                await viewModel.InitializeAsync();
-            }
+            await _viewModel.InitializeAsync();
         }
     }
 }

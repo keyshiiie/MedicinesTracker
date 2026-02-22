@@ -159,7 +159,8 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
                 string medicineName = medicine.MedicineName;
                 int dosage = medicine.Dosage;
                 string unitName = medicine.UnitName;
-                int newQuantity = stock.CurrentQuantity.Value - dosage;
+                int oldQuantity = stock.CurrentQuantity.Value;
+                int newQuantity = oldQuantity - dosage;
 
                 // Обновляем intake
                 intake.IsCompleted = true;
@@ -176,12 +177,35 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
 
                     Debug.WriteLine($"✅ Прием отмечен. Остаток: {newQuantity}");
 
+                    // Сообщение об успешном приеме
                     await Shell.Current.DisplayAlertAsync(
                         "Прием отмечен",
                         $"Лекарство: {medicineName}\n" +
                         $"Дозировка: {dosage} {unitName}\n" +
                         $"Остаток: {newQuantity} {unitName}",
                         "OK");
+
+                    // ПРОВЕРКА НА НЕОБХОДИМОСТЬ ПОПОЛНЕНИЯ ЗАПАСА
+                    if (stock.ReminderEnabled && stock.Threshold.HasValue)
+                    {
+                        // Проверяем, не стало ли новое количество меньше или равно порогу
+                        if (newQuantity <= stock.Threshold.Value)
+                        {
+                            // Проверяем, не было ли уже количество меньше порога до отметки
+                            // Чтобы не показывать уведомление каждый раз
+                            if (oldQuantity > stock.Threshold.Value)
+                            {
+                                Debug.WriteLine($"⚠️ Достигнут порог напоминания! Текущее количество ({newQuantity}) <= порог ({stock.Threshold.Value})");
+
+                                await Shell.Current.DisplayAlertAsync(
+                                    "Внимание! Нужно пополнить запас",
+                                    $"Лекарство: {medicineName}\n" +
+                                    $"Остаток: {newQuantity} {unitName}\n" +
+                                    $"Рекомендуется пополнить запас лекарства.",
+                                    "Понятно");
+                            }
+                        }
+                    }
 
                     // Обновляем список
                     await LoadDataAsync();

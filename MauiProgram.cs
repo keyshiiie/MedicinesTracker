@@ -9,6 +9,10 @@ using MedicinesTracker.Modules.Settings.ViewModels;
 using MedicinesTracker.Modules.HistoryIntake.ViewModels;
 using MedicinesTracker.Services;
 using Plugin.LocalNotification;
+using MedicinesTracker.Modules.Notifications.Views;
+using MedicinesTracker.Modules.Medications.Views;
+using MedicinesTracker.Modules.Settings.Views;
+using MedicinesTracker.Modules.HistoryIntake.View;
 #if ANDROID
 using Android.App; 
 using Android.Content;
@@ -93,8 +97,27 @@ namespace MedicinesTracker
             builder.Services.AddTransient<EditRecipientVM>();
             builder.Services.AddTransient<HistoryPageVM>();
             builder.Services.AddTransient<AcquaintanceVM>();
-            builder.Services.AddTransient<GreetingVM>();    
+            builder.Services.AddTransient<GreetingVM>();
             builder.Services.AddTransient<AboutAppVM>();
+
+            // 6. Регистрируем ВСЕ Views (включая те, что в TabBar)
+            builder.Services.AddTransient<MedicineListPage>();
+            builder.Services.AddTransient<TodayMedicinePage>();
+            builder.Services.AddTransient<HistoryPage>();
+            builder.Services.AddTransient<SettingsPage>();
+            builder.Services.AddTransient<BaseInfoPage>();
+            builder.Services.AddTransient<MedicineDetailPage>();
+            builder.Services.AddTransient<ScheduleTypeSelectionPage>();
+            builder.Services.AddTransient<ScheduleModeSelectionPage>();
+            builder.Services.AddTransient<ScheduleDetailsPage>();
+            builder.Services.AddTransient<StockInfoPage>();
+            builder.Services.AddTransient<EditRecipientPage>();
+            builder.Services.AddTransient<GreetingPage>();
+            builder.Services.AddTransient<AcquaintancePage>();
+            builder.Services.AddTransient<AboutAppPage>();
+
+            // 7. Регистрируем AppShell как Singleton
+            builder.Services.AddSingleton<AppShell>();
 #if DEBUG
             builder.Logging.AddDebug();
 #endif

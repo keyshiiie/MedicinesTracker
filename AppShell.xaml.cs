@@ -1,7 +1,5 @@
 ﻿using MedicinesTracker.Modules.Medications.Views;
-using MedicinesTracker.Modules.Notifications.Views;
 using MedicinesTracker.Modules.Settings.Views;
-using MedicinesTracker.Views;
 
 namespace MedicinesTracker
 {
@@ -17,18 +15,13 @@ namespace MedicinesTracker
         {
             // Существующие маршруты
             Routing.RegisterRoute("SettingsPage", typeof(SettingsPage));
-            Routing.RegisterRoute("MedicineDetailPage", typeof(MedicineDetailPage));
             Routing.RegisterRoute("BaseInfoPage", typeof(BaseInfoPage));
+            Routing.RegisterRoute("MedicineDetailPage", typeof(MedicineDetailPage));
             Routing.RegisterRoute("StockInfoPage", typeof(StockInfoPage));
-            Routing.RegisterRoute("EditRecipientPage", typeof(EditRecipientPage));
-            Routing.RegisterRoute("GreetingPage", typeof(GreetingPage));
-            Routing.RegisterRoute("AcquaintancePage", typeof(AcquaintancePage));
-            Routing.RegisterRoute("AboutAppPage", typeof(AboutAppPage));
-
-            // Новые маршруты для многошагового создания расписания
             Routing.RegisterRoute("ScheduleTypeSelectionPage", typeof(ScheduleTypeSelectionPage));
             Routing.RegisterRoute("ScheduleModeSelectionPage", typeof(ScheduleModeSelectionPage));
             Routing.RegisterRoute("ScheduleDetailsPage", typeof(ScheduleDetailsPage));
+            Routing.RegisterRoute("EditRecipientPage", typeof(EditRecipientPage));
         }
 
         private async void SettingsToolbarItem_Clicked(object sender, EventArgs e)

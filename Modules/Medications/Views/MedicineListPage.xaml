@@ -2,99 +2,100 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Modules.Medications.Views.MedicineListPage"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
              xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
-             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
              x:DataType="viewModels:MedicineListVM"
              Title="Лекарства">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="*,Auto">
+        <!-- RefreshView с CollectionView -->
+        <RefreshView Grid.Row="0"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshDataCommand}">
 
-        <!-- CollectionView -->
-        <CollectionView Grid.Row="1" 
-                        ItemsSource="{Binding MedicineDetails}">
-            <!-- Шаблон элемента -->
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:MedicineDetailDto">
-                    <!-- Обертка для отступов -->
-                    <VerticalStackLayout>
-                        <Border Style="{StaticResource MedicineCardBorderStyle}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer 
-                                    Command="{Binding OpenDetailPageCommand, 
-                                    Source={RelativeSource AncestorType={x:Type viewModels:MedicineListVM}},
-                                    x:DataType=viewModels:MedicineListVM}"
-                                    CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <StackLayout Spacing="10">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <!-- Получатель -->
-                                    <Label Text="{Binding RecipientName}"
-                                           Style="{StaticResource CardDescriptionOpacityStyle}"
-                                           Grid.Column="0"
-                                           VerticalOptions="Center"/>
-                                    <!-- Остаток на складе -->
-                                    <Border Style="{StaticResource CardHintBorderStyle}"
-                                            Grid.Column="1">
-                                        <HorizontalStackLayout Spacing="5">
-                                            <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
-                                                   Style="{StaticResource CardHintTextStyle}"/>
-                                            <Label Text="{Binding UnitName}"
-                                                   Style="{StaticResource CardHintTextStyle}"/>
-                                        </HorizontalStackLayout>
-                                    </Border>
-                                </Grid>
-                                <!-- Основная информация о лекарстве -->
-                                <HorizontalStackLayout Spacing="10">
-                                    <Border Style="{StaticResource ImageBorderCardStyle}">
-                                        <Image Source="pill.png"
-                                           Style="{StaticResource MedicineIconStyle}"/>
-                                    </Border>
-
-                                    <Label Text="{Binding MedicineName}"
-                                           Style="{StaticResource CardTitleStyle}"/>
-                                </HorizontalStackLayout>
-
-                                <HorizontalStackLayout Spacing="5">
-                                    <Label Text="Посмотреть подробную информацию"
-                                           Style="{StaticResource DetailLinkStyle}"/>
-                                    <Image Source="hint_swap_right.png"
-                                           Style="{StaticResource DetailLinkIconStyle}"/>
-                                </HorizontalStackLayout>
-                            </StackLayout>
-                        </Border>
+            <CollectionView ItemsSource="{Binding MedicineDetails}"
+                            VerticalOptions="Fill">
+                <!-- Шаблон элемента -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:MedicineDetailDto">
+                        <VerticalStackLayout>
+                            <Border Style="{StaticResource MedicineCardBorderStyle}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer 
+                                        Command="{Binding OpenDetailPageCommand, 
+                                        Source={RelativeSource AncestorType={x:Type viewModels:MedicineListVM}}}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <StackLayout Spacing="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Text="{Binding RecipientName}"
+                                               Style="{StaticResource CardDescriptionOpacityStyle}"
+                                               Grid.Column="0"
+                                               VerticalOptions="Center"/>
+                                        <Border Style="{StaticResource CardHintBorderStyle}"
+                                                Grid.Column="1">
+                                            <HorizontalStackLayout Spacing="5">
+                                                <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
+                                                       Style="{StaticResource CardHintTextStyle}"/>
+                                                <Label Text="{Binding UnitName}"
+                                                       Style="{StaticResource CardHintTextStyle}"/>
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Border Style="{StaticResource ImageBorderCardStyle}">
+                                            <Image Source="pill.png"
+                                               Style="{StaticResource MedicineIconStyle}"/>
+                                        </Border>
+                                        <Label Text="{Binding MedicineName}"
+                                               Style="{StaticResource CardTitleStyle}"/>
+                                    </HorizontalStackLayout>
+                                    <HorizontalStackLayout Spacing="5">
+                                        <Label Text="Посмотреть подробную информацию"
+                                               Style="{StaticResource DetailLinkStyle}"/>
+                                        <Image Source="hint_swap_right.png"
+                                               Style="{StaticResource DetailLinkIconStyle}"/>
+                                    </HorizontalStackLayout>
+                                </StackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Margin="0,50,0,0"
+                             Spacing="10">
+                        <Label Text="Список лекарств пуст"
+                               Style="{StaticResource MainTitleStyle}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="Вы можете добавить новое лекарство при помощи кнопки ниже."
+                               Style="{StaticResource MainDescriptionStyle}"
+                               HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-            <!-- Отображение когда список пуст - центрировано -->
-            <CollectionView.EmptyView>
-                <VerticalStackLayout HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Margin="0,50,0,0"
-                         Spacing="10">
-                    <!-- Основной текст -->
-                    <Label Text="Список лекарств пуст"
-               Style="{StaticResource MainTitleStyle}"
-               HorizontalTextAlignment="Center"/>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
 
-                    <!-- Дополнительный текст -->
-                    <Label Text="Вы можете добавить новое лекарство при помощи кнопки ниже."
-               Style="{StaticResource MainDescriptionStyle}"
-               HorizontalTextAlignment="Center"/>
-                </VerticalStackLayout>
-            </CollectionView.EmptyView>
-        </CollectionView>
+        <!-- Индикатор загрузки для отображения статуса -->
+        <ActivityIndicator Grid.Row="0"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HeightRequest="50"
+                           WidthRequest="50"
+                           Color="{StaticResource Primary}" />
 
         <!-- Кнопка "Добавить" -->
-        <HorizontalStackLayout Grid.Row="2" 
+        <HorizontalStackLayout Grid.Row="1" 
                                HorizontalOptions="End">
-            <controls:AddButton Command="{Binding AddMedicineCommand}" 
-                                CommandParameter="{x:Null}"/>
+            <Button Command="{Binding AddMedicineCommand}"
+                    Style="{StaticResource AddMedicineButtonStyle}"/>
         </HorizontalStackLayout>
     </Grid>
 </ContentPage>

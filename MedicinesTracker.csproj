@@ -57,7 +57,7 @@
 		<MauiIcon Include="Resources\AppIcon\appicon2.svg" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Styles\solar_pills.svg" Color="#8C6F81" Size="48,48" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -153,12 +153,6 @@
 		<MauiXaml Update="Modules\Medications\Views\BaseInfoPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
-		<MauiXaml Update="Views\Controls\AddButton.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
-		<MauiXaml Update="Views\Controls\SaveButton.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\MedicineDetailPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -180,12 +174,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="Views\Controls\RecipientPicker.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
 	  <MauiIcon Include="Platforms\Android\Resources\Drawable\notification_icon.svg" />
 	</ItemGroup>
 
@@ -199,6 +187,10 @@
 
 	<ItemGroup>
 	  <MauiIcon Include="Resources\AppIcon\icons_medicines.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiSplashScreen Include="Resources\Splash\solar_pills.svg" />
 	</ItemGroup>
 
 	<ItemGroup>

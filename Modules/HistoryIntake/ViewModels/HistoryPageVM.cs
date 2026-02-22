@@ -11,7 +11,7 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
     public partial class HistoryPageVM : ObservableObject
     {
         private readonly IIntakeRepository _intakeRepository;
-        private readonly IRecipientRepository _recipientRepository; // Добавляем
+        private readonly IRecipientRepository _recipientRepository;
         private List<HistoryDto> _allIntakes = new();
 
         [ObservableProperty]
@@ -27,6 +27,9 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
         [ObservableProperty]
         private bool _isLoading;
 
+        [ObservableProperty]
+        private bool _isRefreshing;
+
         public bool IsFiltered => SelectedRecipient != null;
 
         [ObservableProperty]
@@ -37,7 +40,7 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
 
         public HistoryPageVM(
             IIntakeRepository intakeRepository,
-            IRecipientRepository recipientRepository) // Добавляем в конструктор
+            IRecipientRepository recipientRepository)
         {
             _intakeRepository = intakeRepository;
             _recipientRepository = recipientRepository;
@@ -65,6 +68,13 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
         }
 
         [RelayCommand]
+        private async Task RefreshAsync()
+        {
+            await LoadDataAsync();
+            IsRefreshing = false;
+        }
+
+        [RelayCommand]
         private async Task LoadDataAsync()
         {
             if (IsLoading) return;
@@ -74,7 +84,7 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
             {
                 Debug.WriteLine("=== Загрузка истории ===");
 
-                // 1. Загружаем ВСЕХ получателей (не только тех, у кого есть записи)
+                // 1. Загружаем ВСЕХ получателей
                 var recipients = await _recipientRepository.GetAllRecipientsAsync();
                 UpdateRecipientsList(recipients);
 
@@ -154,7 +164,6 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
             }
         }
 
-        // Упрощенный метод - получает список напрямую из репозитория
         private void UpdateRecipientsList(IEnumerable<RecipientModel> recipients)
         {
             Debug.WriteLine("Обновляем список получателей из БД");

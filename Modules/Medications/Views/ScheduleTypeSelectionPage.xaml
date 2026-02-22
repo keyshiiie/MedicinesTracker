@@ -15,7 +15,7 @@
             <!-- Выбор типа с помощью Picker -->
             <VerticalStackLayout Spacing="10">
 
-                <Border Style="{StaticResource EditFielsBorderStyle}">
+                <Border>
                     <Picker ItemsSource="{Binding ScheduleTypes}"
                 ItemDisplayBinding="{Binding Name}"
                 SelectedItem="{Binding SelectedScheduleType, Mode=TwoWay}"

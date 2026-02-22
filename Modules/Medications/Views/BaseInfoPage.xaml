@@ -16,7 +16,7 @@
                     <Label 
                                 Text="Название"
                                 Style="{StaticResource FieldDescriptionStyle}"/>
-                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Border>
                         <Entry
                                     Text="{Binding Medicine.Name}"
                                     Style="{StaticResource EditFieldStyle}"
@@ -28,7 +28,7 @@
                     <Label 
                                 Text="Единица измерения"
                                 Style="{StaticResource FieldDescriptionStyle}"/>
-                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Border>
                         <Picker ItemsSource="{Binding Units}"
                                         ItemDisplayBinding="{Binding Name}"
                                         SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
@@ -40,7 +40,7 @@
                     <Label 
                                 Text="Способ приёма"
                                 Style="{StaticResource FieldDescriptionStyle}"/>
-                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Border>
                         <Picker ItemsSource="{Binding MethodAdmissions}"
                                         ItemDisplayBinding="{Binding Name}"
                                         SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
@@ -53,7 +53,7 @@
                     <Label 
                                 Text="Получатель"
                                 Style="{StaticResource FieldDescriptionStyle}"/>
-                    <Border Style="{StaticResource EditFielsBorderStyle}">
+                    <Border >
                         <Picker ItemsSource="{Binding Recipients}"
                                         ItemDisplayBinding="{Binding Name}"
                                         SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"

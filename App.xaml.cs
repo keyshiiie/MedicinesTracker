@@ -7,8 +7,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using MedicinesTracker.Modules.Notifications.ViewModels;
 using MedicinesTracker.Modules.Notifications.Views;
 using MedicinesTracker.Services;
-using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics;  // Для System.Diagnostics.Debug
 using Application = Microsoft.Maui.Controls.Application;  // Алиас для MAUI Application
 
 namespace MedicinesTracker

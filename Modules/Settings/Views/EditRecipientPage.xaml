@@ -4,21 +4,22 @@
              x:Class="MedicinesTracker.Modules.Settings.Views.EditRecipientPage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Settings.ViewModels"
              x:DataType="viewModels:EditRecipientVM"
-             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
              Title="Получатель">
     <Grid RowDefinitions="*,Auto,Auto">
         <VerticalStackLayout Spacing="5">
             <Label Text="Имя получателя" 
                    Style="{StaticResource FieldDescriptionStyle}"/>
-            <Border Style="{StaticResource EditFielsBorderStyle}">
+            <Border>
                 <Entry Text="{Binding Recipient.Name}"
                        Style="{StaticResource EditFieldStyle}"
                        Placeholder="Введите имя получателя"/>
             </Border>
         </VerticalStackLayout>
-        <controls:SaveButton Command="{Binding SaveRecipientCommand}" 
-                             HorizontalOptions="Fill" 
-                             Grid.Row="2"/>
+        <Button Command="{Binding SaveRecipientCommand}" 
+                Text="Сохранить"
+                HorizontalOptions="Fill" 
+                Grid.Row="2"
+                Style="{StaticResource SaveMedicineButtonStyle}"/>
         <Button Style="{StaticResource DeleteButtonStyle}"
                 Command="{Binding DeleteRecipientCommand}" 
                 Grid.Row="1" 
