@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -164,7 +164,7 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
             }
         }
 
-        private void UpdateRecipientsList(IEnumerable<RecipientModel> recipients)
+        private void UpdateRecipientsList(IEnumerable<Recipient> recipients)
         {
             Debug.WriteLine("Обновляем список получателей из БД");
 

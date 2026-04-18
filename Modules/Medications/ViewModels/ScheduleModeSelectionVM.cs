@@ -1,13 +1,11 @@
-﻿// ViewModels/ScheduleModeSelectionVM.cs
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Repository;
-using MedicinesTracker.Modules.Medications.Models;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using MedicinesTracker.Models;
+using MedicinesTracker.Entities;
+using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
 
-namespace MedicinesTracker.Modules.Medications.ViewModels
+namespace MedicinesTracker.Modules.Medications.Views
 {
     [QueryProperty(nameof(ScheduleTypeCode), "scheduleTypeCode")]
     [QueryProperty(nameof(IsNewMedicine), "isNewMedicine")]
@@ -26,10 +24,10 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private int _medicineId;
 
         [ObservableProperty]
-        private ObservableCollection<ScheduleModeModel> _scheduleModes = new();
+        private ObservableCollection<ScheduleMode> _scheduleModes = new();
 
         [ObservableProperty]
-        private ScheduleModeModel? _selectedScheduleMode;
+        private ScheduleMode? _selectedScheduleMode;
 
         [ObservableProperty]
         private bool _isValid = false;
@@ -56,7 +54,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             try
             {
                 var modes = await _referencesRepository.GetAllScheduleModeAsync();
-                ScheduleModes = new ObservableCollection<ScheduleModeModel>(modes);
+                ScheduleModes = new ObservableCollection<ScheduleMode>(modes);
             }
             catch (Exception ex)
             {
@@ -64,7 +62,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
-        partial void OnSelectedScheduleModeChanged(ScheduleModeModel? value)
+        partial void OnSelectedScheduleModeChanged(ScheduleMode? value)
         {
             IsValid = value != null;
         }

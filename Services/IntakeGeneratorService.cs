@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+﻿using MedicinesTracker.Data;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using System.Diagnostics;
+using MedicinesTracker.Dto;
 
 namespace MedicinesTracker.Services
 {
@@ -23,17 +20,20 @@ namespace MedicinesTracker.Services
         private readonly IScheduleTimeRepository _scheduleTimeRepository;
         private readonly IIntakeRepository _intakeRepository;
         private readonly IScheduleEvaluator _scheduleEvaluator;
+        private readonly AppDbContext _context;
 
         public IntakeGeneratorService(
             IMedicineRepository medicineRepository,
             IScheduleTimeRepository scheduleTimeRepository,
             IIntakeRepository intakeRepository,
-            IScheduleEvaluator scheduleEvaluator)
+            IScheduleEvaluator scheduleEvaluator,
+            AppDbContext context)
         {
             _medicineRepository = medicineRepository;
             _scheduleTimeRepository = scheduleTimeRepository;
             _intakeRepository = intakeRepository;
             _scheduleEvaluator = scheduleEvaluator;
+            _context = context;
         }
 
         public async Task GenerateTodayIntakesAsync()
@@ -41,7 +41,7 @@ namespace MedicinesTracker.Services
             await GenerateIntakesForDateAsync(DateTime.Today);
         }
 
-        public async Task GenerateIntakesForDateAsync(DateTime date)
+        private async Task GenerateIntakesForDateAsync(DateTime date)
         {
             try
             {
@@ -121,28 +121,25 @@ namespace MedicinesTracker.Services
 
                     if (scheduleTime == null || !scheduleTime.IsActive) continue;
 
-                    // Ищем СУЩЕСТВУЮЩУЮ запись (даже завершенную)
+                    // Ищем СУЩЕСТВУЮЩУЮ запись
                     var existingIntake = await _intakeRepository.GetIntakeByMedicineAndDateTimeAsync(
                         medicine.IdMedicine, dateStr, time);
 
                     if (existingIntake != null)
                     {
-                        // Запись уже существует
                         if (existingIntake.IsCompleted)
                         {
-                            // Если уже принято - ничего не делаем
                             Debug.WriteLine($"⏰ Прием {medicine.MedicineName} в {time} уже отмечен как принятый");
                         }
                         else
                         {
-                            // Если не принято - оставляем как есть
                             Debug.WriteLine($"⏰ Прием {medicine.MedicineName} в {time} уже существует, ожидает отметки");
                         }
                         continue;
                     }
 
-                    // Создаем новую запись ТОЛЬКО если нет ни одной записи на это время
-                    var intakeModel = new IntakeModel
+                    // Создаем новую запись
+                    var intake = new Intake
                     {
                         IdMedicine = medicine.IdMedicine,
                         IdSchedule = medicine.IdSchedule,
@@ -153,7 +150,7 @@ namespace MedicinesTracker.Services
                         IsCompleted = false
                     };
 
-                    var intakeId = await _intakeRepository.AddIntakeAsync(intakeModel);
+                    var intakeId = await _intakeRepository.AddIntakeAsync(intake);
                     Debug.WriteLine($"✅ Создана новая запись: {medicine.MedicineName} - {dateStr} {time}");
                 }
             }

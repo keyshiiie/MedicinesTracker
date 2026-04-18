@@ -1,13 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using MedicinesTracker.Models;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
-using Microsoft.Maui.Controls;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MedicinesTracker.Modules.Notifications.ViewModels
 {
@@ -20,7 +16,7 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
         private Page? _page;
 
         [ObservableProperty]
-        private RecipientModel _recipient = new();
+        private Recipient _recipient = new();
 
         public AcquaintanceVM(IRecipientRepository recipientRepository,
             IValidatorService validatorService,

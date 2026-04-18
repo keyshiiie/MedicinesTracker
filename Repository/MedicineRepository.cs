@@ -1,259 +1,211 @@
-﻿using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
-using System.Diagnostics;
+﻿using MedicinesTracker.Data;
+using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace MedicinesTracker.Repository
 {
     public interface IMedicineRepository
     {
         Task<IEnumerable<MedicineDetailDto>> GetMedicineDetailsAsync();
-        Task<int> UpdateMedicineAsync(MedicineModel medicineModel);
+        Task<int> UpdateMedicineAsync(Medicine medicine);
         Task<int> DeleteMedicineAsync(int idMedicine);
-        Task<int> AddMedicineAsync(MedicineModel medicineModel);
+        Task<int> AddMedicineAsync(Medicine medicine);
         Task<MedicineDetailDto?> GetMedicineDetailByIdAsync(int idMedicine);
-        Task<MedicineModel?> GetMedicineByIdAsync(int idMedicine);
+        Task<Medicine?> GetMedicineByIdAsync(int idMedicine);
         Task<IEnumerable<MedicineWithScheduleDto>> GetActiveMedicinesWithSchedulesAsync();
         Task<MedicineWithScheduleDto?> GetMedicineWithScheduleByIdAsync(int medicineId);
     }
+
     public class MedicineRepository : IMedicineRepository
     {
-        private readonly IDBHandler _dbHandler;
-        public MedicineRepository(IDBHandler dbHandler)
+        private readonly AppDbContext _context;
+
+        public MedicineRepository(AppDbContext context)
         {
-            _dbHandler = dbHandler;
+            _context = context;
         }
 
         public async Task<IEnumerable<MedicineDetailDto>> GetMedicineDetailsAsync()
         {
-            var query = @"
-        SELECT
-            m.IdMedicine,
-            ms.IdSchedule,
-            m.Name AS MedicineName,
-            ma.Name AS MethodAdmissionName,
-            u.Name AS UnitName,
-            s.IdStock,
-            s.CurrentQuantity,
-            s.Threshold,
-            CASE
-                WHEN s.ReminderEnabled = 'true' OR s.ReminderEnabled = 1 THEN 1
-                ELSE 0
-            END AS ReminderEnabled,
-            rec.Name AS RecipientName
-        FROM Medicine m
-        LEFT JOIN Stock s ON m.IdMedicine = s.IdMedicine
-        LEFT JOIN MedicationSchedule ms ON m.IdMedicine = ms.IdMedicine
-        INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
-        INNER JOIN MethodAdmission ma ON m.IdMethodAdmission = ma.IdMethodAdmission
-        INNER JOIN Unit u ON m.IdUnit = u.IdUnit
-        ORDER BY rec.Name";
-
-
-            var result = await _dbHandler.QueryAsync<MedicineDetailDto>(query);
-            Debug.WriteLine($"GetMedicineDetailsAsync вернул {result.Count()} записей");
-
-            foreach (var item in result)
-            {
-                Debug.WriteLine($"  - {item.MedicineName} (ID: {item.IdMedicine}, Stock: {item.IdStock})");
-            }
-
-            return result;
+            return await _context.Medicines
+                .Include(m => m.Stock)
+                .Include(m => m.MethodAdmission)
+                .Include(m => m.Unit)
+                .Include(m => m.Recipient)
+                .Include(m => m.Schedules)
+                .Select(m => new MedicineDetailDto
+                {
+                    IdMedicine = m.IdMedicine,
+                    IdSchedule = m.Schedules.FirstOrDefault() != null ? m.Schedules.First().IdSchedule : 0,
+                    MedicineName = m.Name,
+                    MethodAdmissionName = m.MethodAdmission.Name,
+                    UnitName = m.Unit.Name,
+                    IdStock = m.Stock != null ? m.Stock.IdStock : 0,
+                    CurrentQuantity = m.Stock != null ? m.Stock.CurrentQuantity ?? 0 : 0,
+                    Threshold = m.Stock != null ? m.Stock.Threshold ?? 0 : 0,
+                    ReminderEnabled = m.Stock != null ? m.Stock.ReminderEnabled : false,
+                    IdRecipient = m.IdRecipient,
+                    RecipientName = m.Recipient.Name
+                })
+                .ToListAsync();
         }
 
         public async Task<MedicineDetailDto?> GetMedicineDetailByIdAsync(int idMedicine)
         {
-            var query = @"
-            SELECT
-                m.IdMedicine,
-                m.Name AS MedicineName,
-                ma.Name AS MethodAdmissionName,
-                u.Name AS UnitName,
-                s.IdStock,
-                s.CurrentQuantity,
-                s.Threshold,
-                s.ReminderEnabled,
-                rec.IdRecipient,
-                rec.Name AS RecipientName
-            FROM Medicine m
-            INNER JOIN Stock s ON m.IdMedicine = s.IdMedicine
-            INNER JOIN Recipient rec ON m.IdRecipient = rec.IdRecipient
-            INNER JOIN MethodAdmission ma ON m.IdMethodAdmission = ma.IdMethodAdmission
-            INNER JOIN Unit u ON m.IdUnit = u.IdUnit
-            WHERE m.IdMedicine = @IdMedicine";
-
-            var parameters = new { IdMedicine = idMedicine };
-
-            return await _dbHandler.QueryFirstOrDefaultAsync<MedicineDetailDto>(query, parameters);
+            return await _context.Medicines
+                .Include(m => m.Stock)
+                .Include(m => m.MethodAdmission)
+                .Include(m => m.Unit)
+                .Include(m => m.Recipient)
+                .Where(m => m.IdMedicine == idMedicine)
+                .Select(m => new MedicineDetailDto
+                {
+                    IdMedicine = m.IdMedicine,
+                    MedicineName = m.Name,
+                    MethodAdmissionName = m.MethodAdmission.Name,
+                    UnitName = m.Unit.Name,
+                    IdStock = m.Stock != null ? m.Stock.IdStock : 0,
+                    CurrentQuantity = m.Stock != null ? m.Stock.CurrentQuantity ?? 0 : 0,
+                    Threshold = m.Stock != null ? m.Stock.Threshold ?? 0 : 0,
+                    ReminderEnabled = m.Stock != null ? m.Stock.ReminderEnabled : false,
+                    IdRecipient = m.IdRecipient,
+                    RecipientName = m.Recipient.Name
+                })
+                .FirstOrDefaultAsync();
         }
 
-
-        public async Task<MedicineModel?> GetMedicineByIdAsync(int idMedicine)
+        public async Task<Medicine?> GetMedicineByIdAsync(int idMedicine)
         {
-            var query = @"
-            SELECT 
-                m.IdMedicine,
-                m.Name,
-                m.IdUnit,
-                m.IdMethodAdmission,
-                m.IdRecipient
-            FROM Medicine m
-            WHERE m.IdMedicine = @IdMedicine";
-
-            var parameters = new { IdMedicine = idMedicine };
-
-            return await _dbHandler.QueryFirstOrDefaultAsync<MedicineModel>(query, parameters);
+            return await _context.Medicines
+                .FirstOrDefaultAsync(m => m.IdMedicine == idMedicine);
         }
 
-        public async Task<int> UpdateMedicineAsync(MedicineModel medicineModel)
+        public async Task<int> UpdateMedicineAsync(Medicine medicine)
         {
-            var query = @"
-            UPDATE Medicine 
-            SET 
-                Name = @Name,
-                IdUnit = @IdUnit,
-                IdMethodAdmission = @IdMethodAdmission,
-                IdRecipient = @IdRecipient
-            WHERE IdMedicine = @IdMedicine";
-            var parameters = new
-            {
-                medicineModel.IdMedicine,
-                medicineModel.Name,
-                medicineModel.IdUnit,
-                medicineModel.IdMethodAdmission,
-                medicineModel.IdRecipient
-            };
+            var existing = await _context.Medicines.FindAsync(medicine.IdMedicine);
+            if (existing == null) return 0;
 
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            existing.Name = medicine.Name;
+            existing.IdUnit = medicine.IdUnit;
+            existing.IdMethodAdmission = medicine.IdMethodAdmission;
+            existing.IdRecipient = medicine.IdRecipient;
+            existing.UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+            return await _context.SaveChangesAsync();
         }
+
         public async Task<int> DeleteMedicineAsync(int idMedicine)
         {
-            var query = @"DELETE FROM Medicine WHERE IdMedicine = @IdMedicine";
-            var parameters = new
-            {
-                IdMedicine = idMedicine
-            };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            var medicine = await _context.Medicines
+                .Include(m => m.Stock)
+                .Include(m => m.Schedules)
+                .FirstOrDefaultAsync(m => m.IdMedicine == idMedicine);
+
+            if (medicine == null) return 0;
+
+            _context.Medicines.Remove(medicine);
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> AddMedicineAsync(MedicineModel medicineModel)
+        public async Task<int> AddMedicineAsync(Medicine medicine)
         {
-            var query = @"
-        INSERT INTO Medicine (Name, IdUnit, IdMethodAdmission, IdRecipient)
-        VALUES (@Name, @IdUnit, @IdMethodAdmission, @IdRecipient);
-        SELECT LAST_INSERT_ROWID();";
-
-            var parameters = new
-            {
-                medicineModel.Name,
-                medicineModel.IdUnit,
-                medicineModel.IdMethodAdmission,
-                medicineModel.IdRecipient
-            };
-
-            // Используйте ExecuteScalarAsync для получения значения SELECT
-            var newId = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
-            return newId;
+            medicine.CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _context.Medicines.Add(medicine);
+            await _context.SaveChangesAsync();
+            return medicine.IdMedicine;
         }
 
         public async Task<IEnumerable<MedicineWithScheduleDto>> GetActiveMedicinesWithSchedulesAsync()
         {
-            var query = @"
-        SELECT DISTINCT
-            m.IdMedicine,
-            m.Name AS MedicineName,
-            r.Name AS RecipientName,
-            u.Name AS UnitName,
-            m.IdUnit,
-            m.IdRecipient,
-            ms.IdSchedule,
-            ms.IdScheduleType,
-            st.Code AS ScheduleTypeCode,
-            ms.IdScheduleMode,
-            sm.Code AS ScheduleModeCode,
-            ms.IdRecurrencePattern,
-            rp.DaysInterval,
-            ms.OneTimeDate,
-            ms.Dosage,
-            ms.DateStart,
-            ms.DateEnd,
-            ms.IsActive AS ScheduleIsActive,
-            GROUP_CONCAT(DISTINCT wd.IdDay) AS WeekDayIds,
-            GROUP_CONCAT(DISTINCT stm.Time) AS Times
-        FROM Medicine m
-        JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-        JOIN Unit u ON m.IdUnit = u.IdUnit
-        JOIN MedicationSchedule ms ON m.IdMedicine = ms.IdMedicine 
-        LEFT JOIN ScheduleType st ON ms.IdScheduleType = st.IdType
-        LEFT JOIN ScheduleMode sm ON ms.IdScheduleMode = sm.IdMode
-        LEFT JOIN RecurrencePattern rp ON ms.IdRecurrencePattern = rp.IdPattern
-        LEFT JOIN ScheduleWeekDays swd ON ms.IdSchedule = swd.IdSchedule
-        LEFT JOIN WeekDay wd ON swd.IdDay = wd.IdDay
-        LEFT JOIN ScheduleTime stm ON ms.IdSchedule = stm.IdSchedule
-        WHERE ms.IsActive = 1
-          AND stm.IsActive = 1
-        GROUP BY m.IdMedicine, ms.IdSchedule";
+            var result = await _context.MedicationSchedules
+                .Include(ms => ms.Medicine)
+                    .ThenInclude(m => m.Recipient)
+                .Include(ms => ms.Medicine)
+                    .ThenInclude(m => m.Unit)
+                .Include(ms => ms.ScheduleType)
+                .Include(ms => ms.ScheduleMode)
+                .Include(ms => ms.RecurrencePattern)
+                .Include(ms => ms.ScheduleWeekDays)
+                    .ThenInclude(swd => swd.WeekDay)
+                .Include(ms => ms.ScheduleTimes)
+                .Where(ms => ms.IsActive)
+                .Select(ms => new MedicineWithScheduleDto
+                {
+                    IdMedicine = ms.IdMedicine,
+                    MedicineName = ms.Medicine.Name,
+                    RecipientName = ms.Medicine.Recipient.Name,
+                    UnitName = ms.Medicine.Unit.Name,
+                    IdUnit = ms.Medicine.IdUnit,
+                    IdRecipient = ms.Medicine.IdRecipient,
+                    IdSchedule = ms.IdSchedule,
+                    IdScheduleType = ms.IdScheduleType,
+                    ScheduleTypeCode = ms.ScheduleType.Code,
+                    ScheduleTypeName = ms.ScheduleType.Name,
+                    IdScheduleMode = ms.IdScheduleMode,
+                    ScheduleModeCode = ms.ScheduleMode != null ? ms.ScheduleMode.Code : null,
+                    ScheduleModeName = ms.ScheduleMode != null ? ms.ScheduleMode.Name : null,
+                    IdRecurrencePattern = ms.IdRecurrencePattern,
+                    DaysInterval = ms.RecurrencePattern != null ? ms.RecurrencePattern.DaysInterval : null,
+                    RecurrencePatternName = ms.RecurrencePattern != null ? ms.RecurrencePattern.Name : null,
+                    OneTimeDate = ms.OneTimeDate,
+                    Dosage = ms.Dosage,
+                    DateStart = ms.DateStart,
+                    DateEnd = ms.DateEnd,
+                    ScheduleIsActive = ms.IsActive,
+                    WeekDayIds = string.Join(",", ms.ScheduleWeekDays.Select(swd => swd.IdDay)),
+                    WeekDays = string.Join(",", ms.ScheduleWeekDays.Select(swd => swd.WeekDay.Name)),
+                    Times = string.Join(",", ms.ScheduleTimes.Where(st => st.IsActive).OrderBy(st => st.OrderInDay).Select(st => st.Time)),
+                    TimeOrders = string.Join(",", ms.ScheduleTimes.Where(st => st.IsActive).OrderBy(st => st.OrderInDay).Select(st => st.OrderInDay))
+                })
+                .ToListAsync();
 
-            return await _dbHandler.QueryAsync<MedicineWithScheduleDto>(query);
+            return result;
         }
 
         public async Task<MedicineWithScheduleDto?> GetMedicineWithScheduleByIdAsync(int medicineId)
         {
-            var query = @"
-        SELECT DISTINCT
-            m.IdMedicine,
-            m.Name AS MedicineName,
-            r.Name AS RecipientName,
-            u.Name AS UnitName,
-            m.IdUnit,
-            m.IdRecipient,
-    
-            -- Расписание лекарства
-            ms.IdSchedule,
-            ms.IdScheduleType,
-            st.Code AS ScheduleTypeCode,
-            st.Name AS ScheduleTypeName,
-    
-            ms.IdScheduleMode,
-            sm.Code AS ScheduleModeCode,
-            sm.Name AS ScheduleModeName,
-    
-            ms.IdRecurrencePattern,
-            rp.DaysInterval,
-            rp.Name AS RecurrencePatternName,
-    
-            ms.OneTimeDate,
-            ms.Dosage,
-            ms.DateStart,
-            ms.DateEnd,
-            ms.IsActive AS ScheduleIsActive,
-    
-            -- Дни недели для WEEKDAYS режима
-            GROUP_CONCAT(DISTINCT wd.IdDay) AS WeekDayIds,
-            GROUP_CONCAT(DISTINCT wd.Name) AS WeekDays,
-    
-            -- Время приема
-            GROUP_CONCAT(DISTINCT stm.Time) AS Times,
-            GROUP_CONCAT(DISTINCT stm.OrderInDay) AS TimeOrders
-    
-        FROM Medicine m
-        JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-        JOIN Unit u ON m.IdUnit = u.IdUnit
-        JOIN MedicationSchedule ms ON m.IdMedicine = ms.IdMedicine 
-        LEFT JOIN ScheduleType st ON ms.IdScheduleType = st.IdType
-        LEFT JOIN ScheduleMode sm ON ms.IdScheduleMode = sm.IdMode
-        LEFT JOIN RecurrencePattern rp ON ms.IdRecurrencePattern = rp.IdPattern
-        LEFT JOIN ScheduleWeekDays swd ON ms.IdSchedule = swd.IdSchedule
-        LEFT JOIN WeekDay wd ON swd.IdDay = wd.IdDay
-        LEFT JOIN ScheduleTime stm ON ms.IdSchedule = stm.IdSchedule
-        WHERE m.IdMedicine = @MedicineId
-          AND ms.IsActive = 1
-          AND (stm.IsActive = 1 OR stm.IsActive IS NULL)
-        GROUP BY m.IdMedicine, m.Name, r.Name, u.Name, ms.IdSchedule
-        HAVING Times IS NOT NULL
-        LIMIT 1";
-
-            var parameters = new { MedicineId = medicineId };
-            return await _dbHandler.QueryFirstOrDefaultAsync<MedicineWithScheduleDto>(query, parameters);
+            return await _context.MedicationSchedules
+                .Include(ms => ms.Medicine)
+                    .ThenInclude(m => m.Recipient)
+                .Include(ms => ms.Medicine)
+                    .ThenInclude(m => m.Unit)
+                .Include(ms => ms.ScheduleType)
+                .Include(ms => ms.ScheduleMode)
+                .Include(ms => ms.RecurrencePattern)
+                .Include(ms => ms.ScheduleWeekDays)
+                    .ThenInclude(swd => swd.WeekDay)
+                .Include(ms => ms.ScheduleTimes)
+                .Where(ms => ms.IdMedicine == medicineId && ms.IsActive)
+                .Select(ms => new MedicineWithScheduleDto
+                {
+                    IdMedicine = ms.IdMedicine,
+                    MedicineName = ms.Medicine.Name,
+                    RecipientName = ms.Medicine.Recipient.Name,
+                    UnitName = ms.Medicine.Unit.Name,
+                    IdUnit = ms.Medicine.IdUnit,
+                    IdRecipient = ms.Medicine.IdRecipient,
+                    IdSchedule = ms.IdSchedule,
+                    IdScheduleType = ms.IdScheduleType,
+                    ScheduleTypeCode = ms.ScheduleType.Code,
+                    ScheduleTypeName = ms.ScheduleType.Name,
+                    IdScheduleMode = ms.IdScheduleMode,
+                    ScheduleModeCode = ms.ScheduleMode != null ? ms.ScheduleMode.Code : null,
+                    ScheduleModeName = ms.ScheduleMode != null ? ms.ScheduleMode.Name : null,
+                    IdRecurrencePattern = ms.IdRecurrencePattern,
+                    DaysInterval = ms.RecurrencePattern != null ? ms.RecurrencePattern.DaysInterval : null,
+                    RecurrencePatternName = ms.RecurrencePattern != null ? ms.RecurrencePattern.Name : null,
+                    OneTimeDate = ms.OneTimeDate,
+                    Dosage = ms.Dosage,
+                    DateStart = ms.DateStart,
+                    DateEnd = ms.DateEnd,
+                    ScheduleIsActive = ms.IsActive,
+                    WeekDayIds = string.Join(",", ms.ScheduleWeekDays.Select(swd => swd.IdDay)),
+                    WeekDays = string.Join(",", ms.ScheduleWeekDays.Select(swd => swd.WeekDay.Name)),
+                    Times = string.Join(",", ms.ScheduleTimes.Where(st => st.IsActive).OrderBy(st => st.OrderInDay).Select(st => st.Time)),
+                    TimeOrders = string.Join(",", ms.ScheduleTimes.Where(st => st.IsActive).OrderBy(st => st.OrderInDay).Select(st => st.OrderInDay))
+                })
+                .FirstOrDefaultAsync();
         }
     }
 }

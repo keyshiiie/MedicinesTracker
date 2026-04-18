@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 
-namespace MedicinesTracker.Models.Dto
+namespace MedicinesTracker.Dto
 {
     public class GroupedTodayMedicine : ObservableObject
     {

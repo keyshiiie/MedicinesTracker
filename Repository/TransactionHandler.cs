@@ -1,7 +1,4 @@
-﻿using MedicinesTracker.Services;
-using Microsoft.Data.Sqlite;
-using System;
-using System.Data;
+﻿using MedicinesTracker.Data;
 
 namespace MedicinesTracker.Repository
 {
@@ -13,32 +10,26 @@ namespace MedicinesTracker.Repository
 
     public class TransactionHandler : ITransactionHandler
     {
-        private readonly IDatabaseService _databaseService;
+        private readonly AppDbContext _context;
 
-        public TransactionHandler(IDatabaseService databaseService)
+        public TransactionHandler(AppDbContext context)
         {
-            _databaseService = databaseService;
+            _context = context;
         }
 
         public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> operation)
         {
-            // Создаем новое соединение для каждой транзакции
-            using var connection = await _databaseService.GetOpenConnectionAsync();
-            using var transaction = await connection.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // Выполняем операцию
                 var result = await operation();
-
-                // Коммитим транзакцию СИНХРОННО
-                transaction.Commit();
+                await transaction.CommitAsync();
                 return result;
             }
             catch
             {
-                // Откатываем при ошибке СИНХРОННО
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
         }

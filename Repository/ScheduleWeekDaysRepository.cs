@@ -1,56 +1,51 @@
-﻿using MedicinesTracker.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MedicinesTracker.Data;
+using MedicinesTracker.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace MedicinesTracker.Repository
 {
     public interface IScheduleWeekDaysRepository
     {
-        Task<int> AddScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel);
-        Task<int> UpdateScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel);
+        Task<int> AddScheduleWeekDayAsync(ScheduleWeekDay scheduleWeekDay);
+        Task<int> UpdateScheduleWeekDayAsync(ScheduleWeekDay scheduleWeekDay);
         Task<int> DeleteScheduleWeekDaysAsync(int scheduleId);
     }
+
     public class ScheduleWeekDaysRepository : IScheduleWeekDaysRepository
     {
-        private readonly IDBHandler _dbHandler;
-        public ScheduleWeekDaysRepository(IDBHandler dbHandler)
+        private readonly AppDbContext _context;
+
+        public ScheduleWeekDaysRepository(AppDbContext context)
         {
-            _dbHandler = dbHandler;
+            _context = context;
         }
-        public async Task<int> AddScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel)
+
+        public async Task<int> AddScheduleWeekDayAsync(ScheduleWeekDay scheduleWeekDay)
         {
-            var query = @"
-            INSERT INTO ScheduleWeekDays (IdSchedule, IdDay)
-            VALUES (@IdSchedule,@IdDay);
-            SELECT LAST_INSERT_ROWID();";
-            var parameters = new
-            {
-                scheduleWeekDaysModel.IdSchedule,
-                scheduleWeekDaysModel.IdDay
-            };
-            var newId = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
-            return newId;
+            _context.ScheduleWeekDays.Add(scheduleWeekDay);
+            await _context.SaveChangesAsync();
+            return scheduleWeekDay.IdLink;
         }
-        public async Task<int> UpdateScheduleWeekDayAsync(ScheduleWeekDaysModel scheduleWeekDaysModel)
+
+        public async Task<int> UpdateScheduleWeekDayAsync(ScheduleWeekDay scheduleWeekDay)
         {
-            var query = @"UPDATE ScheduleWeekDays
-            SET IdSchedule = @IdSchedule,
-                IdDay = IdDay
-            WHERE IdLink = @IdLink";
-            var parameters = new
-            {
-                scheduleWeekDaysModel.IdLink,
-                scheduleWeekDaysModel.IdSchedule,
-                scheduleWeekDaysModel.IdDay
-            };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            var existing = await _context.ScheduleWeekDays.FindAsync(scheduleWeekDay.IdLink);
+            if (existing == null) return 0;
+
+            existing.IdSchedule = scheduleWeekDay.IdSchedule;
+            existing.IdDay = scheduleWeekDay.IdDay;
+
+            return await _context.SaveChangesAsync();
         }
+
         public async Task<int> DeleteScheduleWeekDaysAsync(int scheduleId)
         {
-            var query = @"DELETE FROM ScheduleWeekDays WHERE IdSchedule = @ScheduleId";
-            var parameters = new { ScheduleId = scheduleId };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            var weekDays = await _context.ScheduleWeekDays
+                .Where(swd => swd.IdSchedule == scheduleId)
+                .ToListAsync();
+
+            _context.ScheduleWeekDays.RemoveRange(weekDays);
+            return await _context.SaveChangesAsync();
         }
     }
 }

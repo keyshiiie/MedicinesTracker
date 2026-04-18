@@ -1,4 +1,4 @@
-﻿namespace MedicinesTracker.Models.Dto
+﻿namespace MedicinesTracker.Dto
 {
     public class HistoryDto
     {

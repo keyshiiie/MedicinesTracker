@@ -1,13 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using MedicinesTracker.Models;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace MedicinesTracker.Modules.Settings.ViewModels
 {
@@ -17,7 +13,7 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
         private readonly IRecipientRepository _recipientRepository;
         private readonly IValidatorService _validatorService;
         [ObservableProperty]
-        private RecipientModel _recipient = new();
+        private Recipient _recipient = new();
         [ObservableProperty]
         private bool _isEditingExisting;
         public EditRecipientVM(IRecipientRepository recipientRepository,
@@ -26,7 +22,7 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
             _recipientRepository = recipientRepository;
             _validatorService = validatorService;
         }
-        partial void OnRecipientChanged(RecipientModel value)
+        partial void OnRecipientChanged(Recipient value)
         {
             // Определяем, редактируем ли мы существующего получателя или добавляем нового
             IsEditingExisting = value?.IdRecipient > 0;

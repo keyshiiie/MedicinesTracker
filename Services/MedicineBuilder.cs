@@ -1,25 +1,21 @@
-﻿using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+﻿using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
+using MedicinesTracker.Dto;
 
 namespace MedicinesTracker.Services
 {
     public interface IMedicineBuilder
     {
-        IMedicineBuilder WithBaseInfo(MedicineModel medicine);
-        IMedicineBuilder WithStockInfo(StockModel stock);
+        IMedicineBuilder WithBaseInfo(Medicine medicine);
+        IMedicineBuilder WithStockInfo(Stock stock);
         IMedicineBuilder WithSchedule(MedicineScheduleDto schedule,
-            List<WeekDayModel> selectedDays,
+            List<WeekDay> selectedDays,
             List<TimeSpan> selectedTimes);
         Task<int> BuildAsync();
         void Reset();
         bool IsComplete { get; }
         MedicineCreationState GetState();
-
     }
 
     public class MedicineBuilder : IMedicineBuilder
@@ -27,13 +23,12 @@ namespace MedicinesTracker.Services
         private readonly IMedicineRepository _medicineRepository;
         private readonly IStockRepository _stockRepository;
         private readonly IScheduleService _scheduleService;
-        private readonly IDBHandler _dbHandler;
         private readonly ITransactionHandler _transactionHandler;
 
-        private MedicineModel? _medicine;
-        private StockModel? _stock;
+        private Medicine? _medicine;
+        private Stock? _stock;
         private MedicineScheduleDto? _schedule;
-        private List<WeekDayModel>? _selectedDays;
+        private List<WeekDay>? _selectedDays;
         private List<TimeSpan>? _selectedTimes;
 
         public bool IsComplete => _medicine != null && _stock != null && _schedule != null;
@@ -42,30 +37,28 @@ namespace MedicinesTracker.Services
             IMedicineRepository medicineRepository,
             IStockRepository stockRepository,
             IScheduleService scheduleService,
-            IDBHandler dbHandler,
             ITransactionHandler transactionHandler)
         {
             _medicineRepository = medicineRepository;
             _stockRepository = stockRepository;
             _scheduleService = scheduleService;
-            _dbHandler = dbHandler;
             _transactionHandler = transactionHandler;
         }
 
-        public IMedicineBuilder WithBaseInfo(MedicineModel medicine)
+        public IMedicineBuilder WithBaseInfo(Medicine medicine)
         {
             _medicine = medicine ?? throw new ArgumentNullException(nameof(medicine));
             return this;
         }
 
-        public IMedicineBuilder WithStockInfo(StockModel stock)
+        public IMedicineBuilder WithStockInfo(Stock stock)
         {
             _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             return this;
         }
 
         public IMedicineBuilder WithSchedule(MedicineScheduleDto schedule,
-            List<WeekDayModel> selectedDays,
+            List<WeekDay> selectedDays,
             List<TimeSpan> selectedTimes)
         {
             _schedule = schedule ?? throw new ArgumentNullException(nameof(schedule));
@@ -79,45 +72,43 @@ namespace MedicinesTracker.Services
             if (!IsComplete)
                 throw new InvalidOperationException("Не все данные заполнены для создания лекарства");
 
-            try
+            return await _transactionHandler.ExecuteInTransactionAsync(async () =>
             {
-                // ВАЖНО: Сначала получаем MedicineId из builder
-                if (_medicine == null)
-                    throw new InvalidOperationException("Базовая информация о лекарстве не заполнена");
-
-                // 1. Сохраняем лекарство
-                var medicineId = await _medicineRepository.AddMedicineAsync(_medicine);
-
-                // 2. Сохраняем запас
-                if (_stock != null)
+                try
                 {
-                    await _stockRepository.AddStockAsync(_stock, medicineId);
-                }
+                    // 1. Сохраняем лекарство
+                    var medicineId = await _medicineRepository.AddMedicineAsync(_medicine!);
 
-                // 3. Сохраняем расписание
-                if (_schedule != null && _selectedDays != null && _selectedTimes != null)
+                    // 2. Сохраняем запас
+                    if (_stock != null)
+                    {
+                        _stock.IdMedicine = medicineId;
+                        await _stockRepository.AddStockAsync(_stock);
+                    }
+
+                    // 3. Сохраняем расписание
+                    if (_schedule != null)
+                    {
+                        _schedule.IdMedicine = medicineId;
+                        await _scheduleService.SaveScheduleAsync(
+                            _schedule,
+                            _selectedDays!,
+                            _selectedTimes!);
+                    }
+
+                    Debug.WriteLine($"✅ Лекарство успешно создано: ID={medicineId}");
+
+                    // 4. Сбрасываем builder
+                    Reset();
+
+                    return medicineId;
+                }
+                catch (Exception ex)
                 {
-                    _schedule.IdMedicine = medicineId;
-
-                    // Используем ScheduleService для сохранения расписания
-                    // (убедитесь, что ScheduleService тоже работает в транзакции)
-                    await _scheduleService.SaveScheduleAsync(
-                        _schedule,
-                        _selectedDays,
-                        _selectedTimes);
+                    Debug.WriteLine($"❌ Ошибка создания лекарства: {ex.Message}");
+                    throw;
                 }
-
-                // 4. Сбрасываем builder
-                Reset();
-
-                Debug.WriteLine($"✅ Лекарство успешно создано: ID={medicineId}");
-                return medicineId;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Ошибка создания лекарства: {ex.Message}");
-                throw new Exception($"Не удалось создать лекарство: {ex.Message}", ex);
-            }
+            });
         }
 
         public void Reset()

@@ -1,8 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
-using MedicinesTracker.Modules.Medications.Models;
+using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
 using System.Collections.ObjectModel;
@@ -41,13 +40,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private MedicineScheduleDto _medicineSchedule = new();
 
         [ObservableProperty]
-        private ObservableCollection<WeekDayModel> _weekDays = new();
+        private ObservableCollection<WeekDay> _weekDays = new();
 
         [ObservableProperty]
-        private ObservableCollection<RecurrencePatternModel> _recurrencePatterns = new();
+        private ObservableCollection<RecurrencePattern> _recurrencePatterns = new();
 
         [ObservableProperty]
-        private RecurrencePatternModel? _selectedRecurrencePattern;
+        private RecurrencePattern? _selectedRecurrencePattern;
 
         [ObservableProperty]
         private ObservableCollection<TimeSpan> _selectedTimes = new();
@@ -216,7 +215,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             {
                 // Загружаем дни недели
                 var days = await _referencesRepository.GetAllWeekDayAsync();
-                WeekDays = new ObservableCollection<WeekDayModel>(days);
+                WeekDays = new ObservableCollection<WeekDay>(days);
 
                 // Подписываемся на изменения выбора дней
                 foreach (var day in WeekDays)
@@ -228,7 +227,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 if (IsIntervalMode)
                 {
                     var patterns = await _referencesRepository.GetAllRecurrencePatternAsync();
-                    RecurrencePatterns = new ObservableCollection<RecurrencePatternModel>(patterns);
+                    RecurrencePatterns = new ObservableCollection<RecurrencePattern>(patterns);
                 }
             }
             catch (Exception ex)
@@ -318,7 +317,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private void OnWeekDaySelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(WeekDayModel.IsSelected))
+            if (e.PropertyName == nameof(WeekDay.IsSelected))
             {
                 UpdateSelectedDaysText();
             }
@@ -352,19 +351,19 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 // ВАЖНО: НЕ меняем значения пользователя!
                 // Просто используем те значения, которые пользователь установил в UI
 
-                var selectedDays = WeekDays?.Where(d => d.IsSelected).ToList() ?? new List<WeekDayModel>();
+                var selectedDays = WeekDays?.Where(d => d.IsSelected).ToList() ?? new List<WeekDay>();
 
-                var tempScheduleType = new ScheduleTypeModel
+                var tempScheduleType = new ScheduleType
                 {
                     IdType = GetScheduleTypeId(),
                     Name = IsRecurring ? "Повторяющееся" : "Одноразовое",
                     Code = ScheduleTypeCode
                 };
 
-                ScheduleModeModel? tempScheduleMode = null;
+                ScheduleMode? tempScheduleMode = null;
                 if (IsRecurring && !string.IsNullOrEmpty(ScheduleModeCode))
                 {
-                    tempScheduleMode = new ScheduleModeModel
+                    tempScheduleMode = new ScheduleMode
                     {
                         IdMode = GetScheduleModeId() ?? 0,
                         Name = ScheduleModeCode == "INTERVAL" ? "Интервал" : "Дни недели",

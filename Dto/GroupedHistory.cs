@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 
-namespace MedicinesTracker.Models.Dto
+namespace MedicinesTracker.Dto
 {
     public class GroupedHistory : ObservableObject
     {

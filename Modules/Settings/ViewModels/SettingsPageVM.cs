@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -12,7 +12,7 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
         private readonly IRecipientRepository _recipientRepository;
 
         [ObservableProperty]
-        private ObservableCollection<RecipientModel> _recipients = new();
+        private ObservableCollection<Recipient> _recipients = new();
 
         public SettingsPageVM(IRecipientRepository recipientRepository) 
         { 
@@ -47,26 +47,33 @@ namespace MedicinesTracker.Modules.Settings.ViewModels
         private async Task LoadRecipientsAsync()
         {
             var recipients = await _recipientRepository.GetAllRecipientsAsync();
-            Recipients = new ObservableCollection<RecipientModel>(recipients);
+            Recipients = new ObservableCollection<Recipient>(recipients);
         }
 
         [RelayCommand]
-        private async Task OpenEditPage(RecipientModel recipient)
+        private async Task OpenEditPage(Recipient recipient)
         {
             try
             {
+                Debug.WriteLine($"OpenEditPage called with recipient: {recipient?.Name ?? "null"}");
+
                 var parameters = new Dictionary<string, object>();
 
                 if (recipient == null)
                 {
-                    recipient = new RecipientModel();
+                    recipient = new Recipient();
+                    Debug.WriteLine("Creating new recipient");
                 }
 
                 parameters.Add("recipient", recipient);
+
+                Debug.WriteLine($"Navigating to EditRecipientPage");
                 await Shell.Current.GoToAsync("EditRecipientPage", parameters);
+                Debug.WriteLine("Navigation completed");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Navigation error: {ex}");
                 await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
             }
         }

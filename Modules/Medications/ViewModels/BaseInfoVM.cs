@@ -1,13 +1,14 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
-using MedicinesTracker.Modules.Medications.Models;
+﻿using CommunityToolkit.Mvvm.Input;
+using MedicinesTracker.Entities;
+using MedicinesTracker.Modules.Medications.s;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
+using MedicinesTracker.Modules.Medications.Models;
 
-namespace MedicinesTracker.Modules.Medications.ViewModels
+namespace MedicinesTracker.Modules.Medications.Views
 {
     [QueryProperty(nameof(MedicineId), "idMedicine")]
     public partial class BaseInfoVM : ObservableObject
@@ -19,25 +20,25 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private readonly IMedicineBuilder _medicineBuilder;
 
         [ObservableProperty]
-        private MedicineModel _medicine = new();
+        private Medicine _medicine = new();
 
         [ObservableProperty]
-        private ObservableCollection<UnitModel> _units = new();
+        private ObservableCollection<Unit> _units = new();
 
         [ObservableProperty]
-        private UnitModel? _selectedUnit;
+        private Unit? _selectedUnit;
 
         [ObservableProperty]
-        private ObservableCollection<RecipientModel> _recipients = new();
+        private ObservableCollection<Recipient> _recipients = new();
 
         [ObservableProperty]
-        private RecipientModel? _selectedRecipient;
+        private Recipient? _selectedRecipient;
 
         [ObservableProperty]
-        private ObservableCollection<MethodAdmissionModel> _methodAdmissions = new();
+        private ObservableCollection<MethodAdmission> _methodAdmissions = new();
 
         [ObservableProperty]
-        private MethodAdmissionModel? _selectedMethodAdmission;
+        private MethodAdmission? _selectedMethodAdmission;
 
         [ObservableProperty]
         private bool _isEditingExisting;
@@ -124,7 +125,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private void ResetForm()
         {
-            Medicine = new MedicineModel();
+            Medicine = new Medicine();
             SelectedUnit = null;
             SelectedRecipient = null;
             SelectedMethodAdmission = null;
@@ -166,7 +167,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             try
             {
                 var units = await _referencesDataRepository.GetAllUnitsAsync();
-                Units = new ObservableCollection<UnitModel>(units);
+                Units = new ObservableCollection<Unit>(units);
             }
             catch (Exception ex)
             {
@@ -179,7 +180,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             try
             {
                 var recipients = await _recipientRepository.GetAllRecipientsAsync();
-                Recipients = new ObservableCollection<RecipientModel>(recipients);
+                Recipients = new ObservableCollection<Recipient>(recipients);
             }
             catch (Exception ex)
             {
@@ -192,7 +193,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             try
             {
                 var methods = await _referencesDataRepository.GetAllMethodsAdmissionAsync();
-                MethodAdmissions = new ObservableCollection<MethodAdmissionModel>(methods);
+                MethodAdmissions = new ObservableCollection<MethodAdmission>(methods);
             }
             catch (Exception ex)
             {
@@ -200,17 +201,17 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
-        partial void OnSelectedUnitChanged(UnitModel? value)
+        partial void OnSelectedUnitChanged(Unit? value)
         {
             if (value != null) Medicine.IdUnit = value.IdUnit;
         }
 
-        partial void OnSelectedRecipientChanged(RecipientModel? value)
+        partial void OnSelectedRecipientChanged(Recipient? value)
         {
             if (value != null) Medicine.IdRecipient = value.IdRecipient;
         }
 
-        partial void OnSelectedMethodAdmissionChanged(MethodAdmissionModel? value)
+        partial void OnSelectedMethodAdmissionChanged(MethodAdmission? value)
         {
             if (value != null) Medicine.IdMethodAdmission = value.IdMethodAdmission;
         }

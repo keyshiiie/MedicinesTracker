@@ -1,28 +1,22 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
-using Microsoft.Data.Sqlite;
-using Syncfusion.Maui.Toolkit.Carousel;
-using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Text;
+﻿using MedicinesTracker.Data;
+using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace MedicinesTracker.Repository
 {
     public interface IIntakeRepository
     {
         // CRUD
         Task<IEnumerable<HistoryDto>> GetAllIntakeAsync();
-        Task<int> AddIntakeAsync(IntakeModel intakeModel);
-        Task<int> UpdateIntakeAsync(IntakeModel intakeModel);
-        Task<IntakeModel?> GetIntakeByIdAsync(int intakeId);
+        Task<int> AddIntakeAsync(Intake intake);
+        Task<int> UpdateIntakeAsync(Intake intake);
+        Task<Intake?> GetIntakeByIdAsync(int intakeId);
 
         // Поиск
-        Task<IEnumerable<IntakeModel>> GetIntakesByDateAsync(string date);
-        Task<IEnumerable<IntakeModel>> GetIntakesByMedicineAndDateAsync(int medicineId, string date);
-        Task<IntakeModel?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time);
+        Task<IEnumerable<Intake>> GetIntakesByDateAsync(string date);
+        Task<IEnumerable<Intake>> GetIntakesByMedicineAndDateAsync(int medicineId, string date);
+        Task<Intake?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time);
         Task<IEnumerable<TodayMedicineDto>> GetTodayMedicineAsync();
 
         // Проверка
@@ -33,278 +27,166 @@ namespace MedicinesTracker.Repository
         Task<int> DeleteFutureIntakesForMedicineAsync(int medicineId, DateTime fromDate);
         Task<int> DeleteOldIntakesAsync(DateTime cutoffDate);
     }
+
     public class IntakeRepository : IIntakeRepository
     {
-        private readonly IDBHandler _dbHandler;
-        public IntakeRepository(IDBHandler bHandler)
+        private readonly AppDbContext _context;
+
+        public IntakeRepository(AppDbContext context)
         {
-            _dbHandler = bHandler;
+            _context = context;
         }
 
-        public async Task<IntakeModel?> GetIntakeByIdAsync(int intakeId)
+        public async Task<Intake?> GetIntakeByIdAsync(int intakeId)
         {
-            var query = @"
-        SELECT 
-            i.IdIntake,
-            i.IdMedicine,
-            i.IsCompleted,
-            i.IdSchedule,
-            i.IdScheduleTime,
-            i.Date,
-            i.Time,
-            i.TakenDateTime,
-            i.ActualDosage
-        FROM Intake i
-        WHERE i.IdIntake = @IntakeId";
-
-            return await _dbHandler.QueryFirstOrDefaultAsync<IntakeModel>(query, new { IntakeId = intakeId });
+            return await _context.Intakes
+                .FirstOrDefaultAsync(i => i.IdIntake == intakeId);
         }
 
         public async Task<IEnumerable<HistoryDto>> GetAllIntakeAsync()
         {
-            var query = @"
-    SELECT
-        i.IdIntake,
-        m.IdMedicine,
-        m.Name AS NameMedicine,
-        i.IsCompleted,
-        i.IdSchedule,
-        i.IdScheduleTime,
-        st.OrderInDay,
-        i.Date,
-        i.Time,
-        i.TakenDateTime,
-        i.ActualDosage,
-        m.IdUnit,
-        r.Name AS RecipientName,
-        u.Name AS UnitName,
-        r.IdRecipient
-    FROM Intake i 
-    JOIN Medicine m ON i.IdMedicine = m.IdMedicine
-    JOIN Unit u ON m.IdUnit = u.IdUnit
-    JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-    LEFT JOIN ScheduleTime st ON st.IdTime = i.IdScheduleTime  -- Важно: IdTime = IdScheduleTime
-    ORDER BY i.Date DESC, i.Time DESC";
-
-            return await _dbHandler.QueryAsync<HistoryDto>(query);
+            return await _context.Intakes
+                .Include(i => i.Medicine)
+                    .ThenInclude(m => m.Unit)
+                .Include(i => i.Medicine.Recipient)
+                .Include(i => i.ScheduleTime)
+                .OrderByDescending(i => i.Date)
+                .ThenByDescending(i => i.Time)
+                .Select(i => new HistoryDto
+                {
+                    IdIntake = i.IdIntake,
+                    IdMedicine = i.IdMedicine,
+                    NameMedicine = i.Medicine.Name,
+                    IsCompleted = i.IsCompleted,
+                    IdSchedule = i.IdSchedule,
+                    IdScheduleTime = i.IdScheduleTime,
+                    Date = i.Date,
+                    Time = i.Time,
+                    TakenDateTime = i.TakenDateTime,
+                    ActualDosage = i.ActualDosage.ToString(),
+                    UnitName = i.Medicine.Unit.Name,
+                    IdRecipient = i.Medicine.IdRecipient,
+                    RecipientName = i.Medicine.Recipient.Name ?? ""
+                })
+                .ToListAsync();
         }
 
-        public async Task<int> AddIntakeAsync(IntakeModel intakeModel)
+        public async Task<int> AddIntakeAsync(Intake intake)
         {
-            var query = @"INSERT INTO Intake 
-            (IdMedicine, IsCompleted, IdSchedule, IdScheduleTime, Date, Time, TakenDateTime, ActualDosage)
-            VALUES (@IdMedicine, @IsCompleted, @IdSchedule, @IdScheduleTime, @Date, @Time, @TakenDateTime, @ActualDosage);
-            SELECT LAST_INSERT_ROWID();";
-
-            var parameters = new
-            {
-                intakeModel.IdMedicine,
-                intakeModel.IsCompleted,
-                intakeModel.IdSchedule,
-                intakeModel.IdScheduleTime,
-                Date = intakeModel.Date, // Уже в формате yyyy-MM-dd
-                TakenDateTime = intakeModel.TakenDateTime,
-                intakeModel.Time,
-                intakeModel.ActualDosage
-            };
-            var newId = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
-            return newId;
+            _context.Intakes.Add(intake);
+            await _context.SaveChangesAsync();
+            return intake.IdIntake;
         }
-        public async Task<int> UpdateIntakeAsync(IntakeModel intakeModel)
+
+        public async Task<int> UpdateIntakeAsync(Intake intake)
         {
-            var query = @"UPDATE Intake 
-                  SET IsCompleted = @IsCompleted,
-                      TakenDateTime = @TakenDateTime
-                  WHERE IdIntake = @IdIntake";
+            var existing = await _context.Intakes.FindAsync(intake.IdIntake);
+            if (existing == null) return 0;
 
-            var parameters = new
-            {
-                intakeModel.IdIntake,
-                intakeModel.IsCompleted,
-                intakeModel.TakenDateTime
-            };
+            existing.IsCompleted = intake.IsCompleted;
+            existing.TakenDateTime = intake.TakenDateTime;
 
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            return await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<TodayMedicineDto>> GetTodayMedicineAsync()
         {
             var today = DateTime.Now.Date.ToString("yyyy-MM-dd");
 
-            // Показываем ВСЕ записи на сегодня (и принятые, и нет)
-            // Но на странице "Сегодня" обычно показывают только не принятые
-            var query = @"
-        SELECT 
-            m.IdMedicine,
-            s.IdStock,
-            s.CurrentQuantity,
-            r.Name AS RecipientName,
-            m.Name as MedicineName,
-            ms.Dosage,
-            st.Time,
-            st.OrderInDay,
-            u.Name as UnitName,
-            ms.IdSchedule,
-            st.IdTime as IdScheduleTime,
-            i.IdIntake,
-            i.IsCompleted
-        FROM Intake i
-        JOIN Medicine m ON i.IdMedicine = m.IdMedicine
-        JOIN MedicationSchedule ms ON i.IdSchedule = ms.IdSchedule
-        JOIN ScheduleTime st ON i.IdScheduleTime = st.IdTime
-        JOIN Unit u ON m.IdUnit = u.IdUnit
-        JOIN Recipient r ON m.IdRecipient = r.IdRecipient
-        JOIN Stock s ON m.IdMedicine = s.IdMedicine
-        WHERE i.Date = @Today
-          AND i.IsCompleted = 0  -- Только не принятые!
-        ORDER BY r.Name, st.OrderInDay";
-
-            return await _dbHandler.QueryAsync<TodayMedicineDto>(query, new { Today = today });
+            return await _context.Intakes
+                .Where(i => i.Date == today && !i.IsCompleted)
+                .Include(i => i.Medicine)
+                    .ThenInclude(m => m.Unit)
+                .Include(i => i.Medicine.Recipient)
+                .Include(i => i.ScheduleTime)
+                .Include(i => i.Medicine.Stock)
+                .Include(i => i.Schedule)
+                .OrderBy(i => i.Medicine.Recipient.Name)
+                .ThenBy(i => i.ScheduleTime.OrderInDay)
+                .Select(i => new TodayMedicineDto
+                {
+                    IdMedicine = i.IdMedicine,
+                    IdStock = i.Medicine.Stock != null ? i.Medicine.Stock.IdStock : 0,
+                    CurrentQuantity = i.Medicine.Stock != null ? i.Medicine.Stock.CurrentQuantity ?? 0 : 0,
+                    RecipientName = i.Medicine.Recipient.Name ?? "",
+                    MedicineName = i.Medicine.Name ?? "",
+                    Dosage = i.Schedule != null ? i.Schedule.Dosage : 0,
+                    IdScheduleTime = i.IdScheduleTime,
+                    Time = i.Time ?? "",
+                    OrderInDay = i.ScheduleTime != null ? i.ScheduleTime.OrderInDay : 0,
+                    UnitName = i.Medicine.Unit.Name ?? "",
+                    IdSchedule = i.IdSchedule,
+                    IdIntake = i.IdIntake,
+                    IsCompleted = i.IsCompleted
+                })
+                .ToListAsync();
         }
 
-        public async Task<IntakeModel?> GetIntakeByMedicineAndDateAsync(int medicineId, string date)
+        public async Task<Intake?> GetIntakeByMedicineAndDateAsync(int medicineId, string date)
         {
-            var query = @"
-        SELECT 
-            i.IdIntake,
-            i.IdMedicine,
-            i.IsCompleted,
-            i.IdSchedule,
-            i.IdScheduleTime,
-            i.Date,
-            i.Time,
-            i.TakenDateTime,
-            i.ActualDosage
-        FROM Intake i
-        WHERE i.IdMedicine = @MedicineId 
-          AND i.Date = @Date
-        LIMIT 1";
-
-            var parameters = new { MedicineId = medicineId, Date = date };
-            return await _dbHandler.QueryFirstOrDefaultAsync<IntakeModel>(query, parameters);
+            return await _context.Intakes
+                .FirstOrDefaultAsync(i => i.IdMedicine == medicineId && i.Date == date);
         }
 
-        public async Task<IEnumerable<IntakeModel>> GetIntakesByDateAsync(string date)
+        public async Task<IEnumerable<Intake>> GetIntakesByDateAsync(string date)
         {
-            var query = @"
-        SELECT 
-            i.IdIntake,
-            i.IdMedicine,
-            i.IsCompleted,
-            i.IdSchedule,
-            i.IdScheduleTime,
-            i.Date,
-            i.Time,
-            i.TakenDateTime,
-            i.ActualDosage
-        FROM Intake i
-        WHERE i.Date = @Date
-        ORDER BY i.Time";
-
-            var parameters = new { Date = date };
-            return await _dbHandler.QueryAsync<IntakeModel>(query, parameters);
+            return await _context.Intakes
+                .Where(i => i.Date == date)
+                .OrderBy(i => i.Time)
+                .ToListAsync();
         }
 
         public async Task<int> DeleteFutureIntakesAsync(DateTime fromDate)
         {
-            var query = @"
-            DELETE FROM Intake 
-            WHERE Date >= @FromDate 
-            AND IsCompleted = 0";
+            var fromDateStr = fromDate.ToString("yyyy-MM-dd");
+            var intakes = await _context.Intakes
+                .Where(i => string.Compare(i.Date, fromDateStr) >= 0 && !i.IsCompleted)
+                .ToListAsync();
 
-            var parameters = new { FromDate = fromDate.ToString("yyyy-MM-dd") };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            _context.Intakes.RemoveRange(intakes);
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<IntakeModel>> GetIntakesByMedicineAndDateAsync(int medicineId, string date)
+        public async Task<IEnumerable<Intake>> GetIntakesByMedicineAndDateAsync(int medicineId, string date)
         {
-            var query = @"
-    SELECT 
-        i.IdIntake,
-        i.IdMedicine,
-        i.IsCompleted,
-        i.IdSchedule,
-        i.IdScheduleTime,
-        i.Date,
-        i.Time,
-        i.TakenDateTime,
-        i.ActualDosage
-    FROM Intake i
-    WHERE i.IdMedicine = @MedicineId 
-      AND i.Date = @Date
-    ORDER BY i.Time";
-
-            var parameters = new { MedicineId = medicineId, Date = date };
-            return await _dbHandler.QueryAsync<IntakeModel>(query, parameters);
+            return await _context.Intakes
+                .Where(i => i.IdMedicine == medicineId && i.Date == date)
+                .OrderBy(i => i.Time)
+                .ToListAsync();
         }
 
-        public async Task<IntakeModel?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time)
+        public async Task<Intake?> GetIntakeByMedicineAndDateTimeAsync(int medicineId, string date, string time)
         {
-            var query = @"
-    SELECT 
-        i.IdIntake,
-        i.IdMedicine,
-        i.IsCompleted,
-        i.IdSchedule,
-        i.IdScheduleTime,
-        i.Date,
-        i.Time,
-        i.TakenDateTime,
-        i.ActualDosage
-    FROM Intake i
-    WHERE i.IdMedicine = @MedicineId 
-      AND i.Date = @Date
-      AND i.Time = @Time
-    LIMIT 1";
-
-            var parameters = new
-            {
-                MedicineId = medicineId,
-                Date = date,
-                Time = time // Теперь точно по времени
-            };
-            return await _dbHandler.QueryFirstOrDefaultAsync<IntakeModel>(query, parameters);
+            return await _context.Intakes
+                .FirstOrDefaultAsync(i => i.IdMedicine == medicineId && i.Date == date && i.Time == time);
         }
 
         public async Task<bool> IntakeExistsAsync(int medicineId, string date, string time)
         {
-            var query = @"
-            SELECT COUNT(*) FROM Intake 
-            WHERE IdMedicine = @MedicineId 
-            AND Date = @Date 
-            AND Time = @Time";
-
-            var parameters = new { MedicineId = medicineId, Date = date, Time = time };
-            var count = await _dbHandler.ExecuteScalarAsync<int>(query, parameters);
-            return count > 0;
+            return await _context.Intakes
+                .AnyAsync(i => i.IdMedicine == medicineId && i.Date == date && i.Time == time);
         }
 
         public async Task<int> DeleteFutureIntakesForMedicineAsync(int medicineId, DateTime fromDate)
         {
-            var query = @"
-            DELETE FROM Intake 
-            WHERE IdMedicine = @MedicineId 
-            AND Date >= @FromDate
-            AND IsCompleted = 0";
+            var fromDateStr = fromDate.ToString("yyyy-MM-dd");
+            var intakes = await _context.Intakes
+                .Where(i => i.IdMedicine == medicineId && string.Compare(i.Date, fromDateStr) >= 0 && !i.IsCompleted)
+                .ToListAsync();
 
-            var parameters = new
-            {
-                MedicineId = medicineId,
-                FromDate = fromDate.ToString("yyyy-MM-dd")
-            };
-
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            _context.Intakes.RemoveRange(intakes);
+            return await _context.SaveChangesAsync();
         }
 
         public async Task<int> DeleteOldIntakesAsync(DateTime cutoffDate)
         {
-            var query = @"
-            DELETE FROM Intake 
-            WHERE Date < @CutoffDate
-            AND IsCompleted = 1";
+            var cutoffDateStr = cutoffDate.ToString("yyyy-MM-dd");
+            var intakes = await _context.Intakes
+                .Where(i => string.Compare(i.Date, cutoffDateStr) < 0 && i.IsCompleted)
+                .ToListAsync();
 
-            var parameters = new { CutoffDate = cutoffDate.ToString("yyyy-MM-dd") };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            _context.Intakes.RemoveRange(intakes);
+            return await _context.SaveChangesAsync();
         }
     }
 }

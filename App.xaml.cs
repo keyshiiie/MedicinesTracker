@@ -7,28 +7,30 @@ using CommunityToolkit.Mvvm.Messaging;
 using MedicinesTracker.Modules.Notifications.ViewModels;
 using MedicinesTracker.Modules.Notifications.Views;
 using MedicinesTracker.Services;
-using Application = Microsoft.Maui.Controls.Application;  // Алиас для MAUI Application
+using MedicinesTracker.Data;
+using Application = Microsoft.Maui.Controls.Application;
 
 namespace MedicinesTracker
 {
-    public partial class App : Application  // Теперь это MAUI Application
+    public partial class App : Application
     {
-        // Удаляем _appShellVM
         private readonly IServiceProvider _serviceProvider;
         private readonly IPreferencesService _preferencesService;
         private readonly IIntakeGeneratorService _intakeGenerator;
+        private readonly IDatabaseInitializer _databaseInitializer; // 👈 ДОБАВИТЬ
         private NavigationPage? _introNavigationPage;
 
         public App(
-            // Удаляем AppShellVM из параметров
             IServiceProvider serviceProvider,
             IPreferencesService preferencesService,
-            IIntakeGeneratorService intakeGenerator)
+            IIntakeGeneratorService intakeGenerator,
+            IDatabaseInitializer databaseInitializer) // 👈 ДОБАВИТЬ В ПАРАМЕТРЫ
         {
             InitializeComponent();
             _serviceProvider = serviceProvider;
             _preferencesService = preferencesService;
             _intakeGenerator = intakeGenerator;
+            _databaseInitializer = databaseInitializer; // 👈 СОХРАНИТЬ
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
@@ -87,7 +89,7 @@ namespace MedicinesTracker
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     // Создаем AppShell без ViewModel
-                    var appShell = new AppShell(); // Убрали _appShellVM
+                    var appShell = new AppShell();
 
                     // Получаем текущее окно
                     var window = Application.Current?.Windows.FirstOrDefault();
@@ -104,7 +106,7 @@ namespace MedicinesTracker
         private Window CreateMainWindow()
         {
             // Создаем AppShell без ViewModel
-            var appShell = new AppShell(); // Убрали _appShellVM
+            var appShell = new AppShell();
 
             // Запускаем запрос разрешений асинхронно
             Task.Run(async () =>
@@ -122,6 +124,11 @@ namespace MedicinesTracker
             try
             {
                 System.Diagnostics.Debug.WriteLine("=== App.OnStart ===");
+
+                // 👇 0. ИНИЦИАЛИЗИРУЕМ БАЗУ ДАННЫХ (НОВОЕ!)
+                System.Diagnostics.Debug.WriteLine("📁 Инициализация базы данных...");
+                await _databaseInitializer.EnsureCreatedAsync();
+                System.Diagnostics.Debug.WriteLine("✅ База данных готова");
 
                 // 1. Запрашиваем разрешения на уведомления
                 await RequestNotificationPermissionIfNeeded();
@@ -144,6 +151,7 @@ namespace MedicinesTracker
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 

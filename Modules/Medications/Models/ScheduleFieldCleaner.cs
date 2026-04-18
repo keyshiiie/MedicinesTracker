@@ -1,9 +1,8 @@
-﻿using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+﻿using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
 using System.Collections.ObjectModel;
-using System.Linq;
 
-namespace MedicinesTracker.Modules.Medications.Models
+namespace MedicinesTracker.Modules.Medications.s
 {
     public class ScheduleFieldCleaner
     {
@@ -12,9 +11,9 @@ namespace MedicinesTracker.Modules.Medications.Models
             string? newTypeCode,
             string? oldTypeCode,
             ref MedicineScheduleDto scheduleDto,
-            ref ScheduleModeModel? selectedMode,
-            ref RecurrencePatternModel? selectedPattern,
-            ref ObservableCollection<WeekDayModel> weekDays)
+            ref ScheduleMode? selectedMode,
+            ref RecurrencePattern? selectedPattern,
+            ref ObservableCollection<WeekDay> weekDays)
         {
             if (oldTypeCode == "RECURRING" && newTypeCode == "ONETIME")
             {
@@ -43,8 +42,8 @@ namespace MedicinesTracker.Modules.Medications.Models
         public void CleanForScheduleMode(
             string? newModeCode,
             string? oldModeCode,
-            ref ObservableCollection<WeekDayModel> weekDays,
-            ref RecurrencePatternModel? selectedPattern)
+            ref ObservableCollection<WeekDay> weekDays,
+            ref RecurrencePattern? selectedPattern)
         {
             if (oldModeCode == "INTERVAL" && newModeCode == "WEEKDAYS")
             {

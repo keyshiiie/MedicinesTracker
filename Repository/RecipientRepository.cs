@@ -1,59 +1,62 @@
-﻿using MedicinesTracker.Models;
+﻿using MedicinesTracker.Data;
+using MedicinesTracker.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace MedicinesTracker.Repository
 {
     public interface IRecipientRepository
     {
-        Task<IEnumerable<RecipientModel>> GetAllRecipientsAsync();
-        Task<int> UpdateRecipientAsync(RecipientModel recipientModel);
+        Task<IEnumerable<Recipient>> GetAllRecipientsAsync();
+        Task<int> UpdateRecipientAsync(Recipient recipient);
         Task<int> DeleteRecipientAsync(int idRecipient);
-        Task<int> AddRecipientAsync(RecipientModel recipientModel);
+        Task<int> AddRecipientAsync(Recipient recipient);
     }
+
     public class RecipientRepository : IRecipientRepository
     {
-        private readonly IDBHandler _dbHandler;
-        public RecipientRepository(IDBHandler dbHandler)
+        private readonly AppDbContext _context;
+
+        public RecipientRepository(AppDbContext context)
         {
-            _dbHandler = dbHandler;
-        }
-        public async Task<IEnumerable<RecipientModel>> GetAllRecipientsAsync()
-        {
-            var query = @"SELECT * FROM Recipient";
-            return await _dbHandler.QueryAsync<RecipientModel>(query);
+            _context = context;
         }
 
-        public async Task<int> UpdateRecipientAsync(RecipientModel recipientModel)
+        public async Task<IEnumerable<Recipient>> GetAllRecipientsAsync()
         {
-            var query = @"
-            UPDATE Recipient
-            SET 
-                Name = @Name
-            WHERE IdRecipient = @IdRecipient";
-            var parameters = new
-            {
-                recipientModel.IdRecipient,
-                recipientModel.Name
-            };
-
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            return await _context.Recipients
+                .OrderBy(r => r.Name)
+                .ToListAsync();
         }
+
+        public async Task<int> UpdateRecipientAsync(Recipient recipient)
+        {
+            var existing = await _context.Recipients.FindAsync(recipient.IdRecipient);
+            if (existing == null) return 0;
+
+            existing.Name = recipient.Name;
+            existing.UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+            return await _context.SaveChangesAsync();
+        }
+
         public async Task<int> DeleteRecipientAsync(int idRecipient)
         {
-            var query = @"DELETE FROM Recipient WHERE IdRecipient = @IdRecipient";
-            var parameters = new
-            {
-                IdRecipient = idRecipient
-            };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            var recipient = await _context.Recipients
+                .Include(r => r.Medicines)
+                .FirstOrDefaultAsync(r => r.IdRecipient == idRecipient);
+
+            if (recipient == null) return 0;
+
+            _context.Recipients.Remove(recipient);
+            return await _context.SaveChangesAsync();
         }
-        public async Task<int> AddRecipientAsync(RecipientModel recipientModel)
+
+        public async Task<int> AddRecipientAsync(Recipient recipient)
         {
-            var query = @"INSERT INTO Recipient(Name) VALUES(@Name)";
-            var parameters = new
-            {
-                recipientModel.Name
-            };
-            return await _dbHandler.ExecuteAsync(query, parameters);
+            recipient.CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            _context.Recipients.Add(recipient);
+            await _context.SaveChangesAsync();
+            return recipient.IdRecipient;
         }
     }
 }

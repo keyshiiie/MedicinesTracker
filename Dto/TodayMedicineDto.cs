@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MedicinesTracker.Models.Dto
+namespace MedicinesTracker.Dto
 {
     public class TodayMedicineDto
     {

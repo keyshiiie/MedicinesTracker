@@ -1,5 +1,5 @@
-﻿using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+﻿using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using System.Diagnostics;
 
@@ -8,7 +8,7 @@ namespace MedicinesTracker.Services
     public interface IScheduleService
     {
         Task<int> SaveScheduleAsync(MedicineScheduleDto scheduleDto,
-                                   List<WeekDayModel> selectedDays,
+                                   List<WeekDay> selectedDays,
                                    List<TimeSpan> selectedTimes);
         Task<MedicineScheduleDto?> GetScheduleByIdAsync(int scheduleId);
         Task ScheduleNotificationsForMedicineAsync(int medicineId);
@@ -19,21 +19,24 @@ namespace MedicinesTracker.Services
         private readonly IMedicineScheduleRepository _scheduleRepository;
         private readonly IScheduleTimeRepository _timeRepository;
         private readonly IScheduleWeekDaysRepository _weekDaysRepository;
-        private readonly INotificationPlannerService _notificationPlanner; // переименовано
-        private readonly IIntakeGeneratorService _intakeGenerator; // переименовано
+        private readonly INotificationPlannerService _notificationPlanner;
+        private readonly IIntakeGeneratorService _intakeGenerator;
+        private readonly IIntakeRepository _intakeRepository; // 👈 ДОБАВИТЬ
 
         public ScheduleService(
             IMedicineScheduleRepository scheduleRepository,
             IScheduleTimeRepository timeRepository,
             IScheduleWeekDaysRepository weekDaysRepository,
-            INotificationPlannerService notificationPlanner, // переименовано
-            IIntakeGeneratorService intakeGenerator) // переименовано
+            INotificationPlannerService notificationPlanner,
+            IIntakeGeneratorService intakeGenerator,
+            IIntakeRepository intakeRepository) // 👈 ДОБАВИТЬ
         {
             _scheduleRepository = scheduleRepository;
             _timeRepository = timeRepository;
             _weekDaysRepository = weekDaysRepository;
             _notificationPlanner = notificationPlanner;
             _intakeGenerator = intakeGenerator;
+            _intakeRepository = intakeRepository; // 👈 ДОБАВИТЬ
         }
 
         public async Task<MedicineScheduleDto?> GetScheduleByIdAsync(int scheduleId)
@@ -43,53 +46,61 @@ namespace MedicinesTracker.Services
 
         public async Task<int> SaveScheduleAsync(
             MedicineScheduleDto scheduleDto,
-            List<WeekDayModel> selectedDays,
+            List<WeekDay> selectedDays,
             List<TimeSpan> selectedTimes)
         {
             int scheduleId;
             bool isUpdate = scheduleDto.IdSchedule > 0;
 
-            var scheduleModel = ConvertToScheduleModel(scheduleDto);
+            var schedule = ConvertToSchedule(scheduleDto);
 
             if (isUpdate)
             {
-                await _scheduleRepository.UpdateMedicineScheduleAsync(scheduleModel);
+                // 👇 ВАЖНО: Сначала удаляем будущие записи приема
+                // Это нужно сделать ДО удаления ScheduleTime, чтобы избежать ошибки внешнего ключа
+                await _intakeRepository.DeleteFutureIntakesForMedicineAsync(
+                    scheduleDto.IdMedicine, DateTime.Today);
+
+                await _scheduleRepository.UpdateMedicineScheduleAsync(schedule);
                 scheduleId = scheduleDto.IdSchedule;
+
+                // Теперь можно безопасно удалять старые данные
                 await _timeRepository.DeleteScheduleTimesAsync(scheduleId);
                 await _weekDaysRepository.DeleteScheduleWeekDaysAsync(scheduleId);
             }
             else
             {
-                scheduleId = await _scheduleRepository.AddMedicineShedule(scheduleModel);
+                scheduleId = await _scheduleRepository.AddMedicineSchedule(schedule);
             }
 
+            // Сохраняем время приема
             if (selectedTimes.Any())
             {
                 await SaveScheduleTimes(scheduleId, selectedTimes);
             }
 
+            // Сохраняем дни недели (только для WEEKDAYS режима)
             if (selectedDays.Any() && scheduleDto.ScheduleModeCode == "WEEKDAYS")
             {
                 await SaveScheduleWeekDays(scheduleId, selectedDays);
             }
 
+            // Фоновая задача для перегенерации записей и уведомлений
             _ = Task.Run(async () =>
             {
                 try
                 {
                     Debug.WriteLine($"=== Сохранение расписания для лекарства ID: {scheduleDto.IdMedicine} ===");
 
+                    // Генерируем новые записи на сегодня
                     await _intakeGenerator.RegenerateIntakesForMedicineAsync(scheduleDto.IdMedicine);
                     Debug.WriteLine($"✅ Записи приема перегенерированы для лекарства ID: {scheduleDto.IdMedicine}");
 
                     await Task.Delay(500);
 
-                    if (_notificationPlanner != null)
-                    {
-                        _notificationPlanner.CancelAll();
-                        await _notificationPlanner.PlanForTodayAsync();
-                        Debug.WriteLine($"✅ Уведомления запланированы для лекарства ID: {scheduleDto.IdMedicine}");
-                    }
+                    _notificationPlanner.CancelAll();
+                    await _notificationPlanner.PlanForTodayAsync();
+                    Debug.WriteLine($"✅ Уведомления запланированы для лекарства ID: {scheduleDto.IdMedicine}");
                 }
                 catch (Exception ex)
                 {
@@ -106,12 +117,9 @@ namespace MedicinesTracker.Services
             {
                 Debug.WriteLine($"Планируем уведомления для лекарства ID: {medicineId}");
 
-                if (_notificationPlanner != null)
-                {
-                    _notificationPlanner.CancelAll();
-                    await _notificationPlanner.PlanForTodayAsync();
-                    Debug.WriteLine($"✅ Уведомления запланированы для лекарства ID: {medicineId}");
-                }
+                _notificationPlanner.CancelAll();
+                await _notificationPlanner.PlanForTodayAsync();
+                Debug.WriteLine($"✅ Уведомления запланированы для лекарства ID: {medicineId}");
             }
             catch (Exception ex)
             {
@@ -119,16 +127,16 @@ namespace MedicinesTracker.Services
             }
         }
 
-        private async Task SaveScheduleWeekDays(int scheduleId, List<WeekDayModel> selectedDays)
+        private async Task SaveScheduleWeekDays(int scheduleId, List<WeekDay> selectedDays)
         {
             foreach (var day in selectedDays)
             {
-                var weekDays = new ScheduleWeekDaysModel
+                var scheduleWeekDay = new ScheduleWeekDay
                 {
                     IdSchedule = scheduleId,
                     IdDay = day.IdDay
                 };
-                await _weekDaysRepository.UpdateScheduleWeekDayAsync(weekDays);
+                await _weekDaysRepository.AddScheduleWeekDayAsync(scheduleWeekDay);
             }
         }
 
@@ -137,7 +145,7 @@ namespace MedicinesTracker.Services
             int order = 1;
             foreach (var time in selectedTimes.OrderBy(t => t))
             {
-                var timeModel = new ScheduleTimeModel
+                var scheduleTime = new ScheduleTime
                 {
                     IdSchedule = scheduleId,
                     Time = time.ToString(@"hh\:mm"),
@@ -145,24 +153,24 @@ namespace MedicinesTracker.Services
                     IsActive = true
                 };
 
-                await _timeRepository.AddScheduleTimeAsync(timeModel);
+                await _timeRepository.AddScheduleTimeAsync(scheduleTime);
             }
         }
 
-        private MedicineScheduleModel ConvertToScheduleModel(MedicineScheduleDto scheduleDto)
+        private MedicationSchedule ConvertToSchedule(MedicineScheduleDto dto)
         {
-            return new MedicineScheduleModel
+            return new MedicationSchedule
             {
-                IdSchedule = scheduleDto.IdSchedule,
-                IdMedicine = scheduleDto.IdMedicine,
-                IdScheduleType = scheduleDto.IdScheduleType,
-                IdScheduleMode = scheduleDto.IdScheduleMode,
-                IdRecurrencePattern = scheduleDto.IdRecurrencePattern,
-                OneTimeDate = scheduleDto.OneTimeDate,
-                Dosage = scheduleDto.Dosage,
-                DateStart = scheduleDto.DateStart,
-                DateEnd = scheduleDto.DateEnd,
-                IsActive = scheduleDto.ScheduleIsActive
+                IdSchedule = dto.IdSchedule,
+                IdMedicine = dto.IdMedicine,
+                IdScheduleType = dto.IdScheduleType,
+                IdScheduleMode = dto.IdScheduleMode,
+                IdRecurrencePattern = dto.IdRecurrencePattern,
+                OneTimeDate = dto.OneTimeDate,
+                Dosage = dto.Dosage,
+                DateStart = dto.DateStart,
+                DateEnd = dto.DateEnd,
+                IsActive = dto.ScheduleIsActive
             };
         }
     }

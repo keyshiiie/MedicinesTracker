@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+using MedicinesTracker.Dto;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -16,7 +16,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private ObservableCollection<MedicineDetailDto> _medicineDetails = new();
 
         [ObservableProperty]
-        private RecipientModel? _selectedRecipient;
+        private Recipient? _selectedRecipient;
 
         [ObservableProperty]
         private bool _isRefreshing;

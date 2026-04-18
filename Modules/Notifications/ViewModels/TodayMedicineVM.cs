@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
-using MedicinesTracker.Models.Dto;
+using MedicinesTracker.Dto;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
 using System.Collections.ObjectModel;

@@ -13,8 +13,11 @@ using MedicinesTracker.Modules.Notifications.Views;
 using MedicinesTracker.Modules.Medications.Views;
 using MedicinesTracker.Modules.Settings.Views;
 using MedicinesTracker.Modules.HistoryIntake.View;
+using MedicinesTracker.Data;
+using Microsoft.EntityFrameworkCore;
+
 #if ANDROID
-using Android.App; 
+using Android.App;
 using Android.Content;
 #endif
 
@@ -49,30 +52,36 @@ namespace MedicinesTracker
             builder.Configuration
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
-            // 1. Регистрируем DatabaseService
-            builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+            // Путь к базе данных (единый для всех платформ)
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "MedicineTracker.db");
 
-            // 2. Регистрируем DBHandler с интерфейсом
-            builder.Services.AddSingleton<IDBHandler, DBHandler>();
+            // Регистрация DbContext как Scoped
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlite($"Data Source={dbPath}"),
+                ServiceLifetime.Scoped);
 
-            // 3. Регистрируем репозитории (обновляем типы конструкторов в репозиториях!)
-            builder.Services.AddSingleton<IMedicineRepository, MedicineRepository>();
-            builder.Services.AddSingleton<IReferencesDataRepository, ReferencesDataRepository>();
-            builder.Services.AddSingleton<IRecipientRepository, RecipientRepository>();
-            builder.Services.AddSingleton<IStockRepository, StockRepository>();
-            builder.Services.AddSingleton<IMedicineScheduleRepository, MedicineScheduleRepository>();
-            builder.Services.AddSingleton<IIntakeRepository, IntakeRepository>();
+            // Регистрация инициализатора БД
+            builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
-            // 4. Регистрируем сервисы
-            builder.Services.AddSingleton<IScheduleService, ScheduleService>();
-            builder.Services.AddSingleton<IValidatorService, ValidatorService>();
-            builder.Services.AddSingleton<IScheduleTimeRepository, ScheduleTimeRepository>();
-            builder.Services.AddSingleton<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
-            builder.Services.AddSingleton<IIntakeGeneratorService, IntakeGeneratorService>();
-            builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
+            // Регистрация репозиториев
+            builder.Services.AddScoped<IMedicineRepository, MedicineRepository>();
+            builder.Services.AddScoped<IReferencesDataRepository, ReferencesDataRepository>();
+            builder.Services.AddScoped<IRecipientRepository, RecipientRepository>();
+            builder.Services.AddScoped<IStockRepository, StockRepository>();
+            builder.Services.AddScoped<IMedicineScheduleRepository, MedicineScheduleRepository>();
+            builder.Services.AddScoped<IIntakeRepository, IntakeRepository>();
+            builder.Services.AddScoped<IScheduleTimeRepository, ScheduleTimeRepository>();
+            builder.Services.AddScoped<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
+
+            // Регистрация сервисов (ВСЕ Scoped)
+            builder.Services.AddScoped<IScheduleService, ScheduleService>();
+            builder.Services.AddScoped<IValidatorService, ValidatorService>();
+            builder.Services.AddScoped<IIntakeGeneratorService, IntakeGeneratorService>();
+            builder.Services.AddScoped<IPreferencesService, PreferencesService>();
             builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
             builder.Services.AddScoped<IMedicineBuilder, MedicineBuilder>();
-            builder.Services.AddSingleton<IScheduleEvaluator, ScheduleEvaluator>();
+            builder.Services.AddScoped<IScheduleEvaluator, ScheduleEvaluator>();
+            builder.Services.AddScoped<INotificationPlannerService, NotificationPlannerService>(); // ✅ Только одна регистрация
 
 #if ANDROID
             builder.Services.AddSingleton<IAlarmScheduler>(sp =>
@@ -81,10 +90,12 @@ namespace MedicinesTracker
                 var alarmManager = context.GetSystemService(Android.Content.Context.AlarmService) as AlarmManager;
                 return new MedicinesTracker.Platforms.Android.Services.AlarmScheduler(alarmManager, context);
             });
+#else
+            // Для Windows, iOS, MacCatalyst - временная заглушка
+            builder.Services.AddSingleton<IAlarmScheduler, DummyAlarmScheduler>();
 #endif
-            builder.Services.AddSingleton<INotificationPlannerService, NotificationPlannerService>();
 
-            // 5. Регистрируем ViewModels
+            // ViewModels (Transient)
             builder.Services.AddTransient<MedicineListVM>();
             builder.Services.AddTransient<TodayMedicineVM>();
             builder.Services.AddTransient<MedicineDetailVM>();
@@ -100,7 +111,7 @@ namespace MedicinesTracker
             builder.Services.AddTransient<GreetingVM>();
             builder.Services.AddTransient<AboutAppVM>();
 
-            // 6. Регистрируем ВСЕ Views (включая те, что в TabBar)
+            // Views (Transient)
             builder.Services.AddTransient<MedicineListPage>();
             builder.Services.AddTransient<TodayMedicinePage>();
             builder.Services.AddTransient<HistoryPage>();
@@ -116,13 +127,32 @@ namespace MedicinesTracker
             builder.Services.AddTransient<AcquaintancePage>();
             builder.Services.AddTransient<AboutAppPage>();
 
-            // 7. Регистрируем AppShell как Singleton
+            // AppShell как Singleton
             builder.Services.AddSingleton<AppShell>();
+
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            // Инициализация БД после сборки
+            using (var scope = app.Services.CreateScope())
+            {
+                try
+                {
+                    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+                    dbInitializer.EnsureCreatedAsync().Wait();
+                    System.Diagnostics.Debug.WriteLine("✅ Database initialized successfully");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Database initialization failed: {ex.Message}");
+                    throw;
+                }
+            }
+
+            return app;
         }
     }
 }

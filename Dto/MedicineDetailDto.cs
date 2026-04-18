@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MedicinesTracker.Models.Dto
+namespace MedicinesTracker.Dto
 {
     public class MedicineDetailDto
     {

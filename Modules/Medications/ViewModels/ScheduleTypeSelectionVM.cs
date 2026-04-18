@@ -1,11 +1,10 @@
-﻿// ViewModels/ScheduleTypeSelectionVM.cs
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Modules.Medications.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using MedicinesTracker.Models;
+using MedicinesTracker.Entities;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
@@ -16,10 +15,10 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private readonly IReferencesDataRepository _referencesRepository;
 
         [ObservableProperty]
-        private ObservableCollection<ScheduleTypeModel> _scheduleTypes = new();
+        private ObservableCollection<ScheduleType> _scheduleTypes = new();
 
         [ObservableProperty]
-        private ScheduleTypeModel? _selectedScheduleType;
+        private ScheduleType? _selectedScheduleType;
 
         [ObservableProperty]
         private bool _isValid = false;
@@ -91,7 +90,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             try
             {
                 var types = await _referencesRepository.GetAllScheduleTypeAsync();
-                ScheduleTypes = new ObservableCollection<ScheduleTypeModel>(types);
+                ScheduleTypes = new ObservableCollection<ScheduleType>(types);
             }
             catch (Exception ex)
             {
@@ -99,7 +98,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
         }
 
-        partial void OnSelectedScheduleTypeChanged(ScheduleTypeModel? value)
+        partial void OnSelectedScheduleTypeChanged(ScheduleType? value)
         {
             IsValid = value != null;
         }

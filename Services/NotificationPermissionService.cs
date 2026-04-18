@@ -1,5 +1,4 @@
-﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Devices;
+﻿using Microsoft.Maui.Devices;
 #if ANDROID
 using Android.App;
 using Android.Content;

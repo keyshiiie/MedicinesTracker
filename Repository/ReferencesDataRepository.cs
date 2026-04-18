@@ -1,189 +1,113 @@
-﻿using MedicinesTracker.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MedicinesTracker.Data;
+using MedicinesTracker.Entities;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Linq;
 
 namespace MedicinesTracker.Repository
 {
     public interface IReferencesDataRepository
     {
-        Task<IEnumerable<UnitModel>> GetAllUnitsAsync();
-        Task<IEnumerable<MethodAdmissionModel>> GetAllMethodsAdmissionAsync();
-        Task<IEnumerable<ScheduleTypeModel>> GetAllScheduleTypeAsync();
-        Task<IEnumerable<WeekDayModel>> GetAllWeekDayAsync();
-        Task<IEnumerable<RecurrencePatternModel>> GetAllRecurrencePatternAsync();
-        Task<IEnumerable<ScheduleModeModel>> GetAllScheduleModeAsync();
-
+        Task<IEnumerable<Unit>> GetAllUnitsAsync();
+        Task<IEnumerable<MethodAdmission>> GetAllMethodsAdmissionAsync();
+        Task<IEnumerable<ScheduleType>> GetAllScheduleTypeAsync();
+        Task<IEnumerable<WeekDay>> GetAllWeekDayAsync();
+        Task<IEnumerable<RecurrencePattern>> GetAllRecurrencePatternAsync();
+        Task<IEnumerable<ScheduleMode>> GetAllScheduleModeAsync();
         Task ClearCacheAsync();
     }
 
     public class ReferencesDataRepository : IReferencesDataRepository
     {
-        private readonly IDBHandler _dbHandler;
-        private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(30);
+        private readonly AppDbContext _context;
 
-        // Кэш для справочных данных (nullable)
-        private static List<UnitModel>? _cachedUnits;
-        private static List<MethodAdmissionModel>? _cachedMethods;
-        private static List<ScheduleTypeModel>? _cachedScheduleTypes;
-        private static List<WeekDayModel>? _cachedWeekDays;
-        private static List<RecurrencePatternModel>? _cachedRecurrencePatterns;
-        private static List<ScheduleModeModel>? _cachedScheduleModes;
+        // Опциональный кэш (можно оставить или убрать)
+        private static List<Unit>? _cachedUnits;
+        private static List<MethodAdmission>? _cachedMethods;
+        private static List<ScheduleType>? _cachedScheduleTypes;
+        private static List<WeekDay>? _cachedWeekDays;
+        private static List<RecurrencePattern>? _cachedRecurrencePatterns;
+        private static List<ScheduleMode>? _cachedScheduleModes;
 
-        // Время последнего обновления кэша
-        private static DateTime _unitsLastUpdate = DateTime.MinValue;
-        private static DateTime _methodsLastUpdate = DateTime.MinValue;
-        private static DateTime _scheduleTypesLastUpdate = DateTime.MinValue;
-        private static DateTime _weekDaysLastUpdate = DateTime.MinValue;
-        private static DateTime _recurrencePatternsLastUpdate = DateTime.MinValue;
-        private static DateTime _scheduleModesLastUpdate = DateTime.MinValue;
+        private static DateTime _lastCacheClear = DateTime.MinValue;
+        private static readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(30);
 
-        // Объекты для синхронизации
-        private static readonly SemaphoreSlim _unitsLock = new(1, 1);
-        private static readonly SemaphoreSlim _methodsLock = new(1, 1);
-        private static readonly SemaphoreSlim _scheduleTypesLock = new(1, 1);
-        private static readonly SemaphoreSlim _weekDaysLock = new(1, 1);
-        private static readonly SemaphoreSlim _recurrencePatternsLock = new(1, 1);
-        private static readonly SemaphoreSlim _scheduleModesLock = new(1, 1);
-
-        public ReferencesDataRepository(IDBHandler dbHandler)
+        public ReferencesDataRepository(AppDbContext context)
         {
-            _dbHandler = dbHandler;
+            _context = context;
         }
 
-        public async Task<IEnumerable<UnitModel>> GetAllUnitsAsync()
+        public async Task<IEnumerable<Unit>> GetAllUnitsAsync()
         {
-            return await GetCachedDataAsync(
-                _cachedUnits,
-                _unitsLastUpdate,
-                _unitsLock,
-                () => _dbHandler.QueryAsync<UnitModel>("SELECT * FROM Unit ORDER BY Name"),
-                data => _cachedUnits = data,
-                time => _unitsLastUpdate = time);
+            if (_cachedUnits != null && DateTime.Now - _lastCacheClear < _cacheDuration)
+                return _cachedUnits;
+
+            _cachedUnits = await _context.Units.OrderBy(u => u.Name).ToListAsync();
+            _lastCacheClear = DateTime.Now;
+            return _cachedUnits;
         }
 
-        public async Task<IEnumerable<MethodAdmissionModel>> GetAllMethodsAdmissionAsync()
+        public async Task<IEnumerable<MethodAdmission>> GetAllMethodsAdmissionAsync()
         {
-            return await GetCachedDataAsync(
-                _cachedMethods,
-                _methodsLastUpdate,
-                _methodsLock,
-                () => _dbHandler.QueryAsync<MethodAdmissionModel>("SELECT * FROM MethodAdmission ORDER BY Name"),
-                data => _cachedMethods = data,
-                time => _methodsLastUpdate = time);
+            if (_cachedMethods != null && DateTime.Now - _lastCacheClear < _cacheDuration)
+                return _cachedMethods;
+
+            _cachedMethods = await _context.MethodAdmissions.OrderBy(m => m.Name).ToListAsync();
+            _lastCacheClear = DateTime.Now;
+            return _cachedMethods;
         }
 
-        public async Task<IEnumerable<ScheduleTypeModel>> GetAllScheduleTypeAsync()
+        public async Task<IEnumerable<ScheduleType>> GetAllScheduleTypeAsync()
         {
-            return await GetCachedDataAsync(
-                _cachedScheduleTypes,
-                _scheduleTypesLastUpdate,
-                _scheduleTypesLock,
-                () => _dbHandler.QueryAsync<ScheduleTypeModel>("SELECT * FROM ScheduleType ORDER BY Name"),
-                data => _cachedScheduleTypes = data,
-                time => _scheduleTypesLastUpdate = time);
+            if (_cachedScheduleTypes != null && DateTime.Now - _lastCacheClear < _cacheDuration)
+                return _cachedScheduleTypes;
+
+            _cachedScheduleTypes = await _context.ScheduleTypes.OrderBy(st => st.Name).ToListAsync();
+            _lastCacheClear = DateTime.Now;
+            return _cachedScheduleTypes;
         }
 
-        public async Task<IEnumerable<WeekDayModel>> GetAllWeekDayAsync()
+        public async Task<IEnumerable<WeekDay>> GetAllWeekDayAsync()
         {
-            return await GetCachedDataAsync(
-                _cachedWeekDays,
-                _weekDaysLastUpdate,
-                _weekDaysLock,
-                () => _dbHandler.QueryAsync<WeekDayModel>("SELECT * FROM WeekDay ORDER BY Number"),
-                data => _cachedWeekDays = data,
-                time => _weekDaysLastUpdate = time);
+            if (_cachedWeekDays != null && DateTime.Now - _lastCacheClear < _cacheDuration)
+                return _cachedWeekDays;
+
+            _cachedWeekDays = await _context.WeekDays.OrderBy(w => w.Number).ToListAsync();
+            _lastCacheClear = DateTime.Now;
+            return _cachedWeekDays;
         }
 
-        public async Task<IEnumerable<RecurrencePatternModel>> GetAllRecurrencePatternAsync()
+        public async Task<IEnumerable<RecurrencePattern>> GetAllRecurrencePatternAsync()
         {
-            return await GetCachedDataAsync(
-                _cachedRecurrencePatterns,
-                _recurrencePatternsLastUpdate,
-                _recurrencePatternsLock,
-                () => _dbHandler.QueryAsync<RecurrencePatternModel>("SELECT * FROM RecurrencePattern ORDER BY DaysInterval"),
-                data => _cachedRecurrencePatterns = data,
-                time => _recurrencePatternsLastUpdate = time);
+            if (_cachedRecurrencePatterns != null && DateTime.Now - _lastCacheClear < _cacheDuration)
+                return _cachedRecurrencePatterns;
+
+            _cachedRecurrencePatterns = await _context.RecurrencePatterns.OrderBy(r => r.DaysInterval).ToListAsync();
+            _lastCacheClear = DateTime.Now;
+            return _cachedRecurrencePatterns;
         }
 
-        public async Task<IEnumerable<ScheduleModeModel>> GetAllScheduleModeAsync()
+        public async Task<IEnumerable<ScheduleMode>> GetAllScheduleModeAsync()
         {
-            return await GetCachedDataAsync(
-                _cachedScheduleModes,
-                _scheduleModesLastUpdate,
-                _scheduleModesLock,
-                () => _dbHandler.QueryAsync<ScheduleModeModel>("SELECT * FROM ScheduleMode ORDER BY Name"),
-                data => _cachedScheduleModes = data,
-                time => _scheduleModesLastUpdate = time);
+            if (_cachedScheduleModes != null && DateTime.Now - _lastCacheClear < _cacheDuration)
+                return _cachedScheduleModes;
+
+            _cachedScheduleModes = await _context.ScheduleModes.OrderBy(sm => sm.Name).ToListAsync();
+            _lastCacheClear = DateTime.Now;
+            return _cachedScheduleModes;
         }
 
-        private async Task<List<T>> GetCachedDataAsync<T>(
-            List<T>? cachedData,
-            DateTime lastUpdate,
-            SemaphoreSlim lockObject,
-            Func<Task<IEnumerable<T>>> dataLoader,
-            Action<List<T>> cacheSetter,
-            Action<DateTime> timeSetter)
+        public Task ClearCacheAsync()
         {
-            // Проверяем, нужно ли обновлять кэш
-            if (cachedData != null && (DateTime.Now - lastUpdate) < _cacheDuration)
-            {
-                Debug.WriteLine($"Using cached data for {typeof(T).Name}");
-                return cachedData;
-            }
+            _cachedUnits = null;
+            _cachedMethods = null;
+            _cachedScheduleTypes = null;
+            _cachedWeekDays = null;
+            _cachedRecurrencePatterns = null;
+            _cachedScheduleModes = null;
+            _lastCacheClear = DateTime.MinValue;
 
-            // Блокируем для обновления кэша
-            await lockObject.WaitAsync();
-            try
-            {
-                // Двойная проверка (double-check)
-                if (cachedData != null && (DateTime.Now - lastUpdate) < _cacheDuration)
-                {
-                    return cachedData;
-                }
-
-                Debug.WriteLine($"Loading fresh data for {typeof(T).Name}");
-
-                // Загружаем данные из БД
-                var data = await dataLoader();
-                var result = data.ToList();
-
-                // Обновляем кэш
-                cacheSetter(result);
-                timeSetter(DateTime.Now);
-
-                Debug.WriteLine($"Cached {typeof(T).Name}: {result.Count} items");
-
-                return result;
-            }
-            finally
-            {
-                lockObject.Release();
-            }
-        }
-
-        public async Task ClearCacheAsync()
-        {
-            await Task.Run(() =>
-            {
-                _cachedUnits = null;
-                _cachedMethods = null;
-                _cachedScheduleTypes = null;
-                _cachedWeekDays = null;
-                _cachedRecurrencePatterns = null;
-                _cachedScheduleModes = null;
-
-                _unitsLastUpdate = DateTime.MinValue;
-                _methodsLastUpdate = DateTime.MinValue;
-                _scheduleTypesLastUpdate = DateTime.MinValue;
-                _weekDaysLastUpdate = DateTime.MinValue;
-                _recurrencePatternsLastUpdate = DateTime.MinValue;
-                _scheduleModesLastUpdate = DateTime.MinValue;
-
-                Debug.WriteLine("Cache cleared");
-            });
+            Debug.WriteLine("References cache cleared");
+            return Task.CompletedTask;
         }
     }
 }

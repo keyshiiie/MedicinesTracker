@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MedicinesTracker.Models;
+using MedicinesTracker.Entities;
 using MedicinesTracker.Modules.Medications.Models;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
@@ -18,7 +18,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private readonly IMedicineBuilder _medicineBuilder;
 
         [ObservableProperty]
-        private StockModel _stock = new();
+        private Stock _stock = new();
 
         [ObservableProperty]
         private int _stockId;
@@ -120,7 +120,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private void ResetForm()
         {
-            Stock = new StockModel
+            Stock = new Stock
             {
                 CurrentQuantity = null, // Явно устанавливаем null
                 Threshold = null         // Явно устанавливаем null
@@ -237,7 +237,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     IsBusy = true;
 
                     // Создаем копию с non-null значениями для репозитория
-                    var stockToSave = new StockModel
+                    var stockToSave = new Stock
                     {
                         IdStock = Stock.IdStock,
                         IdMedicine = Stock.IdMedicine,
@@ -265,7 +265,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                         return;
                     }
 
-                    var stockForBuilder = new StockModel
+                    var stockForBuilder = new Stock
                     {
                         CurrentQuantity = Stock.CurrentQuantity!.Value,
                         Threshold = Stock.Threshold!.Value,

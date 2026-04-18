@@ -1,4 +1,4 @@
-﻿namespace MedicinesTracker.Models.Dto
+﻿namespace MedicinesTracker.Dto
 {
     public class MedicineScheduleDto
     {
@@ -30,6 +30,7 @@
         public bool ScheduleIsActive { get; set; }
 
         // Дни недели
+        public string? WeekDayIds { get; set; } 
         public string? WeekDays { get; set; }
 
         // Время приема
