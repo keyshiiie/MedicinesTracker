@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Modules.Medications.Views.MedicineDetailPage"
              x:DataType="viewModels:MedicineDetailVM"
-             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
              Title="Информация">
     <VerticalStackLayout>

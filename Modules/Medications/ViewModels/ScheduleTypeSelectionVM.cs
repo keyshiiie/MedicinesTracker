@@ -5,12 +5,13 @@ using MedicinesTracker.Modules.Medications.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using MedicinesTracker.Entities;
+using MedicinesTracker.Services;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
     [QueryProperty(nameof(IsNewMedicine), "isNewMedicine")]
     [QueryProperty(nameof(MedicineId), "medicineId")]
-    public partial class ScheduleTypeSelectionVM : ObservableObject
+    public partial class ScheduleTypeSelectionVM : CreationStepBaseVM
     {
         private readonly IReferencesDataRepository _referencesRepository;
 
@@ -29,16 +30,54 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private int _medicineId;
 
-        public ScheduleTypeSelectionVM(IReferencesDataRepository referencesRepository)
+        public ScheduleTypeSelectionVM(IReferencesDataRepository referencesRepository,
+            StepManager stepManager) : base(stepManager)
         {
             _referencesRepository = referencesRepository;
-            LoadDataAsync();
+        }
+
+        public override async Task ContinueAsync()
+        {
+            if (SelectedScheduleType == null) return;
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "scheduleTypeCode", SelectedScheduleType.Code },
+                { "isNewMedicine", IsNewMedicine },
+                { "medicineId", MedicineId }
+            };
+
+            if (SelectedScheduleType.Code == "RECURRING")
+            {
+                if (IsNewMedicine)
+                {
+                    _stepManager.NextStep();  // Переход к шагу 4
+                }
+                await Shell.Current.GoToAsync("ScheduleModeSelectionPage", parameters);
+            }
+            else if (SelectedScheduleType.Code == "ONETIME")
+            {
+                if (IsNewMedicine)
+                {
+                    _stepManager.CurrentStep = 5;  // Сразу к шагу 5
+                }
+                await Shell.Current.GoToAsync("ScheduleDetailsPage", parameters);
+            }
         }
 
         public async Task InitializeAsync()
         {
             try
             {
+                // Устанавливаем признак редактирования
+                IsEditingExisting = !IsNewMedicine;
+
+                // Для нового лекарства убеждаемся, что шаг правильный
+                if (IsNewMedicine && _stepManager.CurrentStep != 3)
+                {
+                    _stepManager.CurrentStep = 3;
+                }
+
                 Debug.WriteLine($"ScheduleTypeSelectionVM InitializeAsync - IsNewMedicine: {IsNewMedicine}, MedicineId: {MedicineId}");
 
                 if (!IsNewMedicine && MedicineId <= 0)
@@ -53,35 +92,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 Debug.WriteLine($"[ScheduleTypeSelectionVM ERROR] {ex.Message}\nStackTrace: {ex.StackTrace}");
                 await Shell.Current.DisplayAlertAsync("Ошибка",
                     $"Не удалось загрузить данные: {ex.Message}", "OK");
-            }
-        }
-
-        [RelayCommand]
-        private async Task ContinueAsync()
-        {
-            if (SelectedScheduleType == null) return;
-
-            Debug.WriteLine($"ScheduleTypeSelectionVM ContinueAsync - Type: {SelectedScheduleType.Code}, IsNewMedicine: {IsNewMedicine}, MedicineId: {MedicineId}");
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "scheduleTypeCode", SelectedScheduleType.Code },
-                { "isNewMedicine", IsNewMedicine },
-                { "medicineId", MedicineId }
-            };
-
-            // Для нового лекарства MedicineId будет 0, это нормально
-            if (SelectedScheduleType.Code == "RECURRING")
-            {
-                // Переходим к выбору способа задания расписания
-                Debug.WriteLine($"Переходим к ScheduleModeSelectionPage");
-                await Shell.Current.GoToAsync("ScheduleModeSelectionPage", parameters);
-            }
-            else if (SelectedScheduleType.Code == "ONETIME")
-            {
-                // Переходим к заполнению одноразового расписания
-                Debug.WriteLine($"Переходим к ScheduleDetailsPage");
-                await Shell.Current.GoToAsync("ScheduleDetailsPage", parameters);
             }
         }
 
@@ -103,9 +113,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             IsValid = value != null;
         }
 
-        [RelayCommand]
-        private async Task BackAsync()
+        public override async Task BackAsync()
         {
+            if (IsNewMedicine)
+            {
+                _stepManager.PreviousStep();  // Возврат к шагу 2
+            }
             await Shell.Current.GoToAsync("..");
         }
     }

@@ -14,7 +14,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     [QueryProperty(nameof(MedicineId), "medicineId")]
     [QueryProperty(nameof(IsNewMedicine), "isNewMedicine")]
     [QueryProperty(nameof(ScheduleId), "scheduleId")]
-    public partial class ScheduleDetailsVM : BaseScheduleStepVM
+    public partial class ScheduleDetailsVM : CreationStepBaseVM
     {
         private readonly IReferencesDataRepository _referencesRepository;
         private readonly IScheduleService _scheduleService;
@@ -66,19 +66,10 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private bool _isSaving = false;
 
-        [ObservableProperty]
-        private bool _isEditingExisting = false;
-
         public bool IsRecurring => ScheduleTypeCode == "RECURRING";
         public bool IsIntervalMode => IsRecurring && ScheduleModeCode == "INTERVAL";
         public bool IsWeekDaysMode => IsRecurring && ScheduleModeCode == "WEEKDAYS";
         public bool IsOneTime => ScheduleTypeCode == "ONETIME";
-
-        public override string Title => "Расписание";
-
-        public override string Description => IsOneTime
-            ? "Настройте одноразовый приём"
-            : $"Настройте {GetModeDescription()}";
 
         private string GetModeDescription()
         {
@@ -94,7 +85,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             IReferencesDataRepository referencesRepository,
             IScheduleService scheduleService,
             IMedicineBuilder medicineBuilder,
-            IValidatorService validatorService)
+            IValidatorService validatorService,
+            StepManager stepManager) : base(stepManager)
         {
             _referencesRepository = referencesRepository;
             _scheduleService = scheduleService;
@@ -104,7 +96,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         partial void OnScheduleIdChanged(int value)
         {
-            _isEditingExisting = value > 0;
+            IsEditingExisting = value > 0;  // Используем базовое свойство
         }
 
         partial void OnScheduleTypeCodeChanged(string value)
@@ -112,8 +104,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             Debug.WriteLine($"OnScheduleTypeCodeChanged: {value}");
             UpdateUI();
 
-            // При смене типа расписания обновляем даты по умолчанию
-            if (!_isEditingExisting)
+            if (!IsEditingExisting)
             {
                 SetDefaultDates();
             }
@@ -124,7 +115,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             Debug.WriteLine($"OnScheduleModeCodeChanged: {value}");
             UpdateUI();
 
-            // При смене режима расписания обновляем UI
             OnPropertyChanged(nameof(IsIntervalMode));
             OnPropertyChanged(nameof(IsWeekDaysMode));
         }
@@ -133,18 +123,24 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             Debug.WriteLine($"ScheduleDetailsVM InitializeAsync - Type: {ScheduleTypeCode}, Mode: {ScheduleModeCode}, MedicineId: {MedicineId}, IsNew: {IsNewMedicine}, ScheduleId: {ScheduleId}");
 
+            // Устанавливаем признак редактирования
+            IsEditingExisting = ScheduleId > 0;
+
+            // Для нового лекарства убеждаемся, что шаг правильный
+            if (IsNewMedicine && _stepManager.CurrentStep != 5)
+            {
+                _stepManager.CurrentStep = 5;
+            }
+
             await LoadDataAsync();
 
-            if (_isEditingExisting && ScheduleId > 0)
+            if (IsEditingExisting && ScheduleId > 0)
             {
                 await LoadScheduleDataAsync(ScheduleId);
             }
             else
             {
-                // ВАЖНО: Устанавливаем значения по умолчанию ДО загрузки страницы
                 SetDefaultDates();
-
-                // Дополнительно проверяем, что значения установились
                 Debug.WriteLine($"После SetDefaultDates - Dosage: {MedicineSchedule.Dosage}, IsActive: {MedicineSchedule.ScheduleIsActive}, DateEnd: {MedicineSchedule.DateEnd}");
             }
         }
@@ -160,7 +156,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 {
                     MedicineSchedule = schedule;
 
-                    // Загружаем выбранные времена
                     if (!string.IsNullOrEmpty(schedule.Times))
                     {
                         var times = schedule.Times
@@ -178,14 +173,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                         UpdateTimesText();
                     }
 
-                    // Для интервального режима выбираем паттерн
                     if (IsIntervalMode && schedule.IdRecurrencePattern.HasValue && RecurrencePatterns.Any())
                     {
                         SelectedRecurrencePattern = RecurrencePatterns
                             .FirstOrDefault(rp => rp.IdPattern == schedule.IdRecurrencePattern.Value);
                     }
 
-                    // Для режима дней недели отмечаем выбранные дни
                     if (IsWeekDaysMode && !string.IsNullOrEmpty(schedule.WeekDays) && WeekDays.Any())
                     {
                         var selectedDayNames = schedule.WeekDays
@@ -213,17 +206,14 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                // Загружаем дни недели
                 var days = await _referencesRepository.GetAllWeekDayAsync();
                 WeekDays = new ObservableCollection<WeekDay>(days);
 
-                // Подписываемся на изменения выбора дней
                 foreach (var day in WeekDays)
                 {
                     day.PropertyChanged += OnWeekDaySelectionChanged;
                 }
 
-                // Загружаем паттерны повторения только для интервального режима
                 if (IsIntervalMode)
                 {
                     var patterns = await _referencesRepository.GetAllRecurrencePatternAsync();
@@ -242,7 +232,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             OnPropertyChanged(nameof(IsIntervalMode));
             OnPropertyChanged(nameof(IsWeekDaysMode));
             OnPropertyChanged(nameof(IsOneTime));
-            OnPropertyChanged(nameof(Description));
         }
 
         private void SetDefaultDates()
@@ -256,20 +245,16 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             else
             {
                 MedicineSchedule.DateStart = today.ToString("yyyy-MM-dd");
-                // Дата завершения на месяц позже
                 MedicineSchedule.DateEnd = today.AddMonths(1).ToString("yyyy-MM-dd");
             }
 
-            // Доза по умолчанию = 1 (только если не установлена)
             if (MedicineSchedule.Dosage <= 0)
             {
                 MedicineSchedule.Dosage = 1;
             }
 
-            // Уведомления включены по умолчанию (только если не установлены)
             MedicineSchedule.ScheduleIsActive = true;
 
-            // Устанавливаем время по умолчанию, если нет выбранных времен
             if (SelectedTimes.Count == 0)
             {
                 SelectedTimes.Add(TimeSpan.FromHours(8));
@@ -278,7 +263,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
             Debug.WriteLine($"SetDefaultDates - Dosage: {MedicineSchedule.Dosage}, IsActive: {MedicineSchedule.ScheduleIsActive}, DateEnd: {MedicineSchedule.DateEnd}");
 
-            // ВАЖНО: Уведомляем UI об изменениях
             OnPropertyChanged(nameof(MedicineSchedule));
         }
 
@@ -348,9 +332,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             {
                 Debug.WriteLine($"ScheduleDetailsVM ContinueAsync - Type: {ScheduleTypeCode}, Mode: {ScheduleModeCode}, IsNewMedicine: {IsNewMedicine}, MedicineId: {MedicineId}");
 
-                // ВАЖНО: НЕ меняем значения пользователя!
-                // Просто используем те значения, которые пользователь установил в UI
-
                 var selectedDays = WeekDays?.Where(d => d.IsSelected).ToList() ?? new List<WeekDay>();
 
                 var tempScheduleType = new ScheduleType
@@ -376,7 +357,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 IsIntervalMode,
                 IsWeekDaysMode,
                 MedicineSchedule.DateStart,
-                MedicineSchedule.DateEnd,  
+                MedicineSchedule.DateEnd,
                 MedicineSchedule.OneTimeDate,
                 MedicineSchedule.Dosage,
                 tempScheduleType,
@@ -426,13 +407,13 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                         MedicineSchedule.IdRecurrencePattern = SelectedRecurrencePattern.IdPattern;
                     }
 
-                    // Сохраняем ТО, ЧТО ПОЛЬЗОВАТЕЛЬ ВВЕЛ, без изменений
                     await _scheduleService.SaveScheduleAsync(
                         MedicineSchedule,
                         selectedDaysList,
                         SelectedTimes.ToList());
 
                     await Shell.Current.DisplayAlertAsync("Успех", "Расписание сохранено!", "OK");
+                    _stepManager.Reset();
                     await Shell.Current.GoToAsync("//medicines");
                 }
                 else
@@ -479,6 +460,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 await Shell.Current.DisplayAlertAsync("Успех",
                     $"Лекарство успешно создано!", "OK");
 
+                _stepManager.Reset();
                 await Shell.Current.GoToAsync("//medicines");
             }
             catch (Exception ex)
@@ -511,6 +493,10 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         public override async Task BackAsync()
         {
+            if (IsNewMedicine)
+            {
+                _stepManager.PreviousStep();
+            }
             await Shell.Current.GoToAsync("..");
         }
     }

@@ -44,27 +44,37 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [RelayCommand]
         private async Task OpenDetailPage(MedicineDetailDto medicine)
         {
-            if (medicine is null) return;
-            if (medicine.IdMedicine <= 0)
+            Debug.WriteLine("=== OpenDetailPage CALLED ===");
+
+            if (medicine is null)
             {
-                Debug.WriteLine("Ошибка: IdMedicine должен быть > 0");
+                Debug.WriteLine("medicine is null");
                 return;
             }
+
+            Debug.WriteLine($"IdMedicine: {medicine.IdMedicine}");
+            Debug.WriteLine($"MedicineName: {medicine.MedicineName}");
+
             try
             {
                 var parameters = new Dictionary<string, object>
-                {
-                    { "idMedicine", medicine.IdMedicine },
-                    { "medicineName", medicine.MedicineName ?? string.Empty},
-                    { "idStock", medicine.IdStock },
-                    { "unitName", medicine.UnitName ?? string.Empty},
-                    { "idSchedule", medicine.IdSchedule }
-                };
+        {
+            { "idMedicine", medicine.IdMedicine },
+            { "medicineName", medicine.MedicineName ?? string.Empty},
+            { "idStock", medicine.IdStock },
+            { "unitName", medicine.UnitName ?? string.Empty},
+            { "idSchedule", medicine.IdSchedule }
+        };
+
+                Debug.WriteLine("Navigating to MedicineDetailPage...");
                 await Shell.Current.GoToAsync("MedicineDetailPage", parameters);
+                Debug.WriteLine("Navigation completed");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при переходе на страницу детализации: {ex.Message}");
+                Debug.WriteLine($"Error: {ex.Message}");
+                Debug.WriteLine($"StackTrace: {ex.StackTrace}");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
             }
         }
 

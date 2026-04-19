@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Modules.Medications.Views.MedicineListPage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
-             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
+             xmlns:dto="clr-namespace:MedicinesTracker.Dto"
              x:DataType="viewModels:MedicineListVM"
              Title="Лекарства">
 
@@ -17,14 +17,11 @@
                             VerticalOptions="Fill">
                 <!-- Шаблон элемента -->
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:MedicineDetailDto">
+                    <DataTemplate x:DataType="dto:MedicineDetailDto">
                         <VerticalStackLayout>
                             <Border Style="{StaticResource MedicineCardBorderStyle}">
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer 
-                                        Command="{Binding OpenDetailPageCommand, 
-                                        Source={RelativeSource AncestorType={x:Type viewModels:MedicineListVM}}}"
-                                        CommandParameter="{Binding .}" />
+                                    <TapGestureRecognizer Tapped="OnMedicineTapped" />
                                 </Border.GestureRecognizers>
                                 <StackLayout Spacing="10">
                                     <Grid>

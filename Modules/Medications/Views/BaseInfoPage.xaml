@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Modules.Medications.Views.Controls"
              x:Class="MedicinesTracker.Modules.Medications.Views.BaseInfoPage"
              x:DataType="viewModels:BaseInfoVM"
              Title="Информация">
@@ -70,5 +71,10 @@
                                 Style="{StaticResource SaveMedicineButtonStyle}"/>
                 </HorizontalStackLayout>
             </VerticalStackLayout>
+        <controls:CreationProgressBar 
+            CurrentStep="{Binding CurrentStep}"
+            TotalSteps="{Binding TotalSteps}"
+            StepDescription="{Binding StepDescription}"
+            IsEditing="{Binding IsEditingExisting}" />
     </VerticalStackLayout>
 </ContentPage>

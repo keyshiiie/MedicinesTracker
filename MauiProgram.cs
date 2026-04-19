@@ -81,8 +81,8 @@ namespace MedicinesTracker
             builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
             builder.Services.AddScoped<IMedicineBuilder, MedicineBuilder>();
             builder.Services.AddScoped<IScheduleEvaluator, ScheduleEvaluator>();
-            builder.Services.AddScoped<INotificationPlannerService, NotificationPlannerService>(); // ✅ Только одна регистрация
-
+            builder.Services.AddScoped<INotificationPlannerService, NotificationPlannerService>();
+            builder.Services.AddSingleton<StepManager>();
 #if ANDROID
             builder.Services.AddSingleton<IAlarmScheduler>(sp =>
             {

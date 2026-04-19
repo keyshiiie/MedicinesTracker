@@ -1,61 +1,65 @@
-namespace MedicinesTracker.Modules.Medications.Views.Controls;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
-public partial class CreationProgressBar : ContentView
+namespace MedicinesTracker.Modules.Medications.Views.Controls
 {
-    public static readonly BindableProperty CurrentStepProperty =
-        BindableProperty.Create(nameof(CurrentStep), typeof(int), typeof(CreationProgressBar), 1);
-
-    public static readonly BindableProperty TotalStepsProperty =
-        BindableProperty.Create(nameof(TotalSteps), typeof(int), typeof(CreationProgressBar), 4);
-
-    public static readonly BindableProperty ProgressWidthProperty =
-        BindableProperty.Create(nameof(ProgressWidth), typeof(double), typeof(CreationProgressBar), 0.0);
-
-    public int CurrentStep
+    public partial class CreationProgressBar : ContentView
     {
-        get => (int)GetValue(CurrentStepProperty);
-        set
+        public static readonly BindableProperty CurrentStepProperty =
+            BindableProperty.Create(nameof(CurrentStep), typeof(int), typeof(CreationProgressBar), 1,
+                propertyChanged: OnCurrentStepChanged);
+
+        public static readonly BindableProperty TotalStepsProperty =
+            BindableProperty.Create(nameof(TotalSteps), typeof(int), typeof(CreationProgressBar), 5,
+                propertyChanged: OnTotalStepsChanged);
+
+        public static readonly BindableProperty StepDescriptionProperty =
+            BindableProperty.Create(nameof(StepDescription), typeof(string), typeof(CreationProgressBar), string.Empty);
+
+        public static readonly BindableProperty IsEditingProperty =
+            BindableProperty.Create(nameof(IsEditing), typeof(bool), typeof(CreationProgressBar), false);
+
+        public int CurrentStep
         {
-            SetValue(CurrentStepProperty, value);
-            UpdateProgressWidth();
+            get => (int)GetValue(CurrentStepProperty);
+            set => SetValue(CurrentStepProperty, value);
         }
-    }
 
-    public int TotalSteps
-    {
-        get => (int)GetValue(TotalStepsProperty);
-        set
+        public int TotalSteps
         {
-            SetValue(TotalStepsProperty, value);
-            UpdateProgressWidth();
+            get => (int)GetValue(TotalStepsProperty);
+            set => SetValue(TotalStepsProperty, value);
         }
-    }
 
-    public double ProgressWidth
-    {
-        get => (double)GetValue(ProgressWidthProperty);
-        set => SetValue(ProgressWidthProperty, value);
-    }
-
-    public CreationProgressBar()
-    {
-        InitializeComponent();
-    }
-
-    private void UpdateProgressWidth()
-    {
-        if (TotalSteps > 0)
+        public string StepDescription
         {
-            // ѕолучаем ширину контейнера (минус отступы)
-            var containerWidth = (Application.Current?.Windows.FirstOrDefault()?.Width ?? 400) - 40;
-            var percentage = (double)CurrentStep / TotalSteps;
-            ProgressWidth = containerWidth * percentage;
+            get => (string)GetValue(StepDescriptionProperty);
+            set => SetValue(StepDescriptionProperty, value);
         }
-    }
 
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        UpdateProgressWidth();
+        public bool IsEditing
+        {
+            get => (bool)GetValue(IsEditingProperty);
+            set => SetValue(IsEditingProperty, value);
+        }
+
+        public double ProgressWidth => (double)CurrentStep / TotalSteps;
+
+        public CreationProgressBar()
+        {
+            InitializeComponent();
+        }
+
+        private static void OnCurrentStepChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var control = (CreationProgressBar)bindable;
+            control.OnPropertyChanged(nameof(ProgressWidth));
+        }
+
+        private static void OnTotalStepsChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var control = (CreationProgressBar)bindable;
+            control.OnPropertyChanged(nameof(ProgressWidth));
+        }
     }
 }

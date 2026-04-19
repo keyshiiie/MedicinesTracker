@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="MedicinesTracker.Modules.Medications.Views.ScheduleModeSelectionPage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Modules.Medications.Views.Controls"
+             x:Class="MedicinesTracker.Modules.Medications.Views.ScheduleModeSelectionPage"
              x:DataType="viewModels:ScheduleModeSelectionVM"
              Title="Способ задания">
 
@@ -25,12 +26,22 @@
 
             <!-- Кнопки -->
             <Grid ColumnDefinitions="*,Auto">
+                <Button Text="Назад"
+                Command="{Binding BackCommand}"
+                IsVisible="{Binding ShowBackButton}"
+                HorizontalOptions="Center"
+                Style="{StaticResource SecondaryButtonStyle}" />
                 <Button Text="Далее"
                         Command="{Binding ContinueCommand}"
                         IsEnabled="{Binding IsValid}"
                         Style="{StaticResource SaveMedicineButtonStyle}"
                         Grid.Column="1"/>
             </Grid>
+            <controls:CreationProgressBar 
+                CurrentStep="{Binding CurrentStep}"
+                TotalSteps="{Binding TotalSteps}"
+                StepDescription="{Binding StepDescription}"
+                IsEditing="{Binding IsEditingExisting}" />
         </VerticalStackLayout>
     </VerticalStackLayout>
 </ContentPage>

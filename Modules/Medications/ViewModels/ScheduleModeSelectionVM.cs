@@ -4,13 +4,14 @@ using System.Diagnostics;
 using MedicinesTracker.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
+using MedicinesTracker.Services;
 
-namespace MedicinesTracker.Modules.Medications.Views
+namespace MedicinesTracker.Modules.Medications.ViewModels
 {
     [QueryProperty(nameof(ScheduleTypeCode), "scheduleTypeCode")]
     [QueryProperty(nameof(IsNewMedicine), "isNewMedicine")]
     [QueryProperty(nameof(MedicineId), "medicineId")]
-    public partial class ScheduleModeSelectionVM : ObservableObject
+    public partial class ScheduleModeSelectionVM : CreationStepBaseVM
     {
         private readonly IReferencesDataRepository _referencesRepository;
 
@@ -32,23 +33,54 @@ namespace MedicinesTracker.Modules.Medications.Views
         [ObservableProperty]
         private bool _isValid = false;
 
-        public ScheduleModeSelectionVM(IReferencesDataRepository referencesRepository)
+        public ScheduleModeSelectionVM(IReferencesDataRepository referencesRepository,
+            StepManager stepManager) : base(stepManager)
         {
             _referencesRepository = referencesRepository;
-            LoadDataAsync();
+        }
+
+        public override async Task ContinueAsync()
+        {
+            if (SelectedScheduleMode == null) return;
+
+            if (IsNewMedicine)
+            {
+                _stepManager.NextStep();  // Переход к шагу 5
+            }
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "scheduleTypeCode", ScheduleTypeCode },
+                { "scheduleModeCode", SelectedScheduleMode.Code },
+                { "isRecurring", true },
+                { "isNewMedicine", IsNewMedicine },
+                { "medicineId", MedicineId }
+            };
+
+            await Shell.Current.GoToAsync("ScheduleDetailsPage", parameters);
         }
 
         public async Task InitializeAsync()
         {
             try
             {
+                // Устанавливаем признак редактирования
+                IsEditingExisting = !IsNewMedicine;
+
+                // Для нового лекарства убеждаемся, что шаг правильный
+                if (IsNewMedicine && _stepManager.CurrentStep != 4)
+                {
+                    _stepManager.CurrentStep = 4;
+                }
+
                 await LoadDataAsync();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MedicineScheduleVM ERROR] {ex.Message}");
+                Debug.WriteLine($"[ScheduleModeSelectionVM ERROR] {ex.Message}");
             }
         }
+
         private async Task LoadDataAsync()
         {
             try
@@ -67,26 +99,12 @@ namespace MedicinesTracker.Modules.Medications.Views
             IsValid = value != null;
         }
 
-        [RelayCommand]
-        private async Task ContinueAsync()
+        public override async Task BackAsync()
         {
-            if (SelectedScheduleMode == null) return;
-
-            var parameters = new Dictionary<string, object>
+            if (IsNewMedicine)
             {
-                { "scheduleTypeCode", ScheduleTypeCode },
-                { "scheduleModeCode", SelectedScheduleMode.Code },
-                { "isRecurring", true },
-                { "isNewMedicine", IsNewMedicine },
-                { "medicineId", MedicineId }
-            };
-
-            await Shell.Current.GoToAsync("ScheduleDetailsPage", parameters);
-        }
-
-        [RelayCommand]
-        private async Task BackAsync()
-        {
+                _stepManager.PreviousStep();  // Возврат к шагу 3
+            }
             await Shell.Current.GoToAsync("..");
         }
     }

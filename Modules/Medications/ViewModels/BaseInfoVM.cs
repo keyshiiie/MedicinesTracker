@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Entities;
-using MedicinesTracker.Modules.Medications.s;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
 using System.Diagnostics;
@@ -8,10 +7,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using MedicinesTracker.Modules.Medications.Models;
 
-namespace MedicinesTracker.Modules.Medications.Views
+namespace MedicinesTracker.Modules.Medications.ViewModels
 {
     [QueryProperty(nameof(MedicineId), "idMedicine")]
-    public partial class BaseInfoVM : ObservableObject
+    public partial class BaseInfoVM : CreationStepBaseVM
     {
         private readonly IMedicineRepository _medicineRepository;
         private readonly IReferencesDataRepository _referencesDataRepository;
@@ -41,9 +40,6 @@ namespace MedicinesTracker.Modules.Medications.Views
         private MethodAdmission? _selectedMethodAdmission;
 
         [ObservableProperty]
-        private bool _isEditingExisting;
-
-        [ObservableProperty]
         private int _medicineId;
 
         [ObservableProperty]
@@ -54,13 +50,19 @@ namespace MedicinesTracker.Modules.Medications.Views
             IMedicineRepository medicineRepository,
             IRecipientRepository recipientRepository,
             IValidatorService validatorService,
-            IMedicineBuilder medicineBuilder)
+            IMedicineBuilder medicineBuilder,
+            StepManager stepManager) : base(stepManager)
         {
             _referencesDataRepository = referencesDataRepository;
             _medicineRepository = medicineRepository;
             _recipientRepository = recipientRepository;
             _validatorService = validatorService;
             _medicineBuilder = medicineBuilder;
+        }
+
+        public override async Task ContinueAsync()
+        {
+            await SaveMedicine();
         }
 
         partial void OnMedicineIdChanged(int value)
@@ -84,6 +86,11 @@ namespace MedicinesTracker.Modules.Medications.Views
         {
             try
             {
+                if (!IsEditingExisting)
+                {
+                    _stepManager.Reset();
+                }
+
                 await LoadDataAsync();
             }
             catch (Exception ex)
@@ -255,6 +262,7 @@ namespace MedicinesTracker.Modules.Medications.Views
                     Debug.WriteLine($"BaseInfo добавлен в Builder. Статус: {_medicineBuilder.IsComplete}");
 
                     // Переходим к следующему шагу
+                    _stepManager.NextStep(); 
                     await OpenStockPage();
                 }
             }
