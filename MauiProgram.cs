@@ -15,6 +15,8 @@ using MedicinesTracker.Modules.Settings.Views;
 using MedicinesTracker.Modules.HistoryIntake.View;
 using MedicinesTracker.Data;
 using Microsoft.EntityFrameworkCore;
+using MedicinesTracker.Services.Navigation;
+
 
 #if ANDROID
 using Android.App;
@@ -73,7 +75,7 @@ namespace MedicinesTracker
             builder.Services.AddScoped<IScheduleTimeRepository, ScheduleTimeRepository>();
             builder.Services.AddScoped<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
 
-            // Регистрация сервисов (ВСЕ Scoped)
+            // Регистрация сервисов
             builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddScoped<IValidatorService, ValidatorService>();
             builder.Services.AddScoped<IIntakeGeneratorService, IntakeGeneratorService>();
@@ -83,6 +85,8 @@ namespace MedicinesTracker
             builder.Services.AddScoped<IScheduleEvaluator, ScheduleEvaluator>();
             builder.Services.AddScoped<INotificationPlannerService, NotificationPlannerService>();
             builder.Services.AddSingleton<StepManager>();
+            builder.Services.AddSingleton<INavigationService, NavigationService>();
+            builder.Services.AddSingleton<IMedicationCreationNavigationService, MedicationCreationNavigationService>();
 #if ANDROID
             builder.Services.AddSingleton<IAlarmScheduler>(sp =>
             {

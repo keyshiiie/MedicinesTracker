@@ -13,9 +13,9 @@ namespace MedicinesTracker.Entities
 
         // Навигационные свойства
         [ForeignKey(nameof(IdSchedule))]
-        public virtual MedicationSchedule Schedule { get; set; }
+        public virtual MedicationSchedule Schedule { get; set; } = null!;
 
         [ForeignKey(nameof(IdDay))]
-        public virtual WeekDay WeekDay { get; set; }
+        public virtual WeekDay WeekDay { get; set; } = null!;
     }
 }

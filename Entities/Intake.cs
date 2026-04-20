@@ -19,12 +19,12 @@ namespace MedicinesTracker.Entities
 
         // Навигационные свойства
         [ForeignKey(nameof(IdMedicine))]
-        public virtual Medicine Medicine { get; set; }
+        public virtual Medicine Medicine { get; set; } = null!;
 
         [ForeignKey(nameof(IdSchedule))]
-        public virtual MedicationSchedule Schedule { get; set; }
+        public virtual MedicationSchedule Schedule { get; set; } = null!;
 
         [ForeignKey(nameof(IdScheduleTime))]
-        public virtual ScheduleTime ScheduleTime { get; set; }
+        public virtual ScheduleTime ScheduleTime { get; set; } = null!;
     }
 }

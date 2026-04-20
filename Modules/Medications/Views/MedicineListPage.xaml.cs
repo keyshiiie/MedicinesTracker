@@ -39,7 +39,7 @@ public partial class MedicineListPage : ContentPage
             if (medicine == null)
             {
                 Debug.WriteLine("medicine is null - BindingContext is " + border.BindingContext?.GetType().Name);
-                await Shell.Current.DisplayAlert("Ошибка", "Не удалось получить данные о лекарстве", "OK");
+                await Shell.Current.DisplayAlertAsync("Ошибка", "Не удалось получить данные о лекарстве", "OK");
                 return;
             }
 
@@ -47,7 +47,7 @@ public partial class MedicineListPage : ContentPage
 
             if (medicine.IdMedicine <= 0)
             {
-                await Shell.Current.DisplayAlert("Ошибка", "ID лекарства не указан", "OK");
+                await Shell.Current.DisplayAlertAsync("Ошибка", "ID лекарства не указан", "OK");
                 return;
             }
 
@@ -57,7 +57,7 @@ public partial class MedicineListPage : ContentPage
         catch (Exception ex)
         {
             Debug.WriteLine($"Error in OnMedicineTapped: {ex.Message}");
-            await Shell.Current.DisplayAlert("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
         }
     }
 }

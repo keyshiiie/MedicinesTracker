@@ -20,16 +20,16 @@ namespace MedicinesTracker.Entities
 
         // Навигационные свойства
         [ForeignKey(nameof(IdMedicine))]
-        public virtual Medicine Medicine { get; set; }
+        public virtual Medicine Medicine { get; set; } = null!;
 
         [ForeignKey(nameof(IdScheduleType))]
-        public virtual ScheduleType ScheduleType { get; set; }
+        public virtual ScheduleType ScheduleType { get; set; } = null!;
 
         [ForeignKey(nameof(IdScheduleMode))]
-        public virtual ScheduleMode ScheduleMode { get; set; }
+        public virtual ScheduleMode ScheduleMode { get; set; } = null!;
 
         [ForeignKey(nameof(IdRecurrencePattern))]
-        public virtual RecurrencePattern RecurrencePattern { get; set; }
+        public virtual RecurrencePattern RecurrencePattern { get; set; } = null!;
 
         // Коллекции для обратных связей
         public virtual ICollection<Intake> Intakes { get; set; } = new List<Intake>();

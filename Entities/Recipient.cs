@@ -15,6 +15,6 @@ namespace MedicinesTracker.Entities
 
         // Обратные навигации
         public virtual ICollection<Medicine> Medicines { get; set; } = new List<Medicine>();
-        public virtual NotificationSetting NotificationSetting { get; set; }
+        public virtual NotificationSetting NotificationSetting { get; set; } = null!;
     }
 }

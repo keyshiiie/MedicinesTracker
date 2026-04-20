@@ -17,20 +17,20 @@ namespace MedicinesTracker
         private readonly IServiceProvider _serviceProvider;
         private readonly IPreferencesService _preferencesService;
         private readonly IIntakeGeneratorService _intakeGenerator;
-        private readonly IDatabaseInitializer _databaseInitializer; // 👈 ДОБАВИТЬ
+        private readonly IDatabaseInitializer _databaseInitializer;
         private NavigationPage? _introNavigationPage;
 
         public App(
             IServiceProvider serviceProvider,
             IPreferencesService preferencesService,
             IIntakeGeneratorService intakeGenerator,
-            IDatabaseInitializer databaseInitializer) // 👈 ДОБАВИТЬ В ПАРАМЕТРЫ
+            IDatabaseInitializer databaseInitializer)
         {
             InitializeComponent();
             _serviceProvider = serviceProvider;
             _preferencesService = preferencesService;
             _intakeGenerator = intakeGenerator;
-            _databaseInitializer = databaseInitializer; // 👈 СОХРАНИТЬ
+            _databaseInitializer = databaseInitializer;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
@@ -125,7 +125,7 @@ namespace MedicinesTracker
             {
                 System.Diagnostics.Debug.WriteLine("=== App.OnStart ===");
 
-                // 👇 0. ИНИЦИАЛИЗИРУЕМ БАЗУ ДАННЫХ (НОВОЕ!)
+                // 0. ИНИЦИАЛИЗИРУЕМ БАЗУ ДАННЫХ
                 System.Diagnostics.Debug.WriteLine("📁 Инициализация базы данных...");
                 await _databaseInitializer.EnsureCreatedAsync();
                 System.Diagnostics.Debug.WriteLine("✅ База данных готова");
@@ -160,35 +160,43 @@ namespace MedicinesTracker
             try
             {
 #if ANDROID
+                // Проверяем, что API 31+ (Android 12+)
                 if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.S)
                 {
                     var context = Android.App.Application.Context;
                     var alarmManager = context.GetSystemService(Android.Content.Context.AlarmService) as Android.App.AlarmManager;
 
-                    if (alarmManager != null && !alarmManager.CanScheduleExactAlarms())
+                    if (alarmManager != null)
                     {
-                        System.Diagnostics.Debug.WriteLine("⚠️ Нет разрешения на точные будильники");
-
-                        // Проверяем, запрашивали ли уже
-                        bool asked = Preferences.Get("ExactAlarmPermissionAsked", false);
-
-                        if (!asked)
+                        // Подавляем предупреждение CA1416, так как мы уже проверили API уровень
+#pragma warning disable CA1416
+                        if (!alarmManager.CanScheduleExactAlarms())
+#pragma warning restore CA1416
                         {
-                            var confirm = await Application.Current.MainPage.DisplayAlertAsync(
-                                "Разрешение на точные уведомления",
-                                "Для своевременных напоминаний приложению нужно разрешение на точные будильники.\n\nХотите предоставить его?",
-                                "Да",
-                                "Не сейчас");
+                            System.Diagnostics.Debug.WriteLine("⚠️ Нет разрешения на точные будильники");
 
-                            if (confirm)
+                            bool asked = Preferences.Get("ExactAlarmPermissionAsked", false);
+
+                            if (!asked)
                             {
-                                var intent = new Android.Content.Intent(Android.Provider.Settings.ActionRequestScheduleExactAlarm);
-                                intent.SetData(Android.Net.Uri.Parse($"package:{context.PackageName}"));
-                                intent.SetFlags(ActivityFlags.NewTask);
-                                context.StartActivity(intent);
-                            }
+                                var confirm = await ShowAlertAsync(
+                                    "Разрешение на точные уведомления",
+                                    "Для своевременных напоминаний приложению нужно разрешение на точные будильники.\n\nХотите предоставить его?",
+                                    "Да",
+                                    "Не сейчас");
 
-                            Preferences.Set("ExactAlarmPermissionAsked", true);
+                                if (confirm)
+                                {
+#pragma warning disable CA1416
+                                    var intent = new Android.Content.Intent(Android.Provider.Settings.ActionRequestScheduleExactAlarm);
+#pragma warning restore CA1416
+                                    intent.SetData(Android.Net.Uri.Parse($"package:{context.PackageName}"));
+                                    intent.SetFlags(ActivityFlags.NewTask);
+                                    context.StartActivity(intent);
+                                }
+
+                                Preferences.Set("ExactAlarmPermissionAsked", true);
+                            }
                         }
                     }
                 }
@@ -329,6 +337,19 @@ namespace MedicinesTracker
             base.OnSleep();
             System.Diagnostics.Debug.WriteLine("=== App.OnSleep ===");
             Preferences.Set("LastAppSleepTime", DateTime.Now.ToString("O"));
+        }
+
+        /// <summary>
+        /// Вспомогательный метод для отображения Alert диалога
+        /// </summary>
+        private async Task<bool> ShowAlertAsync(string title, string message, string accept, string cancel)
+        {
+            var window = Application.Current?.Windows.FirstOrDefault();
+            var page = window?.Page;
+
+            if (page == null) return false;
+
+            return await page.DisplayAlertAsync(title, message, accept, cancel);
         }
     }
 }

@@ -4,7 +4,9 @@ using MedicinesTracker.Entities;
 using MedicinesTracker.Modules.Medications.Models;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
+using MedicinesTracker.Services.Navigation;
 using System.Diagnostics;
+using MedicinesTracker.Constants;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
@@ -16,6 +18,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private readonly IStockRepository _stockRepository;
         private readonly IValidatorService _validatorService;
         private readonly IMedicineBuilder _medicineBuilder;
+        private readonly IMedicationCreationNavigationService _medicationNavigation;
+        private readonly INavigationService _navigation;
 
         [ObservableProperty]
         private Stock _stock = new();
@@ -35,7 +39,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private ButtonUiState _saveButtonState = new();
 
-        // Свойства для валидации
         [ObservableProperty]
         private string _currentQuantityError = string.Empty;
 
@@ -54,11 +57,15 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             IStockRepository stockRepository,
             IValidatorService validatorService,
             IMedicineBuilder medicineBuilder,
-            StepManager stepManager) : base(stepManager)
+            StepManager stepManager,
+            IMedicationCreationNavigationService medicationNavigation,
+            INavigationService navigation) : base(stepManager, navigation)
         {
             _stockRepository = stockRepository;
             _validatorService = validatorService;
             _medicineBuilder = medicineBuilder;
+            _medicationNavigation = medicationNavigation;
+            _navigation = navigation;
         }
 
         public override async Task ContinueAsync()
@@ -68,9 +75,10 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         public async Task InitializeAsync()
         {
+            if (_isInitialized) return;
+
             try
             {
-                // Если это создание нового лекарства, убеждаемся что шаг правильный
                 if (!IsEditingExisting)
                 {
                     if (_stepManager.CurrentStep != 2)
@@ -78,6 +86,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
 
                 await LoadDataAsync();
+                _isInitialized = true;
             }
             catch (Exception ex)
             {
@@ -87,15 +96,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         partial void OnStockIdChanged(int value)
         {
-            IsEditingExisting = value > 0;  // Используем базовое свойство
+            IsEditingExisting = value > 0;
             UpdateButtonState();
             if (value >= 0 && !_isInitialized)
             {
                 _isInitialized = true;
-                MainThread.BeginInvokeOnMainThread(async () =>
-                {
-                    await LoadDataAsync();
-                });
+                _ = LoadDataAsync();
             }
         }
 
@@ -124,7 +130,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка загрузки: {ex.Message}");
-                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось загрузить данные: {ex.Message}", "OK");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить данные: {ex.Message}");
             }
         }
 
@@ -141,81 +147,56 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [RelayCommand]
         private void ValidateCurrentQuantity(string text)
         {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                CurrentQuantityError = "Введите количество";
-                HasCurrentQuantityError = true;
-                Stock.CurrentQuantity = null;
-                return;
-            }
+            var (isValid, errorMessage, value) = _validatorService.ValidatePositiveInt(text, "Количество", ValidationConstants.MaxQuantity);
 
-            if (!int.TryParse(text, out int value))
-            {
-                CurrentQuantityError = "Введите целое число";
-                HasCurrentQuantityError = true;
-                Stock.CurrentQuantity = null;
-                return;
-            }
+            CurrentQuantityError = errorMessage;
+            HasCurrentQuantityError = !isValid;
 
-            if (value < 0)
+            if (isValid && value.HasValue)
             {
-                CurrentQuantityError = "Количество не может быть отрицательным";
-                HasCurrentQuantityError = true;
-                Stock.CurrentQuantity = null;
-                return;
+                Stock.CurrentQuantity = value.Value;
             }
-
-            if (value > 1000)
+            else
             {
-                CurrentQuantityError = "Количество не может быть больше 1000";
-                HasCurrentQuantityError = true;
                 Stock.CurrentQuantity = null;
-                return;
             }
-
-            CurrentQuantityError = string.Empty;
-            HasCurrentQuantityError = false;
-            Stock.CurrentQuantity = value;
         }
 
         [RelayCommand]
         private void ValidateThreshold(string text)
         {
-            if (string.IsNullOrWhiteSpace(text))
+            var (isValid, errorMessage, value) = _validatorService.ValidatePositiveInt(text, "Порог", ValidationConstants.MaxQuantity);
+
+            ThresholdError = errorMessage;
+            HasThresholdError = !isValid;
+
+            if (isValid && value.HasValue)
             {
-                ThresholdError = "Введите порог";
-                HasThresholdError = true;
+                Stock.Threshold = value.Value;
+            }
+            else
+            {
                 Stock.Threshold = null;
-                return;
+            }
+        }
+
+        private bool ValidateStockData(out string errorMessage)
+        {
+            if (HasCurrentQuantityError || HasThresholdError)
+            {
+                errorMessage = "Исправьте ошибки в полях перед сохранением";
+                return false;
             }
 
-            if (!int.TryParse(text, out int value))
+            var errors = _validatorService.GetStockValidationErrors(Stock);
+            if (errors.Any())
             {
-                ThresholdError = "Введите целое число";
-                HasThresholdError = true;
-                Stock.Threshold = null;
-                return;
+                errorMessage = string.Join("\n", errors);
+                return false;
             }
 
-            if (value < 0)
-            {
-                ThresholdError = "Порог не может быть отрицательным";
-                HasThresholdError = true;
-                Stock.Threshold = null;
-                return;
-            }
-
-            if (value > 1000)
-            {
-                ThresholdError = "Порог не может быть больше 1000";
-                HasThresholdError = true;
-                Stock.Threshold = null;
-                return;
-            }
-
-            ThresholdError = string.Empty;
-            HasThresholdError = false;
-            Stock.Threshold = value;
+            errorMessage = string.Empty;
+            return true;
         }
 
         [RelayCommand]
@@ -223,17 +204,9 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                if (HasCurrentQuantityError || HasThresholdError)
+                if (!ValidateStockData(out var error))
                 {
-                    await Shell.Current.DisplayAlertAsync("Ошибка",
-                        "Исправьте ошибки в полях перед сохранением", "OK");
-                    return;
-                }
-
-                var errors = _validatorService.GetStockValidationErrors(Stock);
-                if (errors.Any())
-                {
-                    await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
+                    await _navigation.ShowAlertAsync("Ошибка", error);
                     return;
                 }
 
@@ -246,16 +219,16 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     {
                         IdStock = Stock.IdStock,
                         IdMedicine = Stock.IdMedicine,
-                        CurrentQuantity = Stock.CurrentQuantity!.Value,
-                        Threshold = Stock.Threshold!.Value,
+                        CurrentQuantity = Stock.CurrentQuantity.Value,
+                        Threshold = Stock.Threshold.Value,
                         ReminderEnabled = Stock.ReminderEnabled
                     };
 
                     var rowsAffected = await _stockRepository.UpdateStockAsync(stockToSave);
                     if (rowsAffected > 0)
                     {
-                        await Shell.Current.DisplayAlertAsync("Успех", "Запас обновлен", "OK");
-                        await Shell.Current.GoToAsync("..");
+                        await _navigation.ShowAlertAsync("Успех", "Запас обновлен");
+                        await _navigation.GoBackAsync();
                     }
                 }
                 else if (!IsEditingExisting)
@@ -265,8 +238,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                     var state = _medicineBuilder.GetState();
                     if (state.Medicine == null)
                     {
-                        await Shell.Current.DisplayAlertAsync("Ошибка",
-                            "Сначала заполните основную информацию лекарства", "OK");
+                        await _navigation.ShowAlertAsync("Ошибка",
+                            "Сначала заполните основную информацию лекарства");
                         return;
                     }
 
@@ -286,14 +259,14 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlertAsync("Ошибка",
-                        "Невозможно сохранить: не указаны данные", "OK");
+                    await _navigation.ShowAlertAsync("Ошибка",
+                        "Невозможно сохранить: не указаны данные");
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка при сохранении: {ex.Message}");
-                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}", "ОК");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}");
             }
             finally
             {
@@ -306,35 +279,27 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                var parameters = new Dictionary<string, object>();
-
                 if (!IsEditingExisting)
                 {
-                    parameters.Add("isNewMedicine", true);
-                    parameters.Add("medicineId", 0);
-
                     Debug.WriteLine($"StockInfoVM: Переходим к созданию расписания для нового лекарства");
-                    await Shell.Current.GoToAsync("ScheduleTypeSelectionPage", parameters);
+                    await _medicationNavigation.ToScheduleTypeSelectionAsync(medicineId: 0, isNewMedicine: true);
                 }
                 else if (IsEditingExisting && MedicineId > 0)
                 {
-                    parameters.Add("medicineId", MedicineId);
-                    parameters.Add("isNewMedicine", false);
-
                     Debug.WriteLine($"StockInfoVM: Переходим к созданию расписания для существующего лекарства ID={MedicineId}");
-                    await Shell.Current.GoToAsync("ScheduleTypeSelectionPage", parameters);
+                    await _medicationNavigation.ToScheduleTypeSelectionAsync(MedicineId, isNewMedicine: false);
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlertAsync("Ошибка",
-                        "Не указано лекарство для создания расписания", "OK");
+                    await _navigation.ShowAlertAsync("Ошибка",
+                        "Не указано лекарство для создания расписания");
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка перехода: {ex.Message}\nStackTrace: {ex.StackTrace}");
-                await Shell.Current.DisplayAlertAsync("Ошибка",
-                    $"Не удалось перейти к созданию расписания: {ex.Message}", "ОК");
+                await _navigation.ShowAlertAsync("Ошибка",
+                    $"Не удалось перейти к созданию расписания: {ex.Message}");
             }
         }
 
@@ -359,20 +324,20 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlertAsync("Ошибка", "Запас лекарства не найден", "OK");
+                    await _navigation.ShowAlertAsync("Ошибка", "Запас лекарства не найден");
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка загрузки данных запаса: {ex.Message}");
-                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось загрузить данные запаса: {ex.Message}", "OK");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить данные запаса: {ex.Message}");
             }
         }
 
         public override async Task BackAsync()
         {
             _stepManager.PreviousStep();
-            await Shell.Current.GoToAsync("..");
+            await _navigation.GoBackAsync();
         }
     }
 }

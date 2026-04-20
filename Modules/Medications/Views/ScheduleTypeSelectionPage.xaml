@@ -7,42 +7,53 @@
              x:DataType="viewModels:ScheduleTypeSelectionVM"
              Title="Тип расписания">
 
-    <VerticalStackLayout Spacing="30" 
-                         VerticalOptions="Center">
-        <Label Text="Выберите тип расписания"
-               Style="{StaticResource PageTitleStyle}"/>
-        <!-- Заголовок и описание -->
-        <VerticalStackLayout Spacing="15">
-            <!-- Выбор типа с помощью Picker -->
-            <VerticalStackLayout Spacing="10">
+    <Grid RowDefinitions="Auto,*,Auto">
 
-                <Border>
-                    <Picker ItemsSource="{Binding ScheduleTypes}"
-                ItemDisplayBinding="{Binding Name}"
-                SelectedItem="{Binding SelectedScheduleType, Mode=TwoWay}"
-                Style="{StaticResource PrimaryPickerStyle}"
-                Title="Выберите тип расписания"/>
-                </Border>
+        <!-- Прогресс бар сверху -->
+        <controls:CreationProgressBar 
+            Grid.Row="0"
+            CurrentStep="{Binding CurrentStep}"
+            TotalSteps="{Binding TotalSteps}"
+            StepDescription="{Binding StepDescription}"
+            IsEditing="{Binding IsEditingExisting}" />
+
+        <!-- Поля посередине -->
+        <VerticalStackLayout 
+            Grid.Row="1"
+            Spacing="30"
+            VerticalOptions="Center">
+
+            <VerticalStackLayout Spacing="15">
+                <!-- Выбор типа с помощью Picker -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Тип расписания"
+                           Style="{StaticResource FieldDescriptionStyle}"/>
+                    <Border>
+                        <Picker ItemsSource="{Binding ScheduleTypes}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedScheduleType, Mode=TwoWay}"
+                                Style="{StaticResource PrimaryPickerStyle}"
+                                Title="Выберите тип расписания"/>
+                    </Border>
+                </VerticalStackLayout>
             </VerticalStackLayout>
-
-            <!-- Кнопки -->
-            <Grid ColumnDefinitions="*,Auto">
-                <Button Text="Назад"
-                Command="{Binding BackCommand}"
-                IsVisible="{Binding ShowBackButton}"
-                HorizontalOptions="Center"
-                Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Text="Далее"
-                        Command="{Binding ContinueCommand}"
-                        IsEnabled="{Binding IsValid}"
-                        Style="{StaticResource SaveMedicineButtonStyle}"
-                        Grid.Column="1"/>
-            </Grid>
-            <controls:CreationProgressBar 
-                CurrentStep="{Binding CurrentStep}"
-                TotalSteps="{Binding TotalSteps}"
-                StepDescription="{Binding StepDescription}"
-                IsEditing="{Binding IsEditingExisting}" />
         </VerticalStackLayout>
-    </VerticalStackLayout>
+
+        <!-- Кнопки внизу -->
+        <HorizontalStackLayout 
+            Grid.Row="2"
+            HorizontalOptions="End"
+            Spacing="10">
+            <Button Text="Назад"
+                    Command="{Binding BackCommand}"
+                    IsVisible="{Binding ShowBackButton}"
+                    HorizontalOptions="Center"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+            <Button Text="Далее"
+                    Command="{Binding ContinueCommand}"
+                    IsEnabled="{Binding IsValid}"
+                    Style="{StaticResource SaveMedicineButtonStyle}"
+                    Grid.Column="1"/>
+        </HorizontalStackLayout>
+    </Grid>
 </ContentPage>

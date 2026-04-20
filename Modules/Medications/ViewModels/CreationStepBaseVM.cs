@@ -1,12 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Services;
+using MedicinesTracker.Services.Navigation;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
     public abstract partial class CreationStepBaseVM : ObservableObject
     {
         protected readonly StepManager _stepManager;
+        protected readonly INavigationService _navigation; 
 
         [ObservableProperty]
         private int _currentStep;
@@ -33,11 +35,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private bool _showBackButton;
 
         [ObservableProperty]
-        private bool _isEditingExisting; 
+        private bool _isEditingExisting;
 
-        protected CreationStepBaseVM(StepManager stepManager)
+        protected CreationStepBaseVM(StepManager stepManager, INavigationService navigation)
         {
             _stepManager = stepManager;
+            _navigation = navigation; 
             _stepManager.OnStepInfoChanged += UpdateStepInfo;
 
             CurrentStep = _stepManager.CurrentStep;
@@ -45,7 +48,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             StepTitle = stepInfo.Title;
             StepDescription = stepInfo.Description;
 
-            // Показываем кнопку Назад на всех страницах кроме первой
             ShowBackButton = CurrentStep > 1;
         }
 
@@ -55,12 +57,11 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             StepTitle = stepInfo.Title;
             StepDescription = stepInfo.Description;
 
-            // Обновляем видимость кнопки Назад
             ShowBackButton = CurrentStep > 1 && !IsEditingExisting;
         }
 
         [RelayCommand]
-        public virtual Task BackAsync() => Shell.Current.GoToAsync("..");
+        public virtual Task BackAsync() => _navigation.GoBackAsync(); 
 
         [RelayCommand]
         public abstract Task ContinueAsync();
@@ -68,26 +69,25 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [RelayCommand]
         public virtual async Task CancelAsync()
         {
-            var confirm = await Shell.Current.DisplayAlertAsync(
+            var confirm = await _navigation.ShowConfirmationAsync(  
                 "Отмена создания",
-                "Вы уверены, что хотите отменить создание лекарства? Все данные будут потеряны.",
-                "Да", "Нет");
+                "Вы уверены, что хотите отменить создание лекарства? Все данные будут потеряны.");
 
             if (confirm)
             {
                 _stepManager.Reset();
-                await Shell.Current.GoToAsync("//medicines");
+                await _navigation.GoToAsync("//medicines");  
             }
         }
 
         protected async Task ShowErrorAsync(string message)
         {
-            await Shell.Current.DisplayAlertAsync("Ошибка", message, "OK");
+            await _navigation.ShowAlertAsync("Ошибка", message);  
         }
 
         protected async Task ShowSuccessAsync(string message)
         {
-            await Shell.Current.DisplayAlertAsync("Успех", message, "OK");
+            await _navigation.ShowAlertAsync("Успех", message);  
         }
     }
 }

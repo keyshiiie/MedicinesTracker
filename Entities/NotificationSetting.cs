@@ -14,6 +14,6 @@ namespace MedicinesTracker.Entities
 
         // Навигационное свойство
         [ForeignKey(nameof(IdRecipient))]
-        public virtual Recipient Recipient { get; set; }
+        public virtual Recipient Recipient { get; set; } = null!;
     }
 }

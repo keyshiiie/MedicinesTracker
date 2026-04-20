@@ -5,6 +5,10 @@ using MedicinesTracker.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using MedicinesTracker.Services;
+using MedicinesTracker.Services.Navigation;
+using MedicinesTracker.Constants;
+using static MedicinesTracker.Constants.ScheduleTypes;
+using static MedicinesTracker.Constants.ScheduleModes;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
@@ -14,9 +18,11 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     public partial class ScheduleModeSelectionVM : CreationStepBaseVM
     {
         private readonly IReferencesDataRepository _referencesRepository;
+        private readonly IMedicationCreationNavigationService _medicationNavigation;
+        private readonly INavigationService _navigation;
 
         [ObservableProperty]
-        private string _scheduleTypeCode = "RECURRING";
+        private string _scheduleTypeCode = Recurring;
 
         [ObservableProperty]
         private bool _isNewMedicine = true;
@@ -33,10 +39,15 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private bool _isValid = false;
 
-        public ScheduleModeSelectionVM(IReferencesDataRepository referencesRepository,
-            StepManager stepManager) : base(stepManager)
+        public ScheduleModeSelectionVM(
+            IReferencesDataRepository referencesRepository,
+            StepManager stepManager,
+            IMedicationCreationNavigationService medicationNavigation,
+            INavigationService navigation) : base(stepManager, navigation)
         {
             _referencesRepository = referencesRepository;
+            _medicationNavigation = medicationNavigation;
+            _navigation = navigation;
         }
 
         public override async Task ContinueAsync()
@@ -45,29 +56,23 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
             if (IsNewMedicine)
             {
-                _stepManager.NextStep();  // Переход к шагу 5
+                _stepManager.NextStep();
             }
 
-            var parameters = new Dictionary<string, object>
-            {
-                { "scheduleTypeCode", ScheduleTypeCode },
-                { "scheduleModeCode", SelectedScheduleMode.Code },
-                { "isRecurring", true },
-                { "isNewMedicine", IsNewMedicine },
-                { "medicineId", MedicineId }
-            };
-
-            await Shell.Current.GoToAsync("ScheduleDetailsPage", parameters);
+            await _medicationNavigation.ToScheduleDetailsAsync(
+                ScheduleTypeCode,
+                SelectedScheduleMode.Code,
+                MedicineId,
+                IsNewMedicine,
+                null);
         }
 
         public async Task InitializeAsync()
         {
             try
             {
-                // Устанавливаем признак редактирования
                 IsEditingExisting = !IsNewMedicine;
 
-                // Для нового лекарства убеждаемся, что шаг правильный
                 if (IsNewMedicine && _stepManager.CurrentStep != 4)
                 {
                     _stepManager.CurrentStep = 4;
@@ -78,6 +83,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"[ScheduleModeSelectionVM ERROR] {ex.Message}");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось инициализировать страницу: {ex.Message}");
             }
         }
 
@@ -91,6 +97,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error loading schedule modes: {ex.Message}");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить способы задания: {ex.Message}");
             }
         }
 
@@ -103,9 +110,9 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             if (IsNewMedicine)
             {
-                _stepManager.PreviousStep();  // Возврат к шагу 3
+                _stepManager.PreviousStep();
             }
-            await Shell.Current.GoToAsync("..");
+            await _navigation.GoBackAsync();
         }
     }
 }

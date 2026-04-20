@@ -1,11 +1,13 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Entities;
+using MedicinesTracker.Modules.Medications.Models;
 using MedicinesTracker.Repository;
 using MedicinesTracker.Services;
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
+using MedicinesTracker.Services.Navigation;
 using System.Collections.ObjectModel;
-using MedicinesTracker.Modules.Medications.Models;
+using System.Diagnostics;
+using MedicinesTracker.Constants;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
@@ -17,6 +19,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         private readonly IRecipientRepository _recipientRepository;
         private readonly IValidatorService _validatorService;
         private readonly IMedicineBuilder _medicineBuilder;
+        private readonly IMedicationCreationNavigationService _medicationNavigation;
+        private readonly INavigationService _navigation;
 
         [ObservableProperty]
         private Medicine _medicine = new();
@@ -45,19 +49,25 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private ButtonUiState _saveButtonState = new();
 
+        private bool _isInitialized = false;
+
         public BaseInfoVM(
             IReferencesDataRepository referencesDataRepository,
             IMedicineRepository medicineRepository,
             IRecipientRepository recipientRepository,
             IValidatorService validatorService,
             IMedicineBuilder medicineBuilder,
-            StepManager stepManager) : base(stepManager)
+            StepManager stepManager,
+            IMedicationCreationNavigationService medicationNavigation,
+            INavigationService navigation) : base(stepManager, navigation)
         {
             _referencesDataRepository = referencesDataRepository;
             _medicineRepository = medicineRepository;
             _recipientRepository = recipientRepository;
             _validatorService = validatorService;
             _medicineBuilder = medicineBuilder;
+            _medicationNavigation = medicationNavigation;
+            _navigation = navigation;
         }
 
         public override async Task ContinueAsync()
@@ -69,11 +79,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             IsEditingExisting = value > 0;
             UpdateButtonState();
-
-            MainThread.BeginInvokeOnMainThread(async () =>
-            {
-                await LoadDataAsync();
-            });
+            _ = LoadDataAsync();
         }
 
         private void UpdateButtonState()
@@ -84,6 +90,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         public async Task InitializeAsync()
         {
+            if (_isInitialized) return;
+
             try
             {
                 if (!IsEditingExisting)
@@ -92,6 +100,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
 
                 await LoadDataAsync();
+                _isInitialized = true;
             }
             catch (Exception ex)
             {
@@ -114,7 +123,6 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 {
                     ResetForm();
 
-                    // Если это добавление нового, сбрасываем builder
                     if (!IsEditingExisting)
                     {
                         _medicineBuilder.Reset();
@@ -123,10 +131,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlertAsync(
-                    "Ошибка",
-                    $"Не удалось загрузить данные: {ex.Message}",
-                    "OK");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить данные: {ex.Message}");
             }
         }
 
@@ -140,9 +145,11 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
         private async Task LoadReferenceData()
         {
-            await LoadUnitsAsync();
-            await LoadRecipientsAsync();
-            await LoadMethodsAsync();
+            await Task.WhenAll(
+                LoadUnitsAsync(),
+                LoadRecipientsAsync(),
+                LoadMethodsAsync()
+            );
         }
 
         private async Task LoadMedicineDataAsync(int medicineId)
@@ -160,12 +167,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlertAsync("Ошибка", "Лекарство не найдено", "OK");
+                    await _navigation.ShowAlertAsync("Ошибка", "Лекарство не найдено");
                 }
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось загрузить данные лекарства: {ex.Message}", "OK");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить данные лекарства: {ex.Message}");
             }
         }
 
@@ -223,54 +230,69 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             if (value != null) Medicine.IdMethodAdmission = value.IdMethodAdmission;
         }
 
+        private bool ValidateBaseInfo(out string errorMessage)
+        {
+            var errors = _validatorService.GetBaseInfoValidationErrors(
+                Medicine, SelectedUnit, SelectedRecipient, SelectedMethodAdmission);
+
+            if (errors.Any())
+            {
+                errorMessage = string.Join("\n", errors);
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
         [RelayCommand]
         private async Task SaveMedicine()
         {
             try
             {
-                var errors = _validatorService.GetBaseInfoValidationErrors(
-                    Medicine, SelectedUnit, SelectedRecipient, SelectedMethodAdmission);
-
-                if (errors.Any())
+                if (!ValidateBaseInfo(out var error))
                 {
-                    await Shell.Current.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
+                    await _navigation.ShowAlertAsync("Ошибка", error);
                     return;
                 }
 
-                // РАЗДЕЛЕНИЕ ЛОГИКИ: РЕДАКТИРОВАНИЕ vs ДОБАВЛЕНИЕ
                 if (IsEditingExisting && MedicineId > 0)
                 {
-                    // РЕДАКТИРОВАНИЕ СУЩЕСТВУЮЩЕГО - старая логика
-                    Debug.WriteLine("Режим: Редактирование существующего лекарства");
-                    Medicine.IdMedicine = MedicineId;
-                    var rowsAffected = await _medicineRepository.UpdateMedicineAsync(Medicine);
-
-                    if (rowsAffected > 0)
-                    {
-                        await Shell.Current.DisplayAlertAsync("Успех", "Данные обновлены", "OK");
-                        await Shell.Current.GoToAsync("..");
-                    }
+                    await UpdateExistingMedicine();
                 }
                 else
                 {
-                    // ДОБАВЛЕНИЕ НОВОГО - через Builder
-                    Debug.WriteLine("Режим: Добавление нового лекарства через Builder");
-
-                    // Сохраняем базовую информацию в Builder
-                    _medicineBuilder.WithBaseInfo(Medicine);
-
-                    Debug.WriteLine($"BaseInfo добавлен в Builder. Статус: {_medicineBuilder.IsComplete}");
-
-                    // Переходим к следующему шагу
-                    _stepManager.NextStep(); 
-                    await OpenStockPage();
+                    await CreateNewMedicine();
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка при сохранении: {ex.Message}");
-                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}", "ОК");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}");
             }
+        }
+
+        private async Task UpdateExistingMedicine()
+        {
+            Debug.WriteLine("Режим: Редактирование существующего лекарства");
+            Medicine.IdMedicine = MedicineId;
+            var rowsAffected = await _medicineRepository.UpdateMedicineAsync(Medicine);
+
+            if (rowsAffected > 0)
+            {
+                await _navigation.ShowAlertAsync("Успех", "Данные обновлены");
+                await _navigation.GoBackAsync();
+            }
+        }
+
+        private async Task CreateNewMedicine()
+        {
+            Debug.WriteLine("Режим: Добавление нового лекарства через Builder");
+            _medicineBuilder.WithBaseInfo(Medicine);
+            Debug.WriteLine($"BaseInfo добавлен в Builder. Статус: {_medicineBuilder.IsComplete}");
+
+            _stepManager.NextStep();
+            await OpenStockPage();
         }
 
         [RelayCommand]
@@ -278,24 +300,19 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                // Для редактирования передаем ID, для добавления - только unitName
-                var parameters = new Dictionary<string, object>();
-
                 if (IsEditingExisting && MedicineId > 0)
                 {
-                    // Редактирование: передаем ID
-                    parameters.Add("idMedicine", MedicineId);
-                    parameters.Add("idStock", 0); // 0 = новый запас
+                    await _medicationNavigation.ToStockInfoAsync(MedicineId, SelectedUnit?.Name ?? string.Empty, 0);
                 }
-
-                // Для обоих случаев передаем unitName
-                parameters.Add("unitName", SelectedUnit?.Name ?? string.Empty);
-
-                await Shell.Current.GoToAsync("StockInfoPage", parameters);
+                else
+                {
+                    await _medicationNavigation.ToStockInfoAsync(MedicineId, SelectedUnit?.Name ?? string.Empty, null);
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка при переходе на страницу запасов: {ex.Message}");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось перейти к запасам: {ex.Message}");
             }
         }
     }

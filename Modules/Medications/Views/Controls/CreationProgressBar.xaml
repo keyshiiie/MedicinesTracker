@@ -6,18 +6,13 @@
              x:Name="this"
              IsVisible="{Binding IsEditing, Source={x:Reference this}, Converter={StaticResource InvertedBoolConverter}}">
 
-    <VerticalStackLayout Spacing="8">
+    <VerticalStackLayout Spacing="10">
         <!-- Прогресс-бар с ProgressBar -->
         <ProgressBar Progress="{Binding ProgressWidth, Source={x:Reference this}}"
-                     HeightRequest="8"
-                     Margin="20,0"
-                     BackgroundColor="#E8E8E8"
-                     ProgressColor="{StaticResource Primary}" />
+                     HeightRequest="3"
+                     Style="{StaticResource CreationProgressBarStyle}" />
 
         <Label Text="{Binding StepDescription, Source={x:Reference this}}"
-               FontSize="12"
-               TextColor="{StaticResource Gray}"
-               HorizontalOptions="Center"
-               Margin="0,4,0,0"/>
+               Style="{StaticResource CreationProgressLabelStyle}"/>
     </VerticalStackLayout>
 </ContentView>

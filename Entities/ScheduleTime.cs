@@ -15,7 +15,7 @@ namespace MedicinesTracker.Entities
 
         // Навигационные свойства
         [ForeignKey(nameof(IdSchedule))]
-        public virtual MedicationSchedule Schedule { get; set; }
+        public virtual MedicationSchedule Schedule { get; set; } = null!;
 
         // Обратная навигация
         public virtual ICollection<Intake> Intakes { get; set; } = new List<Intake>();

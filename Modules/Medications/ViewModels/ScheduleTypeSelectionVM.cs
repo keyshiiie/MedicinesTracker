@@ -6,6 +6,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using MedicinesTracker.Entities;
 using MedicinesTracker.Services;
+using MedicinesTracker.Services.Navigation;
+using MedicinesTracker.Constants;
+using static MedicinesTracker.Constants.ScheduleTypes;
 
 namespace MedicinesTracker.Modules.Medications.ViewModels
 {
@@ -14,6 +17,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     public partial class ScheduleTypeSelectionVM : CreationStepBaseVM
     {
         private readonly IReferencesDataRepository _referencesRepository;
+        private readonly IMedicationCreationNavigationService _medicationNavigation;
+        private readonly INavigationService _navigation;
 
         [ObservableProperty]
         private ObservableCollection<ScheduleType> _scheduleTypes = new();
@@ -30,38 +35,44 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private int _medicineId;
 
-        public ScheduleTypeSelectionVM(IReferencesDataRepository referencesRepository,
-            StepManager stepManager) : base(stepManager)
+        public ScheduleTypeSelectionVM(
+            IReferencesDataRepository referencesRepository,
+            StepManager stepManager,
+            IMedicationCreationNavigationService medicationNavigation,
+            INavigationService navigation) : base(stepManager, navigation)
         {
             _referencesRepository = referencesRepository;
+            _medicationNavigation = medicationNavigation;
+            _navigation = navigation;
         }
 
         public override async Task ContinueAsync()
         {
             if (SelectedScheduleType == null) return;
 
-            var parameters = new Dictionary<string, object>
-            {
-                { "scheduleTypeCode", SelectedScheduleType.Code },
-                { "isNewMedicine", IsNewMedicine },
-                { "medicineId", MedicineId }
-            };
-
-            if (SelectedScheduleType.Code == "RECURRING")
+            if (SelectedScheduleType.Code == Recurring)
             {
                 if (IsNewMedicine)
                 {
-                    _stepManager.NextStep();  // Переход к шагу 4
+                    _stepManager.NextStep();
                 }
-                await Shell.Current.GoToAsync("ScheduleModeSelectionPage", parameters);
+                await _medicationNavigation.ToScheduleModeSelectionAsync(
+                    SelectedScheduleType.Code,
+                    MedicineId,
+                    IsNewMedicine);
             }
-            else if (SelectedScheduleType.Code == "ONETIME")
+            else if (SelectedScheduleType.Code == OneTime)
             {
                 if (IsNewMedicine)
                 {
-                    _stepManager.CurrentStep = 5;  // Сразу к шагу 5
+                    _stepManager.CurrentStep = 5;
                 }
-                await Shell.Current.GoToAsync("ScheduleDetailsPage", parameters);
+                await _medicationNavigation.ToScheduleDetailsAsync(
+                    SelectedScheduleType.Code,
+                    null,
+                    MedicineId,
+                    IsNewMedicine,
+                    null);
             }
         }
 
@@ -69,10 +80,8 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             try
             {
-                // Устанавливаем признак редактирования
                 IsEditingExisting = !IsNewMedicine;
 
-                // Для нового лекарства убеждаемся, что шаг правильный
                 if (IsNewMedicine && _stepManager.CurrentStep != 3)
                 {
                     _stepManager.CurrentStep = 3;
@@ -90,8 +99,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"[ScheduleTypeSelectionVM ERROR] {ex.Message}\nStackTrace: {ex.StackTrace}");
-                await Shell.Current.DisplayAlertAsync("Ошибка",
-                    $"Не удалось загрузить данные: {ex.Message}", "OK");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить данные: {ex.Message}");
             }
         }
 
@@ -105,6 +113,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error loading schedule types: {ex.Message}");
+                await _navigation.ShowAlertAsync("Ошибка", $"Не удалось загрузить типы расписаний: {ex.Message}");
             }
         }
 
@@ -117,9 +126,9 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         {
             if (IsNewMedicine)
             {
-                _stepManager.PreviousStep();  // Возврат к шагу 2
+                _stepManager.PreviousStep();
             }
-            await Shell.Current.GoToAsync("..");
+            await _navigation.GoBackAsync();
         }
     }
 }

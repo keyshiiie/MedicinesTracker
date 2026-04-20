@@ -15,6 +15,6 @@ namespace MedicinesTracker.Entities
 
         // Навигационное свойство
         [ForeignKey(nameof(IdMedicine))]
-        public virtual Medicine Medicine { get; set; }
+        public virtual Medicine Medicine { get; set; } = null!;
     }
 }
