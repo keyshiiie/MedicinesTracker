@@ -8,7 +8,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     public abstract partial class CreationStepBaseVM : ObservableObject
     {
         protected readonly StepManager _stepManager;
-        protected readonly INavigationService _navigation; 
+        protected readonly INavigationService _navigation;
 
         [ObservableProperty]
         private int _currentStep;
@@ -40,7 +40,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         protected CreationStepBaseVM(StepManager stepManager, INavigationService navigation)
         {
             _stepManager = stepManager;
-            _navigation = navigation; 
+            _navigation = navigation;
             _stepManager.OnStepInfoChanged += UpdateStepInfo;
 
             CurrentStep = _stepManager.CurrentStep;
@@ -61,7 +61,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         }
 
         [RelayCommand]
-        public virtual Task BackAsync() => _navigation.GoBackAsync(); 
+        public virtual Task BackAsync() => _navigation.GoBackAsync();
 
         [RelayCommand]
         public abstract Task ContinueAsync();
@@ -69,25 +69,25 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [RelayCommand]
         public virtual async Task CancelAsync()
         {
-            var confirm = await _navigation.ShowConfirmationAsync(  
+            var confirm = await _navigation.ShowConfirmationAsync(
                 "Отмена создания",
                 "Вы уверены, что хотите отменить создание лекарства? Все данные будут потеряны.");
 
             if (confirm)
             {
                 _stepManager.Reset();
-                await _navigation.GoToAsync("//medicines");  
+                await _navigation.GoToAsync("//medicines");
             }
         }
 
         protected async Task ShowErrorAsync(string message)
         {
-            await _navigation.ShowAlertAsync("Ошибка", message);  
+            await _navigation.ShowAlertAsync("Ошибка", message);
         }
 
         protected async Task ShowSuccessAsync(string message)
         {
-            await _navigation.ShowAlertAsync("Успех", message);  
+            await _navigation.ShowAlertAsync("Успех", message);
         }
     }
 }

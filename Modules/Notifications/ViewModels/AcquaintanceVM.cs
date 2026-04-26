@@ -13,20 +13,24 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
         private readonly IValidatorService _validatorService;
         private readonly IPreferencesService _preferencesService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IAppSettingsService _appSettingsService; 
         private Page? _page;
 
         [ObservableProperty]
-        private Recipient _recipient = new();
+        private Recipient _recipient = new Recipient();
 
-        public AcquaintanceVM(IRecipientRepository recipientRepository,
+        public AcquaintanceVM(
+            IRecipientRepository recipientRepository,
             IValidatorService validatorService,
             IPreferencesService preferencesService,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IAppSettingsService appSettingsService)  
         {
             _recipientRepository = recipientRepository;
             _validatorService = validatorService;
             _preferencesService = preferencesService;
             _serviceProvider = serviceProvider;
+            _appSettingsService = appSettingsService; 
         }
 
         // Метод для установки ссылки на страницу
@@ -44,7 +48,6 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
 
                 if (errors.Any())
                 {
-                    // Используем _page для отображения алерта
                     if (_page != null)
                     {
                         await _page.DisplayAlertAsync("Ошибка", string.Join("\n", errors), "OK");
@@ -56,11 +59,17 @@ namespace MedicinesTracker.Modules.Notifications.ViewModels
 
                 if (rowsAffected > 0)
                 {
-                    // Устанавливаем флаг, что знакомство завершено
-                    _preferencesService.Set("FirstLaunchCompleted", true);
+                    await _appSettingsService.MarkFirstLaunchCompletedAsync();
 
-                    // Отправляем сообщение для навигации к AboutAppPage
-                    WeakReferenceMessenger.Default.Send(new NavigationMessage("AboutAppPage"));
+                    // ✅ Правильный способ перехода к главному приложению
+                    var appShell = new AppShell();
+
+                    // Получаем текущее окно и устанавливаем новую страницу
+                    var window = Application.Current?.Windows.FirstOrDefault();
+                    if (window != null)
+                    {
+                        window.Page = appShell;  // window.Page существует, а SetPage - нет!
+                    }
                 }
                 else
                 {

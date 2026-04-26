@@ -11,10 +11,12 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     [QueryProperty(nameof(ScheduleId), "idSchedule")]
     [QueryProperty(nameof(StockId), "idStock")]
     [QueryProperty(nameof(UnitName), "unitName")]
+    [QueryProperty(nameof(IsArchived), "isArchived")]
     public partial class MedicineDetailVM : ObservableObject
     {
         private readonly IMedicineRepository _medicineRepository;
         private readonly IScheduleService _scheduleService;
+        private readonly INotificationPlannerService _notificationPlanner;
 
         [ObservableProperty]
         private int _medicineId;
@@ -31,10 +33,16 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private string? _unitName;
 
-        public MedicineDetailVM(IMedicineRepository medicineRepository, IScheduleService scheduleService)
+        [ObservableProperty]
+        private bool _isArchived = false;
+
+        public MedicineDetailVM(IMedicineRepository medicineRepository, 
+            IScheduleService scheduleService,
+            INotificationPlannerService notificationPlanner)
         {
             _medicineRepository = medicineRepository;
             _scheduleService = scheduleService;
+            _notificationPlanner = notificationPlanner;
         }
 
         [RelayCommand]
@@ -159,19 +167,21 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
 
                 bool confirmDelete = await Shell.Current.DisplayAlertAsync(
                     "Подтверждение удаления",
-                    $"Вы действительно хотите удалить это лекарство?",
+                    $"Перенести в архив? История сохранится, лекарство скроется из активного списка",
                     "Да",
-                    "Нет"
-                );
+                    "Нет");
 
                 if (!confirmDelete) return;
 
-                var rowsAffected = await _medicineRepository.DeleteMedicineAsync(MedicineId);
-                if (rowsAffected > 0)
+                var success = await _medicineRepository.ArchiveMedicineAsync(MedicineId);
+                if (success)
                 {
+                    // отменяем уведомление
+                    await _notificationPlanner.CancelAllNotificationsForMedicineAsync(MedicineId);
+
                     await Shell.Current.DisplayAlertAsync(
                         "Успех!",
-                        "Лекарство успешно удалёно!",
+                        "Лекарство успешно добавлено в архив!",
                         "ОК");
                     await Shell.Current.GoToAsync("..");
                 }
@@ -179,7 +189,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
                 {
                     await Shell.Current.DisplayAlertAsync(
                         "Предупреждение!",
-                        "Лекарство не было удалёно",
+                        "Лекарство не было добавлено в архив",
                         "ОК");
                 }
             }

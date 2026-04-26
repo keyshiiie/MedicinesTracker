@@ -10,6 +10,7 @@ namespace MedicinesTracker.Services
         void CancelAll();
         Task PlanForDateAsync(DateTime date);
         Task CancelNotificationForIntakeAsync(int intakeId, int medicineId, string scheduledTime);
+        Task CancelAllNotificationsForMedicineAsync(int medicineId);
     }
 
     public class NotificationPlannerService : INotificationPlannerService
@@ -133,6 +134,56 @@ namespace MedicinesTracker.Services
         public void CancelAll()
         {
             _alarmScheduler.CancelAllNotifications();
+        }
+
+        public async Task CancelAllNotificationsForMedicineAsync(int medicineId)
+        {
+#if ANDROID
+            try
+            {
+                var context = Android.App.Application.Context;
+                var alarmManager = context.GetSystemService(Android.Content.Context.AlarmService) as Android.App.AlarmManager;
+
+                if (alarmManager == null) return;
+
+                // Получаем расписания лекарства
+                var schedules = await _medicineRepository.GetSchedulesByMedicineIdAsync(medicineId);
+
+                foreach (var schedule in schedules)
+                {
+                    // Для каждого времени приёма отменяем уведомление
+                    var times = schedule.Times.Split(',');
+                    foreach (var timeStr in times)
+                    {
+                        if (TimeSpan.TryParse(timeStr.Trim(), out var time))
+                        {
+                            var requestCode = (medicineId * 100) + time.Hours * 10 + time.Minutes / 10;
+
+                            var intent = new Android.Content.Intent(context, typeof(MedicinesTracker.Platforms.Android.NotificationPublisher));
+                            intent.SetAction("ACTION_SHOW_NOTIFICATION");
+
+                            var pendingIntent = Android.App.PendingIntent.GetBroadcast(
+                                context,
+                                requestCode,
+                                intent,
+                                Android.App.PendingIntentFlags.Immutable | Android.App.PendingIntentFlags.NoCreate);
+
+                            if (pendingIntent != null)
+                            {
+                                alarmManager.Cancel(pendingIntent);
+                                pendingIntent.Cancel();
+                                Debug.WriteLine($"✅ Уведомление для лекарства {medicineId} в {time} отменено");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Ошибка отмены уведомлений для лекарства {medicineId}: {ex.Message}");
+            }
+#endif
+            await Task.CompletedTask;
         }
     }
 }

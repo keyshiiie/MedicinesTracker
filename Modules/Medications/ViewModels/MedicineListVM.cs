@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using MedicinesTracker.Dto;
 using MedicinesTracker.Entities;
 using MedicinesTracker.Repository;
+using MedicinesTracker.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -11,9 +12,14 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
     public partial class MedicineListVM : ObservableObject
     {
         private readonly IMedicineRepository _medicineRepository;
+        private readonly INotificationPlannerService _notificationPlanner;
+        private readonly IIntakeGeneratorService _intakeGenerator;
 
         [ObservableProperty]
         private ObservableCollection<MedicineDetailDto> _medicineDetails = new();
+
+        [ObservableProperty]
+        private ObservableCollection<MedicineDetailDto> _filteredMedicineDetails = new();
 
         [ObservableProperty]
         private Recipient? _selectedRecipient;
@@ -24,9 +30,41 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         [ObservableProperty]
         private bool _isLoading;
 
-        public MedicineListVM(IMedicineRepository medicineRepository)
+        [ObservableProperty]
+        private string _searchText = string.Empty;
+
+        [ObservableProperty]
+        private bool _isSearching;
+
+        [ObservableProperty]
+        private bool _isActiveSelected = true;  // По умолчанию показываем активные
+
+        [ObservableProperty]
+        private bool _isArchiveSelected;
+
+        [ObservableProperty]
+        private bool _showAddButton = true;  // Показываем кнопку "Добавить"
+
+        [ObservableProperty]
+        private string _pageTitle = "Лекарства";
+
+        [ObservableProperty]
+        private string _emptyViewTitle = "Список лекарств пуст";
+
+        [ObservableProperty]
+        private string _emptyViewDescription = "Нажмите на кнопку +, чтобы добавить первое лекарство";
+
+        // Свойства для кнопки переключения
+        [ObservableProperty]
+        private string _toggleButtonIcon = "archive_icon.png";
+
+        public MedicineListVM(IMedicineRepository medicineRepository,
+            INotificationPlannerService notificationPlanner,
+            IIntakeGeneratorService intakeGenerator)
         {
             _medicineRepository = medicineRepository;
+            _notificationPlanner = notificationPlanner;
+            _intakeGenerator = intakeGenerator;
         }
 
         public async Task InitializeAsync()
@@ -42,54 +80,139 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
         }
 
         [RelayCommand]
-        private async Task OpenDetailPage(MedicineDetailDto medicine)
+        private async Task ToggleMode()
         {
-            Debug.WriteLine("=== OpenDetailPage CALLED ===");
-
-            if (medicine is null)
+            if (IsActiveSelected)
             {
-                Debug.WriteLine("medicine is null");
-                return;
+                // Переключаемся в архив
+                await ShowArchivedMedicines();
+            }
+            else
+            {
+                // Переключаемся в активные
+                await ShowActiveMedicines();
+            }
+        }
+
+        [RelayCommand]
+        private async Task ShowActiveMedicines()
+        {
+            if (IsActiveSelected) return;
+
+            IsActiveSelected = true;
+            IsArchiveSelected = false;
+            ShowAddButton = true;
+            PageTitle = "Лекарства";
+
+            // Обновляем кнопку
+            ToggleButtonIcon = "archive_icon.png";
+
+            // Обновляем тексты для пустого состояния
+            EmptyViewTitle = "Список лекарств пуст";
+            EmptyViewDescription = "Нажмите на кнопку +, чтобы добавить первое лекарство";
+
+            await LoadDataAsync();
+        }
+
+        [RelayCommand]
+        private async Task ShowArchivedMedicines()
+        {
+            if (IsArchiveSelected) return;
+
+            IsArchiveSelected = true;
+            IsActiveSelected = false;
+            ShowAddButton = false;
+            PageTitle = "Архив";
+
+            // Обновляем кнопку
+            ToggleButtonIcon = "medicine_box.png";
+
+            // Обновляем тексты для пустого состояния
+            EmptyViewTitle = "Архив пуст";
+            EmptyViewDescription = "Здесь будут лекарства, которые вы отправили в архив";
+
+            await LoadDataAsync();
+        }
+
+        [RelayCommand]
+        private void UpdateSearchText(string newText)
+        {
+            SearchText = newText ?? string.Empty;
+            ApplyFilter();
+        }
+
+        private void ApplyFilter()
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                FilteredMedicineDetails = new ObservableCollection<MedicineDetailDto>(MedicineDetails);
+            }
+            else
+            {
+                var filtered = MedicineDetails
+                    .Where(m => m.MedicineName?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) == true)
+                    .ToList();
+                FilteredMedicineDetails = new ObservableCollection<MedicineDetailDto>(filtered);
             }
 
-            Debug.WriteLine($"IdMedicine: {medicine.IdMedicine}");
-            Debug.WriteLine($"MedicineName: {medicine.MedicineName}");
+            IsSearching = !string.IsNullOrWhiteSpace(SearchText);
+        }
+
+        [RelayCommand]
+        private async Task OpenDetailPage(MedicineDetailDto medicine)
+        {
+            if (medicine is null) return;
 
             try
             {
                 var parameters = new Dictionary<string, object>
-        {
-            { "idMedicine", medicine.IdMedicine },
-            { "medicineName", medicine.MedicineName ?? string.Empty},
-            { "idStock", medicine.IdStock },
-            { "unitName", medicine.UnitName ?? string.Empty},
-            { "idSchedule", medicine.IdSchedule }
-        };
-
-                Debug.WriteLine("Navigating to MedicineDetailPage...");
+                {
+                    { "idMedicine", medicine.IdMedicine },
+                    { "medicineName", medicine.MedicineName ?? string.Empty},
+                    { "idStock", medicine.IdStock },
+                    { "unitName", medicine.UnitName ?? string.Empty},
+                    { "idSchedule", medicine.IdSchedule },
+                    { "isArchived", medicine.IsArchived }
+                };
                 await Shell.Current.GoToAsync("MedicineDetailPage", parameters);
-                Debug.WriteLine("Navigation completed");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error: {ex.Message}");
-                Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
             }
         }
 
         private async Task LoadDataAsync()
         {
-            if (_isLoading) return; // Предотвращаем множественные загрузки
+            if (_isLoading) return;
 
             try
             {
                 _isLoading = true;
 
-                var rawData = await _medicineRepository.GetMedicineDetailsAsync();
-                MedicineDetails = new ObservableCollection<MedicineDetailDto>(rawData);
+                IEnumerable<MedicineDetailDto> rawData;
 
-                Debug.WriteLine($"[MedicineListVM] Загружено {MedicineDetails.Count} лекарств");
+                if (IsActiveSelected)
+                {
+                    rawData = await _medicineRepository.GetMedicineDetailsAsync();
+                    // Помечаем, что это не архивные записи
+                    foreach (var item in rawData)
+                    {
+                        item.IsArchived = false;
+                    }
+                }
+                else
+                {
+                    rawData = await _medicineRepository.GetArchivedMedicinesAsync();
+                    // Помечаем, что это архивные записи
+                    foreach (var item in rawData)
+                    {
+                        item.IsArchived = true;
+                    }
+                }
+
+                MedicineDetails = new ObservableCollection<MedicineDetailDto>(rawData);
+                FilteredMedicineDetails = new ObservableCollection<MedicineDetailDto>(rawData);
             }
             catch (Exception ex)
             {
@@ -101,7 +224,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             finally
             {
                 _isLoading = false;
-                IsRefreshing = false; // ВАЖНО: всегда сбрасываем IsRefreshing
+                IsRefreshing = false;
             }
         }
 
@@ -116,7 +239,7 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка при обновлении: {ex.Message}");
-                IsRefreshing = false; // Сбрасываем даже при ошибке
+                IsRefreshing = false;
                 await Shell.Current.DisplayAlertAsync("Ошибка",
                     "Не удалось обновить список. Попробуйте позже.",
                     "OK");
@@ -138,6 +261,60 @@ namespace MedicinesTracker.Modules.Medications.ViewModels
             catch (Exception ex)
             {
                 await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
+            }
+        }
+
+        [RelayCommand]
+        private void ClearSearch()
+        {
+            SearchText = string.Empty;
+            ApplyFilter();
+        }
+
+        [RelayCommand]
+        private async Task RestoreMedicine(int medicineId)
+        {
+            bool confirm = await Shell.Current.DisplayAlertAsync(
+                "Восстановление",
+                "Восстановить лекарство из архива?\n\nИстория приёмов сохранится.",
+                "Да",
+                "Нет");
+
+            if (!confirm) return;
+
+            try
+            {
+                var success = await _medicineRepository.RestoreMedicineAsync(medicineId);
+
+                if (success)
+                {
+                    await _intakeGenerator.RegenerateIntakesForMedicineAsync(medicineId);
+
+                    // Перепланируем уведомления
+                    _notificationPlanner.CancelAll();
+                    await _notificationPlanner.PlanForTodayAsync();
+
+                    await Shell.Current.DisplayAlertAsync("Успех", "Лекарство восстановлено", "ОК");
+
+                    // Если мы в архиве и восстановили лекарство — переключаемся на активные
+                    if (IsArchiveSelected)
+                    {
+                        await ShowActiveMedicines();
+                    }
+                    else
+                    {
+                        await LoadDataAsync();
+                    }
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlertAsync("Ошибка", "Не удалось восстановить лекарство", "ОК");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка при восстановлении: {ex.Message}");
+                await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось восстановить: {ex.Message}", "ОК");
             }
         }
     }

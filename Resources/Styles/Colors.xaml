@@ -6,13 +6,13 @@
 
     <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
 
-    <Color x:Key="PrimaryDarkText">#06091C</Color>
-    <Color x:Key="PrimaryDark">#6B5279</Color>
+    <Color x:Key="PrimaryDarkText">#191A1E</Color>
+    <Color x:Key="PrimaryDark">#48110C</Color>
     <Color x:Key="PrimarySoftDark">#353535</Color>
-    <Color x:Key="Primary">#8C6F81</Color>
-    <Color x:Key="SecondaryDark">#DED7D1</Color>
-    <Color x:Key="Secondary">#FEFBEA</Color>
-    <Color x:Key="SecondaryLight">#80FEFBEA</Color>
+    <Color x:Key="Primary">#56483B</Color>
+    <Color x:Key="SecondaryDark">#AD9E89</Color>
+    <Color x:Key="Secondary">#C9C3B7</Color>
+    <Color x:Key="SecondaryLight">#E7E4DB</Color>
 
     <SolidColorBrush x:Key="PrimaryDarkTextBrush" Color="{StaticResource PrimaryDarkText}"/>
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDark}"/>

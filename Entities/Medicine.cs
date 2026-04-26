@@ -14,6 +14,8 @@ namespace MedicinesTracker.Entities
         public int IdRecipient { get; set; }
         public string? CreatedAt { get; set; }
         public string? UpdatedAt { get; set; }
+        public bool IsActive { get; set; } = true;  // активное или удалённое
+        public DateTime? DeletedAt { get; set; }
 
         // Навигационные свойства
         [ForeignKey(nameof(IdUnit))]

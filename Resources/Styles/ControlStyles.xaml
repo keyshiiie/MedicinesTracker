@@ -196,4 +196,31 @@
         <Setter Property="Opacity" Value="0.8"/>
         <Setter Property="Margin" Value="0,5,0,0"/>
     </Style>
+
+    <!-- Стили для поиска -->
+    <Style x:Key="SearchBorderStyle" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"/>
+        <Setter Property="StrokeThickness" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Padding" Value="10,0"/>
+    </Style>
+
+    <Style x:Key="SearchEntryStyle" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource PrimaryDarkText}}"/>
+        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <Style x:Key="SearchIconStyle" TargetType="Image">
+        <Setter Property="WidthRequest" Value="20"/>
+        <Setter Property="HeightRequest" Value="20"/>
+        <Setter Property="Margin" Value="0,0,10,0"/>
+    </Style>
+
+    <Style x:Key="SearchResultLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource Gray400}}"/>
+        <Setter Property="Margin" Value="10,5,10,0"/>
+    </Style>
 </ResourceDictionary>

@@ -4,8 +4,7 @@
              x:Class="MedicinesTracker.Modules.Settings.Views.SettingsPage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Settings.ViewModels"
              x:DataType="viewModels:SettingsPageVM"
-             xmlns:models="clr-namespace:MedicinesTracker.Models"
-             xmlns:controls="clr-namespace:MedicinesTracker.Views.Controls" 
+             xmlns:entitities="clr-namespace:MedicinesTracker.Entities"
              Title="Настройки">
     <VerticalStackLayout Spacing="5">
         <Label 
@@ -17,7 +16,7 @@
                ItemsSource="{Binding Recipients}">
             <!-- Шаблон элемента -->
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:RecipientModel">
+                <DataTemplate x:DataType="entitities:Recipient">
                     <!-- Обертка для отступов -->
                     <VerticalStackLayout>
                         <Border Style="{StaticResource MedicineCardBorderStyle}">

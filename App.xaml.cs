@@ -15,6 +15,7 @@ namespace MedicinesTracker
     public partial class App : Application
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly IAppSettingsService _appSettingsService; 
         private readonly IPreferencesService _preferencesService;
         private readonly IIntakeGeneratorService _intakeGenerator;
         private readonly IDatabaseInitializer _databaseInitializer;
@@ -22,12 +23,14 @@ namespace MedicinesTracker
 
         public App(
             IServiceProvider serviceProvider,
+            IAppSettingsService appSettingsService, 
             IPreferencesService preferencesService,
             IIntakeGeneratorService intakeGenerator,
             IDatabaseInitializer databaseInitializer)
         {
             InitializeComponent();
             _serviceProvider = serviceProvider;
+            _appSettingsService = appSettingsService;
             _preferencesService = preferencesService;
             _intakeGenerator = intakeGenerator;
             _databaseInitializer = databaseInitializer;
@@ -35,10 +38,12 @@ namespace MedicinesTracker
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // Проверяем, был ли выполнен первый запуск
-            bool firstLaunchCompleted = _preferencesService.Get("FirstLaunchCompleted", false);
+            var firstLaunchTask = Task.Run(async () => await _appSettingsService.IsFirstLaunchAsync());
+            bool isFirstLaunch = firstLaunchTask.Result;
 
-            if (!firstLaunchCompleted)
+            System.Diagnostics.Debug.WriteLine($"=== isFirstLaunch = {isFirstLaunch} ===");
+
+            if (isFirstLaunch)
             {
                 return CreateIntroWindow();
             }
@@ -127,6 +132,8 @@ namespace MedicinesTracker
 
                 // 0. ИНИЦИАЛИЗИРУЕМ БАЗУ ДАННЫХ
                 System.Diagnostics.Debug.WriteLine("📁 Инициализация базы данных...");
+
+                // ВРЕМЕННО: принудительно пересоздаём БД с новой структурой
                 await _databaseInitializer.EnsureCreatedAsync();
                 System.Diagnostics.Debug.WriteLine("✅ База данных готова");
 

@@ -25,6 +25,7 @@ namespace MedicinesTracker.Data
         public DbSet<Unit> Units { get; set; }
         public DbSet<WeekDay> WeekDays { get; set; }
         public DbSet<NotificationSetting> NotificationSettings { get; set; }
+        public DbSet<AppSetting> AppSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

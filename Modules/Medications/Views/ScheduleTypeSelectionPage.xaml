@@ -49,6 +49,10 @@
                     IsVisible="{Binding ShowBackButton}"
                     HorizontalOptions="Center"
                     Style="{StaticResource SaveMedicineButtonStyle}"/>
+            <Button Text="Отмена"
+Command="{Binding CancelCommand}"
+IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}"
+Style="{StaticResource CancelButtonBottomStyle}"/>
             <Button Text="Далее"
                     Command="{Binding ContinueCommand}"
                     IsEnabled="{Binding IsValid}"

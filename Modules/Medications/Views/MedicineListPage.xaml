@@ -5,17 +5,51 @@
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
              xmlns:dto="clr-namespace:MedicinesTracker.Dto"
              x:DataType="viewModels:MedicineListVM"
-             Title="Лекарства">
+             Title="{Binding PageTitle}"
+             Padding="0">
 
-    <Grid RowDefinitions="*,Auto">
-        <!-- RefreshView с CollectionView -->
-        <RefreshView Grid.Row="0"
+    <!-- Кнопка переключения между активными и архивом -->
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="{Binding ToggleButtonIcon}"
+                     Command="{Binding ToggleModeCommand}"
+                     Order="Primary"/>
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="10">
+
+        <!-- Строка поиска -->
+        <Grid Grid.Row="0"
+              Margin="0,0,0,10">
+            <Border Style="{StaticResource SearchBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Image Source="search_icon.png"
+                           Grid.Column="0"
+                           Style="{StaticResource SearchIconStyle}"/>
+
+                    <Entry x:Name="SearchEntry"
+                           Grid.Column="1"
+                           Text="{Binding SearchText, Mode=TwoWay}"
+                           Placeholder="Поиск по названию..."
+                           Style="{StaticResource SearchEntryStyle}"
+                           TextChanged="OnSearchTextChanged"/>
+
+                    <Button Grid.Column="2"
+                            Text="x"
+                            Command="{Binding ClearSearchCommand}"
+                            IsVisible="{Binding IsSearching}"
+                            Style="{StaticResource ClearSearchButtonStyle}"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- RefreshView с CollectionView - занимает всё доступное место -->
+        <RefreshView Grid.Row="1"
                      IsRefreshing="{Binding IsRefreshing}"
                      Command="{Binding RefreshDataCommand}">
 
-            <CollectionView ItemsSource="{Binding MedicineDetails}"
+            <CollectionView ItemsSource="{Binding FilteredMedicineDetails}"
                             VerticalOptions="Fill">
-                <!-- Шаблон элемента -->
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="dto:MedicineDetailDto">
                         <VerticalStackLayout>
@@ -33,24 +67,24 @@
                                                Style="{StaticResource CardDescriptionOpacityStyle}"
                                                Grid.Column="0"
                                                VerticalOptions="Center"/>
-                                        <Border Style="{StaticResource CardHintBorderStyle}"
-                                                Grid.Column="1">
-                                            <HorizontalStackLayout Spacing="5">
-                                                <Label Text="{Binding CurrentQuantity, StringFormat='Осталось {0}'}"
-                                                       Style="{StaticResource CardHintTextStyle}"/>
-                                                <Label Text="{Binding UnitName}"
-                                                       Style="{StaticResource CardHintTextStyle}"/>
-                                            </HorizontalStackLayout>
-                                        </Border>
+
+                                        <!-- Кнопка восстановления (только для архива) -->
+                                        <Button Grid.Column="1"
+                                                Clicked="OnRestoreButtonClicked"
+                                                CommandParameter="{Binding IdMedicine}"
+                                                IsVisible="{Binding IsArchived}"
+                                                Style="{StaticResource RecoverButtonStyle}"/>
                                     </Grid>
+
                                     <HorizontalStackLayout Spacing="10">
                                         <Border Style="{StaticResource ImageBorderCardStyle}">
                                             <Image Source="pill.png"
-                                               Style="{StaticResource MedicineIconStyle}"/>
+                                                   Style="{StaticResource MedicineIconStyle}"/>
                                         </Border>
                                         <Label Text="{Binding MedicineName}"
                                                Style="{StaticResource CardTitleStyle}"/>
                                     </HorizontalStackLayout>
+
                                     <HorizontalStackLayout Spacing="5">
                                         <Label Text="Посмотреть подробную информацию"
                                                Style="{StaticResource DetailLinkStyle}"/>
@@ -62,15 +96,16 @@
                         </VerticalStackLayout>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
+
                 <CollectionView.EmptyView>
                     <VerticalStackLayout HorizontalOptions="Center"
-                             VerticalOptions="Center"
-                             Margin="0,50,0,0"
-                             Spacing="10">
-                        <Label Text="Список лекарств пуст"
+                                         VerticalOptions="Center"
+                                         Margin="0,50,0,0"
+                                         Spacing="10">
+                        <Label Text="{Binding EmptyViewTitle}"
                                Style="{StaticResource MainTitleStyle}"
                                HorizontalTextAlignment="Center"/>
-                        <Label Text="Вы можете добавить новое лекарство при помощи кнопки ниже."
+                        <Label Text="{Binding EmptyViewDescription}"
                                Style="{StaticResource MainDescriptionStyle}"
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
@@ -78,8 +113,8 @@
             </CollectionView>
         </RefreshView>
 
-        <!-- Индикатор загрузки для отображения статуса -->
-        <ActivityIndicator Grid.Row="0"
+        <!-- Индикатор загрузки (поверх списка) -->
+        <ActivityIndicator Grid.Row="1"
                            IsRunning="{Binding IsLoading}"
                            IsVisible="{Binding IsLoading}"
                            HorizontalOptions="Center"
@@ -88,9 +123,11 @@
                            WidthRequest="50"
                            Color="{StaticResource Primary}" />
 
-        <!-- Кнопка "Добавить" -->
-        <HorizontalStackLayout Grid.Row="1" 
-                               HorizontalOptions="End">
+        <!-- Кнопка "Добавить" (скрываем в архиве) -->
+        <HorizontalStackLayout Grid.Row="2" 
+                               HorizontalOptions="End"
+                               IsVisible="{Binding ShowAddButton}"
+                               Margin="0,10,0,0">
             <Button Command="{Binding AddMedicineCommand}"
                     Style="{StaticResource AddMedicineButtonStyle}"/>
         </HorizontalStackLayout>

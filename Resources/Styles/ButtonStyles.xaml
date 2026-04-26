@@ -11,7 +11,7 @@
     </Style>
 
     <Style TargetType="Button" x:Key="DefaultButtonStyle" BasedOn="{StaticResource BaseButtonStyle}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}"/>
         <Setter Property="TextColor" Value="{StaticResource Secondary}"/>
         <Setter Property="Padding" Value="15,5"/>
     </Style>
@@ -20,6 +20,12 @@
         <Setter Property="Text" Value="Сохранить"/>
         <Setter Property="Padding" Value="15,10"/>
         <Setter Property="SemanticProperties.Description" Value="Сохранить изменения"/>
+    </Style>
+
+    <Style TargetType="Button" x:Key="MarkMedicineButtonStyle" BasedOn="{StaticResource BasePrimaryButtonStyle}">
+        <Setter Property="Text" Value="✔"/>
+        <Setter Property="VerticalOptions" Value="Center"/>
+        <Setter Property="Padding" Value="10,5"/>
     </Style>
 
     <Style TargetType="Button" x:Key="EditButtonStyle" BasedOn="{StaticResource BaseButtonStyle}">
@@ -45,11 +51,29 @@
         <Setter Property="BorderWidth" Value="2"/>
     </Style>
 
+    <Style TargetType="Button" x:Key="RecoverButtonStyle" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="ImageSource" Value="recover.png"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+    </Style>
+
     <Style x:Key="OutlineButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="BackgroundColor" Value="Transparent"/>
         <Setter Property="TextColor" Value="{StaticResource Primary}"/>
         <Setter Property="BorderColor" Value="{StaticResource Primary}"/>
         <Setter Property="BorderWidth" Value="1"/>
         <Setter Property="Padding" Value="10,5"/>
+    </Style>
+
+    <Style x:Key="CancelButtonBottomStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="TextColor" Value="{StaticResource PrimaryDark}"/>
+        <Setter Property="BorderWidth" Value="1.5"/>
+        <Setter Property="BorderColor" Value="{StaticResource PrimaryDark}"/>
+    </Style>
+
+    <Style x:Key="ClearSearchButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"/>
+        <Setter Property="FontSize" Value="16"/>
     </Style>
 </ResourceDictionary>

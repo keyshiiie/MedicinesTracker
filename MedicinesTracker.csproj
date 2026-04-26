@@ -1,13 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<!-- Исправьте опечатку в NoWarn -->
 		<NoWarn>MAUI0000,MAUI0001,XC0022,XC0024,MVVMTK0045</NoWarn>
 
 		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 
-		<!-- Добавьте для поддержки архитектур ARM64 -->
 		<RuntimeIdentifiers Condition="'$(TargetFramework)' == 'net10.0-android'">android-arm64</RuntimeIdentifiers>
 		<RuntimeIdentifiers Condition="'$(TargetFramework)' == 'net10.0-ios'">ios-arm64</RuntimeIdentifiers>
 		<RuntimeIdentifiers Condition="'$(TargetFramework)' == 'net10.0-maccatalyst'">maccatalyst-arm64;maccatalyst-x64</RuntimeIdentifiers>
@@ -19,23 +17,14 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
-		<!-- Включите для лучшей производительности -->
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
-
-		<!-- Включите AOT для производительности (опционально) -->
 		<EnableAOT>false</EnableAOT>
 
-		<!-- Display name -->
 		<ApplicationTitle>MedicinesTracker</ApplicationTitle>
-
-		<!-- App Identifier -->
 		<ApplicationId>com.companyname.medicinestracker</ApplicationId>
-
-		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
-		<!-- Для публикации в Microsoft Store -->
 		<WindowsPackageType>None</WindowsPackageType>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
@@ -46,112 +35,101 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
-	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <AndroidUseAapt2>True</AndroidUseAapt2>
-	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<AndroidUseAapt2>True</AndroidUseAapt2>
+		<AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
+	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+	</PropertyGroup>
+
+	<!-- ИКОНКИ: только один раз указываем appicon -->
 	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
-		<MauiIcon Include="Resources\AppIcon\appicon2.svg" />
-
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Styles\solar_pills.svg" Color="#8C6F81" Size="48,48" />
-
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
-
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
-
-		<!-- Raw Assets - УДАЛИТЕ ЭТУ СТРОКУ или ЗАКОММЕНТИРУЙТЕ если не используете -->
-		<!--
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-		-->
-
-		<!-- Вместо этого определите конкретные файлы для включения -->
-		<None Remove="Resources\**" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#56483B" />
 	</ItemGroup>
 
+	<!-- Сплаш-скрин -->
 	<ItemGroup>
-		<!-- Конфигурационный файл -->
+		<MauiSplashScreen Include="Resources\Styles\solar_pills.svg" Color="#56483B" />
+	</ItemGroup>
+
+	<!-- ИЗОБРАЖЕНИЯ: все из папки Images -->
+	<ItemGroup>
+		<MauiImage Include="Resources\Images\*" />
+	</ItemGroup>
+
+	<!-- ШРИФТЫ -->
+	<ItemGroup>
+		<MauiFont Include="Resources\Fonts\*" />
+	</ItemGroup>
+
+	<!-- АССЕТЫ: файлы конфигурации -->
+	<ItemGroup>
 		<MauiAsset Include="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</MauiAsset>
-
-		<!-- Файл базы данных -->
-
-		<!-- Если у вас есть другие файлы БД или ресурсы -->
-		<!--
-		<MauiAsset Include="Resources\initial_data.sql">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</MauiAsset>
-		-->
 	</ItemGroup>
 
+	<!-- ОСТАЛЬНЫЕ РЕСУРСЫ: исключаем всё, что явно не включено -->
+	<ItemGroup>
+		<None Remove="Resources\**" />
+	</ItemGroup>
+
+	<!-- ПАКЕТЫ NuGet -->
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Dapper" Version="2.1.66" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.6">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.6" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.6">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.11" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
 		<PackageReference Include="Plugin.LocalNotification" Version="13.0.0" />
-
-		<!-- Уберите дублирующийся пакет sqlite-net-pcl, если используете только Microsoft.Data.Sqlite -->
-		<!--
-		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-		-->
-
 		<PackageReference Include="Syncfusion.Maui.Toolkit" Version="1.0.8" />
-
-		<!-- Добавьте для поддержки SQLite на всех платформах -->
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
 	</ItemGroup>
 
-	<!-- Остальная часть файла остается без изменений -->
+	<!-- XAML-файлы -->
 	<ItemGroup>
 		<MauiXaml Update="Modules\HistoryIntake\View\HistoryPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\Controls\CreationProgressBar.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\ScheduleDetailsPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\ScheduleModeSelectionPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Medications\Views\ScheduleTypeSelectionPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Notifications\Views\AboutAppPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Notifications\Views\AcquaintancePage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Notifications\Views\GreetingPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Modules\Settings\Views\EditRecipientPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Resources\Styles\BaseStyles.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Resources\Styles\ButtonStyles.xaml">
 			<Generator>MSBuild:Compile</Generator>
@@ -182,29 +160,10 @@
 		</MauiXaml>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <MauiIcon Include="Platforms\Android\Resources\Drawable\notification_icon.svg" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiIcon Include="Resources\AppIcon\icon1.svg" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiIcon Include="Resources\AppIcon\icon_medicine.svg" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiIcon Include="Resources\AppIcon\icons_medicines.svg" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiSplashScreen Include="Resources\Splash\solar_pills.svg" />
-	</ItemGroup>
-
+	<!-- Code-behind связи -->
 	<ItemGroup>
 		<Compile Update="Modules\Notifications\Views\AboutAppPage.xaml.cs">
-		  <DependentUpon>AboutAppPage.xaml</DependentUpon>
+			<DependentUpon>AboutAppPage.xaml</DependentUpon>
 		</Compile>
 		<Compile Update="Modules\Notifications\Views\TodayMedicinePage.xaml.cs">
 			<DependentUpon>TodayMedicinePage.xaml</DependentUpon>

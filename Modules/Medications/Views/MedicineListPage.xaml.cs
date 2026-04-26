@@ -60,4 +60,25 @@ public partial class MedicineListPage : ContentPage
             await Shell.Current.DisplayAlertAsync("Ошибка", $"Не удалось открыть страницу: {ex.Message}", "OK");
         }
     }
+
+    private async void OnRestoreButtonClicked(object sender, EventArgs e)
+    {
+        var button = sender as Button;
+        if (button?.CommandParameter is int medicineId)
+        {
+            if (BindingContext is MedicineListVM viewModel)
+            {
+                // Вызываем команду напрямую
+                await viewModel.RestoreMedicineCommand.ExecuteAsync(medicineId);
+            }
+        }
+    }
+
+    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (BindingContext is MedicineListVM vm)
+        {
+            vm.UpdateSearchTextCommand.Execute(e.NewTextValue);
+        }
+    }
 }

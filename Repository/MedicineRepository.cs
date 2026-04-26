@@ -15,6 +15,10 @@ namespace MedicinesTracker.Repository
         Task<Medicine?> GetMedicineByIdAsync(int idMedicine);
         Task<IEnumerable<MedicineWithScheduleDto>> GetActiveMedicinesWithSchedulesAsync();
         Task<MedicineWithScheduleDto?> GetMedicineWithScheduleByIdAsync(int medicineId);
+        Task<bool> ArchiveMedicineAsync(int medicineId);
+        Task<List<MedicineDetailDto>> GetArchivedMedicinesAsync(); // Для отображения архива
+        Task<bool> RestoreMedicineAsync(int medicineId);  // Восстановление из архива
+        Task<IEnumerable<MedicineWithScheduleDto>> GetSchedulesByMedicineIdAsync(int medicineId);
     }
 
     public class MedicineRepository : IMedicineRepository
@@ -29,6 +33,7 @@ namespace MedicinesTracker.Repository
         public async Task<IEnumerable<MedicineDetailDto>> GetMedicineDetailsAsync()
         {
             return await _context.Medicines
+                .Where(m => m.IsActive)
                 .Include(m => m.Stock)
                 .Include(m => m.MethodAdmission)
                 .Include(m => m.Unit)
@@ -129,7 +134,7 @@ namespace MedicinesTracker.Repository
                 .Include(ms => ms.ScheduleWeekDays)
                     .ThenInclude(swd => swd.WeekDay)
                 .Include(ms => ms.ScheduleTimes)
-                .Where(ms => ms.IsActive)
+                .Where(ms => ms.IsActive && ms.Medicine.IsActive)
                 .Select(ms => new MedicineWithScheduleDto
                 {
                     IdMedicine = ms.IdMedicine,
@@ -206,6 +211,109 @@ namespace MedicinesTracker.Repository
                     TimeOrders = string.Join(",", ms.ScheduleTimes.Where(st => st.IsActive).OrderBy(st => st.OrderInDay).Select(st => st.OrderInDay))
                 })
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> ArchiveMedicineAsync(int medicineId)
+        {
+            var medicine = await _context.Medicines
+                .Include(m => m.Schedules)
+                .FirstOrDefaultAsync(m => m.IdMedicine == medicineId);
+
+            if (medicine == null) return false;
+
+            // Архивируем само лекарство
+            medicine.IsActive = false;
+            medicine.DeletedAt = DateTime.UtcNow;
+
+            // Отключаем все расписания этого лекарства
+            if (medicine.Schedules != null && medicine.Schedules.Any())
+            {
+                foreach (var schedule in medicine.Schedules)
+                {
+                    schedule.IsActive = false;
+                }
+            }
+
+            // удаляем только НЕзавершённые записи (начиная с сегодня)
+            var todayStr = DateTime.Today.ToString("yyyy-MM-dd");
+            var futureIntakes = await _context.Intakes
+                .Where(i => i.IdMedicine == medicineId
+                    && string.Compare(i.Date, todayStr) >= 0
+                    && !i.IsCompleted) 
+                .ToListAsync();
+
+            _context.Intakes.RemoveRange(futureIntakes);
+            System.Diagnostics.Debug.WriteLine($"Удалено {futureIntakes.Count} будущих (незавершённых) записей приёма");
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Восстановление из архива
+        public async Task<bool> RestoreMedicineAsync(int medicineId)
+        {
+            var medicine = await _context.Medicines
+                .Include(m => m.Schedules)  // <-- тоже подгружаем
+                .FirstOrDefaultAsync(m => m.IdMedicine == medicineId && !m.IsActive);
+
+            if (medicine == null) return false;
+
+            medicine.IsActive = true;
+            medicine.DeletedAt = null;
+
+            // Восстанавливаем все расписания этого лекарства
+            if (medicine.Schedules != null && medicine.Schedules.Any())
+            {
+                foreach (var schedule in medicine.Schedules)
+                {
+                    schedule.IsActive = true;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<MedicineDetailDto>> GetArchivedMedicinesAsync()
+        {
+            return await _context.Medicines
+                .Where(m => m.IsActive == false)
+                .Include(m => m.Stock)
+                .Include(m => m.MethodAdmission)
+                .Include(m => m.Unit)
+                .Include(m => m.Recipient)
+                .Include(m => m.Schedules)
+                .Select(m => new MedicineDetailDto
+                {
+                    IdMedicine = m.IdMedicine,
+                    IdSchedule = m.Schedules.FirstOrDefault() != null ? m.Schedules.First().IdSchedule : 0,
+                    MedicineName = m.Name,
+                    MethodAdmissionName = m.MethodAdmission.Name,
+                    UnitName = m.Unit.Name,
+                    IdStock = m.Stock != null ? m.Stock.IdStock : 0,
+                    CurrentQuantity = m.Stock != null ? m.Stock.CurrentQuantity ?? 0 : 0,
+                    Threshold = m.Stock != null ? m.Stock.Threshold ?? 0 : 0,
+                    ReminderEnabled = m.Stock != null ? m.Stock.ReminderEnabled : false,
+                    IdRecipient = m.IdRecipient,
+                    RecipientName = m.Recipient.Name,
+                    DeletedAt = m.DeletedAt
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<MedicineWithScheduleDto>> GetSchedulesByMedicineIdAsync(int medicineId)
+        {
+            return await _context.MedicationSchedules
+                .Include(ms => ms.ScheduleTimes)
+                .Where(ms => ms.IdMedicine == medicineId)
+                .Select(ms => new MedicineWithScheduleDto
+                {
+                    IdSchedule = ms.IdSchedule,
+                    IdMedicine = ms.IdMedicine,
+                    MedicineName = ms.Medicine.Name,
+                    Times = string.Join(",", ms.ScheduleTimes.Where(st => st.IsActive).OrderBy(st => st.OrderInDay).Select(st => st.Time))
+                })
+                .ToListAsync();
         }
     }
 }

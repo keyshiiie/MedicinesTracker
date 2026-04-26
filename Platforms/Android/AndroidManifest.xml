@@ -7,9 +7,9 @@
 	<uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
-	<application android:icon="@mipmap/icons_medicines" 
+	<application android:icon="@mipmap/appicon" 
 				 android:label="Medicine Tracker"
-				 android:enableOnBackInvokedCallback="true">>
+				 android:enableOnBackInvokedCallback="true">
 		<!-- Только BroadcastReceiver, никакого ForegroundService -->
 		<receiver android:name=".Platforms.Android.NotificationPublisher" android:enabled="true" android:exported="false">
 			<intent-filter>

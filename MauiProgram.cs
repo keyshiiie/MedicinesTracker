@@ -87,6 +87,7 @@ namespace MedicinesTracker
             builder.Services.AddSingleton<StepManager>();
             builder.Services.AddSingleton<INavigationService, NavigationService>();
             builder.Services.AddSingleton<IMedicationCreationNavigationService, MedicationCreationNavigationService>();
+            builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
 #if ANDROID
             builder.Services.AddSingleton<IAlarmScheduler>(sp =>
             {

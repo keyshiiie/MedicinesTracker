@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MedicinesTracker.Modules.Notifications.Views.TodayMedicinePage"
              xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Notifications.ViewModels"
-             xmlns:models="clr-namespace:MedicinesTracker.Models.Dto"
+             xmlns:dto="clr-namespace:MedicinesTracker.Dto"
              x:DataType="viewModels:TodayMedicineVM"
              Title="Сегодня">
 
@@ -19,7 +19,7 @@
                             VerticalOptions="Fill">
 
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:TodayMedicineDto">
+                    <DataTemplate x:DataType="dto:TodayMedicineDto">
                         <Border Style="{StaticResource MedicineCardBorderStyle}">
                             <Grid ColumnDefinitions="*, Auto">
 
@@ -57,8 +57,9 @@
                                         Source={RelativeSource AncestorType={x:Type viewModels:TodayMedicineVM}},
                                         x:DataType=viewModels:TodayMedicineVM}"
                                         CommandParameter="{Binding .}"
-                                        Style="{StaticResource DefaultButtonStyle}"
-                                        Text="Отметить"/>
+                                        Style="{StaticResource MarkMedicineButtonStyle}"
+                                        Text="✔"
+                                        VerticalOptions="Center"/>
                             </Grid>
                         </Border>
                     </DataTemplate>

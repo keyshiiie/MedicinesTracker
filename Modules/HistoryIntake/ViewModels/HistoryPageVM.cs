@@ -25,12 +25,21 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
         private RecipientFilter? _selectedRecipient;
 
         [ObservableProperty]
+        private DateTime? _startDate;  // Дата начала периода
+
+        [ObservableProperty]
+        private DateTime? _endDate;    // Дата окончания периода
+
+        [ObservableProperty]
+        private bool _isDateFilterActive;  // Активен ли фильтр по дате
+
+        [ObservableProperty]
         private bool _isLoading;
 
         [ObservableProperty]
         private bool _isRefreshing;
 
-        public bool IsFiltered => SelectedRecipient != null;
+        public bool IsFiltered => SelectedRecipient != null || IsDateFilterActive;
 
         [ObservableProperty]
         private bool _hasData;
@@ -49,7 +58,9 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
 
         private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(SelectedRecipient))
+            if (e.PropertyName == nameof(SelectedRecipient) ||
+                e.PropertyName == nameof(StartDate) ||
+                e.PropertyName == nameof(EndDate))
             {
                 ApplyFilter();
             }
@@ -114,18 +125,51 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
         private void ClearFilter()
         {
             SelectedRecipient = null;
+            StartDate = null;
+            EndDate = null;
+            IsDateFilterActive = false;
+        }
+
+        [RelayCommand]
+        private void ClearDateFilter()
+        {
+            StartDate = null;
+            EndDate = null;
+            IsDateFilterActive = false;
+        }
+
+        [RelayCommand]
+        private void ApplyDateFilter()
+        {
+            IsDateFilterActive = StartDate.HasValue || EndDate.HasValue;
+            ApplyFilter();
         }
 
         private void ApplyFilter()
         {
             try
             {
-                Debug.WriteLine($"Применяем фильтр. Выбран: {SelectedRecipient?.Name ?? "Все"}");
+                Debug.WriteLine($"Применяем фильтр. Выбран получатель: {SelectedRecipient?.Name ?? "Все"}, " +
+                              $"Дата с: {StartDate?.ToString("yyyy-MM-dd") ?? "не указана"}, " +
+                              $"Дата по: {EndDate?.ToString("yyyy-MM-dd") ?? "не указана"}");
 
-                // Фильтруем данные
+                // Фильтруем по получателю
                 var filteredData = SelectedRecipient != null
                     ? _allIntakes.Where(m => m.RecipientName == SelectedRecipient.Name).ToList()
                     : _allIntakes.ToList();
+
+                // Фильтруем по дате
+                if (StartDate.HasValue)
+                {
+                    var startDateStr = StartDate.Value.ToString("yyyy-MM-dd");
+                    filteredData = filteredData.Where(m => string.Compare(m.Date, startDateStr) >= 0).ToList();
+                }
+
+                if (EndDate.HasValue)
+                {
+                    var endDateStr = EndDate.Value.ToString("yyyy-MM-dd");
+                    filteredData = filteredData.Where(m => string.Compare(m.Date, endDateStr) <= 0).ToList();
+                }
 
                 Debug.WriteLine($"После фильтрации: {filteredData.Count} записей");
 
@@ -153,8 +197,16 @@ namespace MedicinesTracker.Modules.HistoryIntake.ViewModels
 
                 if (!HasData)
                 {
-                    EmptyMessage = SelectedRecipient != null
-                        ? $"Нет данных о приеме лекарств для {SelectedRecipient.Name}"
+                    var filterParts = new List<string>();
+                    if (SelectedRecipient != null)
+                        filterParts.Add($"для {SelectedRecipient.Name}");
+                    if (StartDate.HasValue)
+                        filterParts.Add($"с {StartDate.Value:dd.MM.yyyy}");
+                    if (EndDate.HasValue)
+                        filterParts.Add($"по {EndDate.Value:dd.MM.yyyy}");
+
+                    EmptyMessage = filterParts.Any()
+                        ? $"Нет данных о приеме лекарств {string.Join(" ", filterParts)}"
                         : "Нет данных о приеме лекарств";
                 }
             }

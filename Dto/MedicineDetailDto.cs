@@ -15,6 +15,9 @@
         public int CurrentQuantity { get; set; }
         public int Threshold { get; set; }
         public bool ReminderEnabled { get; set; }
+
+        public DateTime? DeletedAt { get; set; }  // дата архивации
+        public bool IsArchived { get; set; }
     }
 
 }

@@ -1,5 +1,4 @@
-﻿// Models/ButtonUiState.cs
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MedicinesTracker.Modules.Medications.Models
 {
