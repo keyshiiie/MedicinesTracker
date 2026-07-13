@@ -1,13 +1,27 @@
-﻿using MedicinesTracker.Services;
-using MedicinesTracker.ViewModels;
-using CommunityToolkit.Maui;
-using MedicinesTracker.Views;
+﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Maui.Toolkit.Hosting;
-using Microsoft.Extensions.Configuration;   
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using MedicinesTracker.Repository;
-using MedicinesTracker.Interface;
+using MedicinesTracker.Modules.Medications.ViewModels;
+using MedicinesTracker.Modules.Notifications.ViewModels;
+using MedicinesTracker.Modules.Settings.ViewModels;
+using MedicinesTracker.Modules.HistoryIntake.ViewModels;
+using MedicinesTracker.Services;
+using Plugin.LocalNotification;
+using MedicinesTracker.Modules.Notifications.Views;
+using MedicinesTracker.Modules.Medications.Views;
+using MedicinesTracker.Modules.Settings.Views;
+using MedicinesTracker.Modules.HistoryIntake.View;
+using MedicinesTracker.Data;
+using Microsoft.EntityFrameworkCore;
+using MedicinesTracker.Services.Navigation;
+
+
+#if ANDROID
+using Android.App;
+using Android.Content;
+#endif
 
 namespace MedicinesTracker
 {
@@ -18,6 +32,9 @@ namespace MedicinesTracker
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+#if ANDROID
+                .UseLocalNotification()
+#endif
                 .UseMauiCommunityToolkit()
                 .ConfigureSyncfusionToolkit()
                 .ConfigureMauiHandlers(handlers =>
@@ -37,39 +54,110 @@ namespace MedicinesTracker
             builder.Configuration
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
-            // Получение строки подключения
-            var config = builder.Configuration;
-            string? connectionString = config.GetConnectionString("Default");
+            // Путь к базе данных (единый для всех платформ)
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "MedicineTracker.db");
 
-            if (string.IsNullOrEmpty(connectionString))
+            // Регистрация DbContext как Scoped
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlite($"Data Source={dbPath}"),
+                ServiceLifetime.Scoped);
+
+            // Регистрация инициализатора БД
+            builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+
+            // Регистрация репозиториев
+            builder.Services.AddScoped<IMedicineRepository, MedicineRepository>();
+            builder.Services.AddScoped<IReferencesDataRepository, ReferencesDataRepository>();
+            builder.Services.AddScoped<IRecipientRepository, RecipientRepository>();
+            builder.Services.AddScoped<IStockRepository, StockRepository>();
+            builder.Services.AddScoped<IMedicineScheduleRepository, MedicineScheduleRepository>();
+            builder.Services.AddScoped<IIntakeRepository, IntakeRepository>();
+            builder.Services.AddScoped<IScheduleTimeRepository, ScheduleTimeRepository>();
+            builder.Services.AddScoped<IScheduleWeekDaysRepository, ScheduleWeekDaysRepository>();
+
+            // Регистрация сервисов
+            builder.Services.AddScoped<IScheduleService, ScheduleService>();
+            builder.Services.AddScoped<IValidatorService, ValidatorService>();
+            builder.Services.AddScoped<IIntakeGeneratorService, IntakeGeneratorService>();
+            builder.Services.AddScoped<IPreferencesService, PreferencesService>();
+            builder.Services.AddScoped<ITransactionHandler, TransactionHandler>();
+            builder.Services.AddScoped<IMedicineBuilder, MedicineBuilder>();
+            builder.Services.AddScoped<IScheduleEvaluator, ScheduleEvaluator>();
+            builder.Services.AddScoped<INotificationPlannerService, NotificationPlannerService>();
+            builder.Services.AddSingleton<StepManager>();
+            builder.Services.AddSingleton<INavigationService, NavigationService>();
+            builder.Services.AddSingleton<IMedicationCreationNavigationService, MedicationCreationNavigationService>();
+            builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
+#if ANDROID
+            builder.Services.AddSingleton<IAlarmScheduler>(sp =>
             {
-                throw new InvalidOperationException(
-                    "Строка подключения не найдена в appsettings.json. Проверьте секцию ConnectionStrings:Default.");
-            }
+                var context = Android.App.Application.Context;
+                var alarmManager = context.GetSystemService(Android.Content.Context.AlarmService) as AlarmManager;
+                return new MedicinesTracker.Platforms.Android.Services.AlarmScheduler(alarmManager, context);
+            });
+#else
+            // Для Windows, iOS, MacCatalyst - временная заглушка
+            builder.Services.AddSingleton<IAlarmScheduler, DummyAlarmScheduler>();
+#endif
 
-            builder.Services.AddSingleton<DBHandler>(
-                sp => new DBHandler(connectionString));
+            // ViewModels (Transient)
+            builder.Services.AddTransient<MedicineListVM>();
+            builder.Services.AddTransient<TodayMedicineVM>();
+            builder.Services.AddTransient<MedicineDetailVM>();
+            builder.Services.AddTransient<BaseInfoVM>();
+            builder.Services.AddTransient<ScheduleTypeSelectionVM>();
+            builder.Services.AddTransient<ScheduleModeSelectionVM>();
+            builder.Services.AddTransient<ScheduleDetailsVM>();
+            builder.Services.AddTransient<StockInfoVM>();
+            builder.Services.AddTransient<SettingsPageVM>();
+            builder.Services.AddTransient<EditRecipientVM>();
+            builder.Services.AddTransient<HistoryPageVM>();
+            builder.Services.AddTransient<AcquaintanceVM>();
+            builder.Services.AddTransient<GreetingVM>();
+            builder.Services.AddTransient<AboutAppVM>();
 
-            builder.Services.AddSingleton<IMedicineRepository, MedicineRepository>();
-            builder.Services.AddSingleton<IUnitRepository, UnitRepository>();
-            builder.Services.AddSingleton<IRecipientRepository, RecipientRepository>();
-            builder.Services.AddSingleton<IMethodAdmissionRepository, MethodAdmissionRepository>();
+            // Views (Transient)
+            builder.Services.AddTransient<MedicineListPage>();
+            builder.Services.AddTransient<TodayMedicinePage>();
+            builder.Services.AddTransient<HistoryPage>();
+            builder.Services.AddTransient<SettingsPage>();
+            builder.Services.AddTransient<BaseInfoPage>();
+            builder.Services.AddTransient<MedicineDetailPage>();
+            builder.Services.AddTransient<ScheduleTypeSelectionPage>();
+            builder.Services.AddTransient<ScheduleModeSelectionPage>();
+            builder.Services.AddTransient<ScheduleDetailsPage>();
+            builder.Services.AddTransient<StockInfoPage>();
+            builder.Services.AddTransient<EditRecipientPage>();
+            builder.Services.AddTransient<GreetingPage>();
+            builder.Services.AddTransient<AcquaintancePage>();
+            builder.Services.AddTransient<AboutAppPage>();
 
-            builder.Services.AddSingleton<MedicineService>();
-
-            builder.Services.AddSingleton<AppShellVM>();
-            builder.Services.AddSingleton<MedicineListVM>();
-            builder.Services.AddSingleton<TodayMedicineVM>();
-            builder.Services.AddSingleton<MedicineDetailVM>();
-            builder.Services.AddSingleton<BaseInfoVM>();
-            builder.Services.AddSingleton<NotificationInfoVM>();
-            builder.Services.AddSingleton<StockInfoVM>();
+            // AppShell как Singleton
+            builder.Services.AddSingleton<AppShell>();
 
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            // Инициализация БД после сборки
+            using (var scope = app.Services.CreateScope())
+            {
+                try
+                {
+                    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+                    dbInitializer.EnsureCreatedAsync().Wait();
+                    System.Diagnostics.Debug.WriteLine("✅ Database initialized successfully");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Database initialization failed: {ex.Message}");
+                    throw;
+                }
+            }
+
+            return app;
         }
     }
 }

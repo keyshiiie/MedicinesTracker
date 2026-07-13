@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Medications.Views.ScheduleDetailsPage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Modules.Medications.Views.Controls"
+             x:DataType="viewModels:ScheduleDetailsVM"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:entities="clr-namespace:MedicinesTracker.Entities"
+             Title="Настройка расписания">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Прогресс бар сверху -->
+        <controls:CreationProgressBar 
+            Grid.Row="0"
+            CurrentStep="{Binding CurrentStep}"
+            TotalSteps="{Binding TotalSteps}"
+            StepDescription="{Binding StepDescription}"
+            IsEditing="{Binding IsEditingExisting}" 
+            Margin="0,0,0,10"/>
+
+        <!-- Поля посередине с прокруткой -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout VerticalOptions="Center">
+
+                <VerticalStackLayout Spacing="15">
+                    <!-- Частота приёма (для интервального режима) -->
+                    <VerticalStackLayout Spacing="10" 
+                                         IsVisible="{Binding IsIntervalMode}">
+                        <Label Text="Частота приёма"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+                        <Border>
+                            <Picker ItemsSource="{Binding RecurrencePatterns}"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    SelectedItem="{Binding SelectedRecurrencePattern, Mode=TwoWay}"
+                                    Style="{StaticResource PrimaryPickerStyle}"
+                                    Title="Выберите частоту приёма"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Дни недели (для режима по дням недели) -->
+                    <VerticalStackLayout Spacing="10" 
+                                         IsVisible="{Binding IsWeekDaysMode}">
+                        <Label Text="Дни недели"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding WeekDays}"
+                                              Spacing="5">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="entities:WeekDay">
+                                    <Border Style="{StaticResource MedicineCardBorderStyle}" 
+                                            Margin="0" 
+                                            Padding="0">
+                                        <HorizontalStackLayout>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Color="{StaticResource Primary}"
+                                                      VerticalOptions="Center"/>
+                                            <Label Text="{Binding Name}"
+                                                   Style="{StaticResource FieldTitleStyle}"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Label Text="{Binding SelectedDaysText}"
+                               Style="{StaticResource FieldDescriptionStyle}"
+                               FontAttributes="Italic"
+                               IsVisible="{Binding HasSelectedDays}"/>
+                    </VerticalStackLayout>
+
+                    <!-- Даты начала и завершения (для повторяющихся) -->
+                    <VerticalStackLayout Spacing="10" 
+                                         IsVisible="{Binding IsRecurring}">
+                        <Label Text="Дата начала приёма"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+                        <Border>
+                            <DatePicker Style="{StaticResource PrimaryDatePickerStyle}"
+                                        Date="{Binding MedicineSchedule.DateStart, 
+                                        Converter={StaticResource StringToDateConverter}, 
+                                        Mode=TwoWay}"/>
+                        </Border>
+
+                        <Label Text="Дата завершения приёма"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+                        <Border>
+                            <DatePicker Style="{StaticResource PrimaryDatePickerStyle}" 
+                                        Date="{Binding MedicineSchedule.DateEnd,
+                                        Converter={StaticResource StringToDateConverter}, 
+                                        Mode=TwoWay}"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Дата приёма (для одноразовых) -->
+                    <VerticalStackLayout Spacing="10" 
+                                         IsVisible="{Binding IsOneTime}">
+                        <Label Text="Дата приёма"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+                        <Border>
+                            <DatePicker Style="{StaticResource PrimaryDatePickerStyle}"
+                                        MinimumDate="1900-01-01"
+                                        Date="{Binding MedicineSchedule.OneTimeDate,
+                                        Converter={StaticResource StringToDateConverter}, 
+                                        Mode=TwoWay}"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Выбор времени приема -->
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Время приёма"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+                        <!-- Список выбранных времен -->
+                        <CollectionView x:Name="TimeCollectionView"
+                                        ItemsSource="{Binding SelectedTimes}"
+                                        VerticalOptions="Start"
+                                        Margin="0,0,0,10">
+                            <!-- Задаем ItemsLayout с отступами -->
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Vertical" 
+                                                   ItemSpacing="5"/>
+                            </CollectionView.ItemsLayout>
+
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="{x:Type x:TimeSpan}">
+                                    <Border Padding="5,0">
+                                        <Grid ColumnDefinitions="*,Auto" 
+                                              Padding="5,0">
+                                            <Label Text="{Binding ., Converter={StaticResource TimeSpanToStringConverter}}"
+                                                   Grid.Column="0"
+                                                   Style="{StaticResource FieldTitleStyle}"
+                                                   VerticalOptions="Center"/>
+                                            <Button Style="{StaticResource CloseButtonStyle}"
+                                                    Grid.Column="1"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type CollectionView}}, 
+                                                    Path=BindingContext.RemoveTimeCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <!-- Поле для добавления нового времени -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Добавить время приёма"
+                                   Style="{StaticResource FieldDescriptionStyle}"/>
+                            <HorizontalStackLayout Spacing="5">
+                                <Border>
+                                    <TimePicker Time="{Binding NewTime, Mode=TwoWay}" 
+                                                Style="{StaticResource TimePickerStyle}"/>
+                                </Border>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Доза -->
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Доза"
+                               Style="{StaticResource FieldDescriptionStyle}"/>
+                        <Border>
+                            <Entry Text="{Binding MedicineSchedule.Dosage}"
+                                   Style="{StaticResource EditFieldStyle}" 
+                                   HorizontalOptions="Fill"
+                                   Placeholder="Введите количество лекарства"
+                                   Keyboard="Numeric"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Уведомления -->
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="Получать напоминание о приёме лекарства?"
+                               WidthRequest="200"
+                               Style="{StaticResource FieldDescriptionStyle}" 
+                               VerticalOptions="Center"
+                               Grid.Column="0"/>
+                        <Switch IsToggled="{Binding MedicineSchedule.ScheduleIsActive}" 
+                                Grid.Column="1" 
+                                HorizontalOptions="End"      
+                                VerticalOptions="Center"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Кнопки внизу -->
+        <HorizontalStackLayout 
+            Grid.Row="2"
+            HorizontalOptions="End"
+            Spacing="10"
+            Margin="0,10,0,0">
+            <Button Text="Назад"
+                    Command="{Binding BackCommand}"
+                    IsVisible="{Binding ShowBackButton}"
+                    HorizontalOptions="Center"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+            <Button Text="Отмена"
+Command="{Binding CancelCommand}"
+IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}"
+Style="{StaticResource CancelButtonBottomStyle}"/>
+            <Button Text="Сохранить"
+                            Command="{Binding ContinueCommand}"
+                            Style="{StaticResource SaveMedicineButtonStyle}"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

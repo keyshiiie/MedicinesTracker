@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Settings.Views.SettingsPage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Settings.ViewModels"
+             x:DataType="viewModels:SettingsPageVM"
+             xmlns:entitities="clr-namespace:MedicinesTracker.Entities"
+             Title="Настройки">
+    <VerticalStackLayout Spacing="5">
+        <Label 
+        Text="Получатели"
+        Style="{StaticResource FieldDescriptionStyle}"/>
+
+        <!-- CollectionView -->
+        <CollectionView Grid.Row="1" 
+               ItemsSource="{Binding Recipients}">
+            <!-- Шаблон элемента -->
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="entitities:Recipient">
+                    <!-- Обертка для отступов -->
+                    <VerticalStackLayout>
+                        <Border Style="{StaticResource MedicineCardBorderStyle}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding OpenEditPageCommand, 
+                                    Source={RelativeSource AncestorType={x:Type viewModels:SettingsPageVM}},
+                                    x:DataType=viewModels:SettingsPageVM}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="{Binding Name}" 
+                                       Style="{StaticResource FieldTitleStyle}"/>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <!-- Отображение когда список пуст - центрировано -->
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center"
+                 VerticalOptions="Center"
+                 Spacing="10">
+                    <!-- Основной текст -->
+                    <Label Text="Список получателей пуст"
+       Style="{StaticResource MainTitleStyle}"
+       HorizontalTextAlignment="Center"/>
+
+                    <!-- Дополнительный текст -->
+                    <Label Text="Вы можете добавить нового получателя при помощи кнопки ниже."
+       Style="{StaticResource MainDescriptionStyle}"
+       HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+        <Button Style="{StaticResource AddMedicineButtonStyle}" 
+                Command="{Binding OpenEditPageCommand}" 
+                CommandParameter="{x:Null}"/>
+    </VerticalStackLayout>
+</ContentPage>

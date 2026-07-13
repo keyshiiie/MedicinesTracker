@@ -28,5 +28,15 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- Разрешения для уведомлений -->
+	<key>NSRemindersUsageDescription</key>
+	<string>Приложение отправляет напоминания о приёме лекарств</string>
 </dict>
 </plist>

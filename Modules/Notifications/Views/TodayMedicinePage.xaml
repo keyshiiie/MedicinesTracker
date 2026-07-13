@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Notifications.Views.TodayMedicinePage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Notifications.ViewModels"
+             xmlns:dto="clr-namespace:MedicinesTracker.Dto"
+             x:DataType="viewModels:TodayMedicineVM"
+             Title="Сегодня">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- RefreshView с CollectionView занимает всю первую строку -->
+        <RefreshView Grid.Row="0"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshCommand}">
+
+            <CollectionView ItemsSource="{Binding Medicines}"
+                            SelectionMode="None"
+                            VerticalOptions="Fill">
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:TodayMedicineDto">
+                        <Border Style="{StaticResource MedicineCardBorderStyle}">
+                            <Grid ColumnDefinitions="*, Auto">
+
+                                <VerticalStackLayout Grid.Column="0"
+                                                     VerticalOptions="Center"
+                                                     HorizontalOptions="Fill"
+                                                     Spacing="5">
+
+                                    <!-- Имя получателя -->
+                                    <Label Text="{Binding RecipientName}"
+                                           Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Label Text="{Binding MedicineName}"
+                                               Style="{StaticResource TimeAwareFieldTitleStyle}"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="TailTruncation"/>
+
+                                        <HorizontalStackLayout VerticalOptions="Center"
+                                                               Spacing="2">
+                                            <Label Text="{Binding Dosage}"
+                                                   Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+                                            <Label Text="{Binding UnitName}"
+                                                   Style="{StaticResource TimeAwareCardDescriptionStyle}"/>
+                                        </HorizontalStackLayout>
+                                    </HorizontalStackLayout>
+
+                                    <Label Text="{Binding Time}"
+                                           Style="{StaticResource TimeAwareCardDescriptionStyle}"
+                                           HorizontalOptions="Start"/>
+                                </VerticalStackLayout>
+
+                                <Button Grid.Column="1"
+                                        Command="{Binding MarkIntakeCommand, 
+                                        Source={RelativeSource AncestorType={x:Type viewModels:TodayMedicineVM}},
+                                        x:DataType=viewModels:TodayMedicineVM}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource MarkMedicineButtonStyle}"
+                                        Text="✔"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <!-- Пустое состояние - центрировано на странице -->
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         VerticalOptions="Center"
+                                         Spacing="10">
+                        <Label Text="На сегодня ничего не запланировано"
+                               Style="{StaticResource MainTitleStyle}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="Лекарства на сегодня, вероятно, уже были приняты. Возвращайтесь завтра!"
+                               Style="{StaticResource MainDescriptionStyle}"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Индикатор загрузки во второй строке, виден только когда IsLoading=true -->
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HeightRequest="50"
+                           WidthRequest="50"
+                           Color="{StaticResource Primary}" />
+    </Grid>
+</ContentPage>

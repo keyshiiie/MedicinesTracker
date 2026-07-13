@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Notifications.ViewModels"
+             x:DataType="viewModels:AboutAppVM"
+             x:Class="MedicinesTracker.Modules.Notifications.Views.AboutAppPage"
+             Title="AboutAppPage">
+
+    <Grid RowDefinitions="*, Auto" Margin="10">
+        <VerticalStackLayout Spacing="22" VerticalOptions="Center">
+            <Image Source="completed.png" 
+                   HeightRequest="150"
+                   HorizontalOptions="Center"/>
+
+            <Label Text="Приятно познакомиться!"
+                   Style="{StaticResource AcquaintanceTitleStyle}"
+                   HorizontalOptions="Center" />
+
+            <Label Text="Регулярный прием назначенных лекарств — ключ к успешному лечению и поддержанию вашего здоровья. Наше приложение разработано с учетом ваших потребностей, чтобы сделать этот процесс простым и удобным."
+                   Style="{StaticResource AcquaintanceDescriptionStyle}"/>
+
+            
+        </VerticalStackLayout>
+        <Button Text="Начать использовать приложение"
+                Padding="20,10"
+                Style="{StaticResource DefaultButtonStyle}"
+                Command="{Binding ContinueToMainAppCommand}"
+                Grid.Row="1"/>
+    </Grid>
+    
+</ContentPage>

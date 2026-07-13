@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Modules.Medications.Views.Controls"
+             x:Class="MedicinesTracker.Modules.Medications.Views.BaseInfoPage"
+             x:DataType="viewModels:BaseInfoVM"
+             
+             Title="Информация">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Прогресс бар сверху -->
+        <controls:CreationProgressBar 
+            Grid.Row="0"
+            CurrentStep="{Binding CurrentStep}"
+            TotalSteps="{Binding TotalSteps}"
+            StepDescription="{Binding StepDescription}"
+            IsEditing="{Binding IsEditingExisting}" />
+
+        <!-- Поля посередине -->
+        <VerticalStackLayout 
+            Grid.Row="1"
+            Spacing="15"
+            VerticalOptions="Center">
+
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Название"
+                    Style="{StaticResource FieldDescriptionStyle}"/>
+                <Border>
+                    <Entry
+                        Text="{Binding Medicine.Name}"
+                        Style="{StaticResource EditFieldStyle}"
+                        Placeholder="Введите название лекарства"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Единица измерения"
+                    Style="{StaticResource FieldDescriptionStyle}"/>
+                <Border>
+                    <Picker 
+                        ItemsSource="{Binding Units}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите единицу измерения"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Способ приёма"
+                    Style="{StaticResource FieldDescriptionStyle}"/>
+                <Border>
+                    <Picker 
+                        ItemsSource="{Binding MethodAdmissions}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedMethodAdmission, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите способ приёма"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Label 
+                    Text="Получатель"
+                    Style="{StaticResource FieldDescriptionStyle}"/>
+                <Border>
+                    <Picker 
+                        ItemsSource="{Binding Recipients}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedRecipient, Mode=TwoWay}"
+                        Style="{StaticResource PrimaryPickerStyle}"
+                        Title="Выберите получателя лекарства"/>
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Кнопка внизу -->
+        <HorizontalStackLayout 
+            Grid.Row="2"
+            HorizontalOptions="End"
+            Spacing="10">
+            <Button Text="Отмена"
+                    Command="{Binding CancelCommand}"
+                    IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}"
+                    Style="{StaticResource CancelButtonBottomStyle}"/>
+            <Button 
+                Command="{Binding SaveMedicineCommand}"
+                Text="{Binding SaveButtonState.Text}"
+                Style="{StaticResource SaveMedicineButtonStyle}"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

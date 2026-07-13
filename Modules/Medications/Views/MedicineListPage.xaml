@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Medications.Views.MedicineListPage"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:dto="clr-namespace:MedicinesTracker.Dto"
+             x:DataType="viewModels:MedicineListVM"
+             Title="{Binding PageTitle}"
+             Padding="0">
+
+    <!-- Кнопка переключения между активными и архивом -->
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="{Binding ToggleButtonIcon}"
+                     Command="{Binding ToggleModeCommand}"
+                     Order="Primary"/>
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="10">
+
+        <!-- Строка поиска -->
+        <Grid Grid.Row="0"
+              Margin="0,0,0,10">
+            <Border Style="{StaticResource SearchBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Image Source="search_icon.png"
+                           Grid.Column="0"
+                           Style="{StaticResource SearchIconStyle}"/>
+
+                    <Entry x:Name="SearchEntry"
+                           Grid.Column="1"
+                           Text="{Binding SearchText, Mode=TwoWay}"
+                           Placeholder="Поиск по названию..."
+                           Style="{StaticResource SearchEntryStyle}"
+                           TextChanged="OnSearchTextChanged"/>
+
+                    <Button Grid.Column="2"
+                            Text="x"
+                            Command="{Binding ClearSearchCommand}"
+                            IsVisible="{Binding IsSearching}"
+                            Style="{StaticResource ClearSearchButtonStyle}"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- RefreshView с CollectionView - занимает всё доступное место -->
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshDataCommand}">
+
+            <CollectionView ItemsSource="{Binding FilteredMedicineDetails}"
+                            VerticalOptions="Fill">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:MedicineDetailDto">
+                        <VerticalStackLayout>
+                            <Border Style="{StaticResource MedicineCardBorderStyle}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMedicineTapped" />
+                                </Border.GestureRecognizers>
+                                <StackLayout Spacing="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Text="{Binding RecipientName}"
+                                               Style="{StaticResource CardDescriptionOpacityStyle}"
+                                               Grid.Column="0"
+                                               VerticalOptions="Center"/>
+
+                                        <!-- Кнопка восстановления (только для архива) -->
+                                        <Button Grid.Column="1"
+                                                Clicked="OnRestoreButtonClicked"
+                                                CommandParameter="{Binding IdMedicine}"
+                                                IsVisible="{Binding IsArchived}"
+                                                Style="{StaticResource RecoverButtonStyle}"/>
+                                    </Grid>
+
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Border Style="{StaticResource ImageBorderCardStyle}">
+                                            <Image Source="pill.png"
+                                                   Style="{StaticResource MedicineIconStyle}"/>
+                                        </Border>
+                                        <Label Text="{Binding MedicineName}"
+                                               Style="{StaticResource CardTitleStyle}"/>
+                                    </HorizontalStackLayout>
+
+                                    <HorizontalStackLayout Spacing="5">
+                                        <Label Text="Посмотреть подробную информацию"
+                                               Style="{StaticResource DetailLinkStyle}"/>
+                                        <Image Source="hint_swap_right.png"
+                                               Style="{StaticResource DetailLinkIconStyle}"/>
+                                    </HorizontalStackLayout>
+                                </StackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         VerticalOptions="Center"
+                                         Margin="0,50,0,0"
+                                         Spacing="10">
+                        <Label Text="{Binding EmptyViewTitle}"
+                               Style="{StaticResource MainTitleStyle}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="{Binding EmptyViewDescription}"
+                               Style="{StaticResource MainDescriptionStyle}"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Индикатор загрузки (поверх списка) -->
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HeightRequest="50"
+                           WidthRequest="50"
+                           Color="{StaticResource Primary}" />
+
+        <!-- Кнопка "Добавить" (скрываем в архиве) -->
+        <HorizontalStackLayout Grid.Row="2" 
+                               HorizontalOptions="End"
+                               IsVisible="{Binding ShowAddButton}"
+                               Margin="0,10,0,0">
+            <Button Command="{Binding AddMedicineCommand}"
+                    Style="{StaticResource AddMedicineButtonStyle}"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

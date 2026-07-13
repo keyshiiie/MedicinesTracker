@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Modules.Medications.Views.Controls"
+             x:Class="MedicinesTracker.Modules.Medications.Views.ScheduleModeSelectionPage"
+             x:DataType="viewModels:ScheduleModeSelectionVM"
+             Title="Способ задания">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Прогресс бар сверху -->
+        <controls:CreationProgressBar 
+            Grid.Row="0"
+            CurrentStep="{Binding CurrentStep}"
+            TotalSteps="{Binding TotalSteps}"
+            StepDescription="{Binding StepDescription}"
+            IsEditing="{Binding IsEditingExisting}" />
+
+        <!-- Поля посередине -->
+        <VerticalStackLayout 
+            Grid.Row="1"
+            Spacing="30"
+            VerticalOptions="Center">
+            
+            <VerticalStackLayout Spacing="15">
+                <!-- Выбор способа с помощью Picker -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Способ задания расписания"
+                           Style="{StaticResource FieldDescriptionStyle}"/>
+                    <Border>
+                        <Picker ItemsSource="{Binding ScheduleModes}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedScheduleMode, Mode=TwoWay}"
+                                Style="{StaticResource PrimaryPickerStyle}"
+                                Title="Выберите способ задания расписания"/>
+                    </Border>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Кнопки внизу -->
+        <HorizontalStackLayout 
+            Grid.Row="2"
+            HorizontalOptions="End"
+            Spacing="10">
+            <Button Text="Назад"
+                    Command="{Binding BackCommand}"
+                    IsVisible="{Binding ShowBackButton}"
+                    HorizontalOptions="Center"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+            <Button Text="Отмена"
+Command="{Binding CancelCommand}"
+IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}"
+Style="{StaticResource CancelButtonBottomStyle}"/>
+            <Button Text="Далее"
+                    Command="{Binding ContinueCommand}"
+                    IsEnabled="{Binding IsValid}"
+                    Style="{StaticResource SaveMedicineButtonStyle}"
+                    Grid.Column="1"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

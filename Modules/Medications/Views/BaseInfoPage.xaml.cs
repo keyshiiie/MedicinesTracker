@@ -1,0 +1,29 @@
+using MedicinesTracker.Modules.Medications.ViewModels;
+using System.Diagnostics;
+
+namespace MedicinesTracker.Modules.Medications.Views;
+
+public partial class BaseInfoPage : ContentPage
+{
+	public BaseInfoPage(BaseInfoVM viewModel)
+	{
+		InitializeComponent();
+        BindingContext = viewModel;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        try
+        {
+            Debug.WriteLine("[BaseInfoPagePage] OnAppearing - обновление данных");
+            await ((BaseInfoVM)BindingContext).InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Ошибка при загрузке данных: {ex.Message}");
+            await DisplayAlertAsync("Ошибка", "Не удалось загрузить данные", "ОК");
+        }
+    }
+}

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MedicinesTracker.Modules.Medications.Views.StockInfoPage"
+             x:DataType="viewModels:StockInfoVM"
+             xmlns:viewModels="clr-namespace:MedicinesTracker.Modules.Medications.ViewModels"
+             xmlns:controls="clr-namespace:MedicinesTracker.Modules.Medications.Views.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             Title="Запас">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Прогресс бар сверху -->
+        <controls:CreationProgressBar 
+            Grid.Row="0"
+            CurrentStep="{Binding CurrentStep}"
+            TotalSteps="{Binding TotalSteps}"
+            StepDescription="{Binding StepDescription}"
+            IsEditing="{Binding IsEditingExisting}" />
+
+        <!-- Поля посередине -->
+        <VerticalStackLayout 
+            Grid.Row="1"
+            Spacing="30"
+            VerticalOptions="Center">
+
+            <VerticalStackLayout Spacing="15">
+                <VerticalStackLayout Spacing="5">
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                               IsVisible="{Binding IsBusy}" />
+
+                    <Label Text="{Binding LoadingMessage}" 
+                   IsVisible="{Binding IsBusy}" />
+
+                    <Label Text="Текущий запас"
+                   Style="{StaticResource FieldDescriptionStyle}"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border>
+                            <Entry Text="{Binding Stock.CurrentQuantity}"
+                                   Style="{StaticResource EditFieldStyle}"
+                                   Grid.Column="0"
+                                   Placeholder="0"
+                                   Keyboard="Numeric">
+                                <!-- Добавляем поведение для валидации целого числа -->
+                                <Entry.Behaviors>
+                                    <toolkit:EventToCommandBehavior EventName="TextChanged"
+                                                Command="{Binding ValidateCurrentQuantityCommand}" />
+                                </Entry.Behaviors>
+                            </Entry>
+                        </Border>
+
+                        <Label Text="{Binding UnitName}"
+                               Style="{StaticResource FieldDescriptionStyle}"
+                               Grid.Column="1"
+                               Padding="10,0,0,0"/>
+                    </Grid>
+
+                    <!-- Отображение ошибки для текущего количества -->
+                    <Label Text="{Binding CurrentQuantityError}"
+                   TextColor="Red"
+                   FontSize="Small"
+                   IsVisible="{Binding HasCurrentQuantityError}"
+                   Margin="5,0,0,0"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Напомнить вам, когда останется"
+                   Style="{StaticResource FieldDescriptionStyle}"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border>
+                            <Entry Text="{Binding Stock.Threshold}"
+                           Style="{StaticResource EditFieldStyle}"
+                           Grid.Column="0"
+                           Placeholder="0"
+                           Keyboard="Numeric">
+                                <!-- Добавляем поведение для валидации целого числа -->
+                                <Entry.Behaviors>
+                                    <toolkit:EventToCommandBehavior EventName="TextChanged"
+                                                Command="{Binding ValidateThresholdCommand}" />
+                                </Entry.Behaviors>
+                            </Entry>
+                        </Border>
+
+                        <Label Text="{Binding UnitName}"
+                       Style="{StaticResource FieldDescriptionStyle}"
+                       Grid.Column="1"
+                       Padding="10,0,0,0"/>
+                    </Grid>
+
+                    <!-- Отображение ошибки для порога -->
+                    <Label Text="{Binding ThresholdError}"
+                           TextColor="Red"
+                           FontSize="Small"
+                           IsVisible="{Binding HasThresholdError}"
+                           Margin="5,0,0,0"/>
+                </VerticalStackLayout>
+
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Text="Получать напоминание о пополнении запаса?"
+                           WidthRequest="200"
+                   Style="{StaticResource FieldDescriptionStyle}" 
+                   VerticalOptions="Center"
+                   HorizontalOptions="Start"/>
+                    <Switch IsToggled="{Binding Stock.ReminderEnabled}" 
+                    Grid.Column="1" 
+                    HorizontalOptions="End"      
+                    VerticalOptions="Center"/>
+                </Grid>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Кнопки внизу -->
+        <HorizontalStackLayout 
+            Grid.Row="2"
+            HorizontalOptions="End"
+            Spacing="10">
+            <Button Text="Назад"
+                    Command="{Binding BackCommand}"
+                    IsVisible="{Binding ShowBackButton}"
+                    HorizontalOptions="Center"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+            <Button Text="Отмена"
+                    Command="{Binding CancelCommand}"
+                    IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}"
+                    Style="{StaticResource CancelButtonBottomStyle}"/>
+            <Button Command="{Binding SaveMedicineCommand}"
+                    Text="{Binding SaveButtonState.Text}"
+                    Style="{StaticResource SaveMedicineButtonStyle}"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

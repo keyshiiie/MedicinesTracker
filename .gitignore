@@ -1,0 +1,23 @@
+## .NET Core/MAUI
+bin/
+obj/
+packages/
+*.user
+*.suo
+*.userprefs
+
+## Visual Studio
+.vs/
+.vscode/
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.dll
+*.exe
+*.pdb
+
+## MAUI specific
+*.csproj.user
